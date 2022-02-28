@@ -7,3 +7,7 @@
  For layered soil reserviors, the two options include 
   * constant by layer, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
   * linearly interpolated profile between consecutive layers, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
+  
+## Standalone run:
+ * run [make_bmi_coupler.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_bmi_coupler.sh) to get the executable (e.g., run_bmi_coupler)
+ * run './run_bmi_coupler test/config.txt'
