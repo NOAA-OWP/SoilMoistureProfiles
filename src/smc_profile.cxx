@@ -251,7 +251,6 @@ SetLayerThickness() {
 void smc_profile::SMCProfile::
 SMPVertical()
 {
-  //std::cout<<"SMP option "<<this->smc_profile<<"\n";
   if (this->smc_profile == "conceptual" || this->smc_profile == "Conceptual") {
     SMPFromConceptualReservoir();
   }
@@ -361,8 +360,6 @@ SMPFromLayeredReservoir()
   for (int i=0; i <this->nz_layers; i++)
     z_layers_n.push_back(Z_layers[i]);
 
-  //for (int i=0; i <this->nz_layers; i++)
-  //  std::cout<<"SMCL "<<this->SMCL[i] <<"\n";
   std::vector<double> z_res; // from SFT
   int sft_ncells = 60;
   
@@ -372,10 +369,11 @@ SMPFromLayeredReservoir()
   std::vector<double> smc_sft;
   int c =0;
   double delta =0.0;
-  
+
   // piece-wise constant (vertically)
   if (this->smc_profile_option == "constant" || this->smc_profile_option == "Constant") {
     bool layers_flag=true;
+    
     for (int i=0; i < sft_ncells; i++){
 
       if (z_res[i] < Z_layers[c]) {
@@ -403,7 +401,7 @@ SMPFromLayeredReservoir()
 	else
 	  smc_sft.push_back(phi);
       }
-      std::cout<<"cons. "<<smc_sft[i]<<","<<" \n";
+      std::cout<<smc_sft[i]<<",";
 
     }
   }
@@ -411,43 +409,30 @@ SMPFromLayeredReservoir()
     // linearly interpoloted
     bool layers_flag=true;
     double t_v=0.0;
-    
+   
     smc_sft.push_back(SMCL[0]); // SFT first cell gets the top-layer soil moisture
-    
-    for (int i=1; i < sft_ncells; i++){
+
+    for (int i=1; i <sft_ncells; i++) {
       
-      if (z_res[i] <= Z_layers[c]) {
-	
-	if (c == nlayer-1)
-	  t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], SMCL[c], SMCL[c], z_res[i]);// interface of layers
-	else
-	  t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], SMCL[c], SMCL[c+1], z_res[i]);
+      if (z_res[i] <= Z_layers[c] && c < nlayer-1) {
+	t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], SMCL[c], SMCL[c+1], z_res[i]);
 	smc_sft.push_back(t_v);
+	if (z_res[i+1] > Z_layers[c])
+	  c++;
 	
-      }
-      else if (z_res[i] < Dl) {
-	
-	c++;
-	
-	if (c == nlayer-1)
-	  t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], SMCL[c], SMCL[c], z_res[i]);// interface of layers
-	else
-	  t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], SMCL[c], SMCL[c+1], z_res[i]);// interface of layers
-	smc_sft.push_back(t_v);
 	
       }
       else {
 	
 	double zz = D - z_res[i];
-	
 	double theta = delta + std::pow((hb/zz),lam)*phi;
 	
-	if (layers_flag) { // to make sure the moisture curve below Dl start at moisture value at Dl for continuity
+	if (layers_flag) {//to make sure the moisture curve below Dl start at moisture value at Dl for continuity
 	  delta = 0.0 - theta;
 	  theta = theta + delta;
 	  layers_flag = false;
-	  
 	}
+	
 	double theta1 = SMCL[nlayer-1] +  theta;
 	double theta2 = std::min(phi, theta1);
 	if (z_res[i] > hb)
@@ -456,26 +441,27 @@ SMPFromLayeredReservoir()
 	  smc_sft.push_back(phi);
 	
       }
-      //std::cout<<smc_sft[i-1]<<",";
-      
-      }
-      
     }
+    // for vis comparison
+    for (int j=0; j<sft_ncells; j++)
+      std::cout<<z_res[j] <<" "<<smc_sft[j]<<",";
+    
+    for (int i=0; i<this->nz; i++) {
+      for (int j=0; j<sft_ncells; j++) {
+	if (z_res[j]  >= this->Z[i] ) {
+	  this->SMCT[i] = smc_sft[j];
+	  break;
+	}
+      }
+    }
+    
+  }
   else {
     std::stringstream errMsg;
     errMsg << "Soil moisture profile "<< this->smc_profile << " works with options \'constant\' and \'linear\'. Provide at least one option in the config file "<< config_file <<"\n";
     throw std::runtime_error(errMsg.str());
   }
-
-  // mapping the updated soil moisture curve to the heat conduction discretization depth (Dz)
-   for (int i=0; i<this->nz; i++) {
-     for (int j=0; j<sft_ncells; j++) {
-       if (z_res[j]  >= (D - this->Z[i]*100) ) {
-	 this->SMCT[i] = smc_sft[j];
-	 break;
-       }
-     }
-   }
+  
 }
 
 double smc_profile::SMCProfile::

@@ -96,13 +96,15 @@ int main(int argc, char *argv[])
     double *var_smc = new double[4];
     
     model.GetValue(var_name_smc,&var_smc[0]);
+    std::string smc_profile = "linear";
 
-    for (int i=0; i < shape[0]; i++) {
-      std::cout<<"Main: "<<var_smc[i]<<" "<<SMCT[i]<<" "<<abs(var_smc[i] - SMCT[i])<<"\n";
-      assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
-      fprintf(fp, "%6.4e", var_smc[i]);
-      fprintf(fp, "\n");
-    }
+    if (smc_profile == "constant")
+      for (int i=0; i < shape[0]; i++) {
+	std::cout<<"Main: "<<var_smc[i]<<" "<<SMCT[i]<<" "<<abs(var_smc[i] - SMCT[i])<<"\n";
+	assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
+	fprintf(fp, "%6.4e", var_smc[i]);
+	fprintf(fp, "\n");
+      }
     
   }
   
