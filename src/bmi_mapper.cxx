@@ -22,14 +22,14 @@ Initialize (std::string config_file)
 void BmiMapper::
 Update()
 {
-  this->_model.MapFromBasinToGrid();
+  this->_model.SMCFromBasinToGrid();
 }
 
 
 void BmiMapper::
 UpdateUntil(double t)
 {
-  this->_model.MapFromBasinToGrid();
+  this->_model.SMCFromBasinToGrid();
 }
 
 
@@ -43,7 +43,7 @@ Finalize()
 int BmiMapper::
 GetVarGrid(std::string name)
 {
-  if (name.compare("NWMGID_area_fraction") == 0 || name.compare("NWMGID") == 0 || name.compare("NWMGI_SMC") == 0)
+  if (name.compare("area_fraction") == 0 || name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0 || name.compare("grid_SMC") == 0)
     return 0;
   else if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0)
     return 1;
@@ -55,11 +55,11 @@ GetVarGrid(std::string name)
 std::string BmiMapper::
 GetVarType(std::string name)
 {
-  if (name.compare("NWMGID_area_fraction") == 0 || name.compare("NWMGI_SMC") == 0)
+  if (name.compare("area_fraction") == 0 || name.compare("grid_SMC") == 0)
     return "double";
   else if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0)
     return "double";
-  else if (name.compare("NWMGID") == 0)
+  else if (name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0)
     return "int";
   else
     return "";
@@ -69,11 +69,11 @@ GetVarType(std::string name)
 int BmiMapper::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("NWMGID_area_fraction") == 0 || name.compare("NWMGI_SMC") == 0)
+  if (name.compare("area_fraction") == 0 || name.compare("grid_SMC") == 0)
     return sizeof("double");
   if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0 )
     return sizeof(double);
-  else if (name.compare("NWMGID") == 0)
+  else if (name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0)
     return sizeof(int);
   else
     return 0;
@@ -89,7 +89,7 @@ GetVarUnits(std::string name)
     return "m";
   else if (name.compare("depth") == 0)
     return "m";
-  else if (name.compare("NWMGRID_area_fraction") == 0)
+  else if (name.compare("area_fraction") == 0)
     return "m^-2"; //check the notation - ajk
   else
     return "none";
@@ -111,7 +111,7 @@ GetVarNbytes(std::string name)
 std::string BmiMapper::
 GetVarLocation(std::string name)
 {
-  if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0 || name.compare("NWMGID_area_fraction") == 0 || name.compare("NWMGID") == 0 || name.compare("NWMGID_SMC") == 0)
+  if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0 || name.compare("area_fraction") == 0 || name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0 || name.compare("grid_SMC") == 0)
     return "node";
   else
     return "";
@@ -268,22 +268,24 @@ GetValue (std::string name, void *dest)
 
 void *BmiMapper::
 GetValuePtr (std::string name)
-{/*
+{
   if (name.compare("TWI") == 0)
     return (void*)this->_model.TWI;
   else if (name.compare("global_deficit") == 0)
-    return (void*)this->_model.global_deficit;
+    return (void*)this->_model.cat_global_deficit;
   else  if (name.compare("porosity") == 0)
     return (void*)this->_model.phi;
   else if (name.compare("depth") == 0)
     return (void*)this->_model.depth;
-  else if (name.compare("GRID_ID") == 0)
+  else if (name.compare("grid_gid") == 0)
     return (void*)this->_model.grid_id;
-  else if (name.compare("GRID_area_fraction") == 0)
+  else if (name.compare("grid_gid_unique") == 0)
+    return (void*)this->_model.grid_id_unique;
+  else if (name.compare("area_fraction") == 0)
     return (void*)this->_model.grid_area_fraction;
-  else if (name.compare("GRID_SMC") == 0)
+  else if (name.compare("grid_SMC") == 0)
     return (void*)this->_model.grid_SMC;
-    else */{
+    else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
     throw std::runtime_error(errMsg.str());

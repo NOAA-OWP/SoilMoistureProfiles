@@ -23,10 +23,11 @@ public:
     this->input_var_names[1] = "global_deficit";
     this->input_var_names[2] = "porosity";
     this->input_var_names[3] = "depth";
-    this->input_var_names[4] = "NWMGID";
-    this->input_var_names[5] = "NWMGID_area_fraction";
+    this->input_var_names[4] = "grid_gid";
+    this->input_var_names[5] = "area_fraction";
     
-    this->output_var_names[0] = "NWMGID_SMC";
+    this->output_var_names[0] = "grid_SMC";
+    this->output_var_names[0] = "grid_id_unique";
   };
   
   void Initialize(std::string config_file);
@@ -84,10 +85,10 @@ public:
 private:
   smc_mapping::SMCMapping _model;
   static const int input_var_name_count = 6;
-  static const int output_var_name_count = 1;
+  static const int output_var_name_count = 2;
   
   std::string input_var_names[6];
-  std::string output_var_names[1];
+  std::string output_var_names[2];
 };
 
 #endif

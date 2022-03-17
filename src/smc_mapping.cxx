@@ -42,48 +42,74 @@ SMCMapping(std::string config_file)
   this->cat_local_moisture = new double[*this->ncats];
 
   this->grid_SMC = new double[*ngrids_u];
-
-  this->cat_storage_max = (*this->depth) * (*this->phi);
+  this->grid_total_area = new double[*ngrids_u];
   
-  ComputeLocalMoisture();
-  ComputeGridedMoisture();
+  this->cat_storage_max = (*this->depth) * (*this->phi);
+
+  // initial cat_global_deficit (but(it updates every timestep)
+  //this->cat_global_storage = cat_storage_max - *cat_global_deficit;
+
+  // this needs to be called once
+  AreaWeightedAverageTWI();
+    
+  ComputeLocalSoilMoisture();
+  ComputeGridedSoilMoisture();
 }
 
 void smc_mapping::SMCMapping::
-ComputeLocalMoisture()
+SMCFromBasinToGrid()
 {
+  //update global storage
+  // this->cat_global_storage = cat_storage_max - *cat_global_deficit;
 
-  // cat_global_deficit updates every timestep
-  this->cat_global_storage = cat_storage_max - *cat_global_deficit;
+  //update catchment soil moisture
+  ComputeLocalSoilMoisture();
 
+  // update/map grided soil moisture
+  ComputeGridedSoilMoisture();
+  
+}
+
+void smc_mapping::SMCMapping::
+AreaWeightedAverageTWI()
+{
   // Get total area (TWI area which should sum to 1.0)
   // and areal average (area weighted-average of TWI) 
 
-  double TL = 0.0; // areal average: 1/Area * integral (sub_cat_area_i * TWI_i)
-
+  this->areal_avg_TWI = 0.0; // areal average: 1/Area * integral (sub_cat_area_i * TWI_i)
+  
   std::vector<double> dist_area_lnaotb(*ncats);
   total_area = 1.0; // hacked value for testing
   
   for (int i=0; i < *ncats; i++)
     dist_area_lnaotb[i] = dist_area_TWI[i]/total_area;
-
+  
   for (int i=1; i < *ncats; i++)
-    TL +=  dist_area_lnaotb[i]*(TWI[i]+TWI[i-1])/2.0;
+    this->areal_avg_TWI +=  dist_area_lnaotb[i]*(TWI[i]+TWI[i-1])/2.0;
 
-  TL = 5.454978310883997; //hacked value for testing
+  this->areal_avg_TWI = 5.454978310883997; //hacked value for testing
 
+}
+
+void smc_mapping::SMCMapping::
+ComputeLocalSoilMoisture()
+{
   for (int i=0; i < *ncats; i++) {
-    cat_local_deficit[i] = (*cat_global_deficit) + (*szm) * (TL-TWI[i]);
+    cat_local_deficit[i] = (*cat_global_deficit) + (*szm) * (areal_avg_TWI-TWI[i]);
     cat_local_moisture[i] = cat_storage_max - cat_local_deficit[i];
-
   }
   
 }
 
 void smc_mapping::SMCMapping::
-ComputeGridedMoisture()
+ComputeGridedSoilMoisture()
 {
-  double *grid_total_area = new double[*ngrids_u];
+  
+  // make sure smc and area are set to zero before mapping
+  for (int i=0; i<*ngrids_u;i++) {
+    this->grid_SMC[i] = 0.0;
+    this->grid_total_area[i] = 0.0;
+  }
   
   for (int i=0; i <*ngrids; i++) {
     int gid_index = this->grid_id_unique_index[i];
@@ -96,12 +122,13 @@ ComputeGridedMoisture()
      
   }
 
-  std::cout<<"ID,SMC"<<"\n";
+  // std::cout<<"ID,SMC"<<"\n";
   for (int i=0; i <*ngrids_u; i++) {
-    int id = this->grid_id_unique[i];
+    //int id = this->grid_id_unique[i];
     grid_SMC[i] /= grid_total_area[i];
-    std::cout<<id<<","<<grid_SMC[i]<<"\n";
+    //std::cout<<id<<","<<grid_SMC[i]<<"\n";
   }
+  
 }
 
 
@@ -295,24 +322,23 @@ ReadSpatialData(std::string spatial_file)
     this->grid_id_unique[i] = grid_id_index_v[i];
   }
 
-
-  this->grid_id_unique_index = new int[*ngrids];
-  //std::vector<int> vec(*ngrids);
+  std::vector<int> vec(*ngrids);
   
   for (int i=0; i<*ngrids_u; i++) { //start with unique id
     for (int j=0; j<*ngrids; j++) { // loop over nwm grid to cover duplicate ids and assign them same index
       if (grid_id_unique[i] == grid_id[j]) {
-	//vec[j] = i;
-	this->grid_id_unique_index[i] = vec[i];
+	vec[j] = i;
+	//this->grid_id_unique_index[j] = i;
       }
     }
   }
   
-  /*
+  this->grid_id_unique_index = new int[*ngrids];
+  
   for (int i=0; i<*ngrids; i++) {
     this->grid_id_unique_index[i] = vec[i];
-    }*/
-
+  }
+  
 }
 
 
@@ -322,8 +348,9 @@ ReadTWIData(std::string spatial_file)
   std::ifstream fp;
   fp.open(spatial_file);
   if (!fp) {
-    cout<<"file "<<spatial_file<<" doesn't exist. \n";
-    abort();
+    std::stringstream errMsg;
+    errMsg << "file "<<spatial_file<<" doesn't exist. "<<"\n";
+    throw std::runtime_error(errMsg.str());
   }
 
   std::vector<int> cat_id_v(0.0);
@@ -400,10 +427,6 @@ ReadTWIData(std::string spatial_file)
   }
   
 }
-
-void smc_mapping::SMCMapping::
-MapFromBasinToGrid()
-{}
 
 smc_mapping::SMCMapping::
 ~SMCMapping()

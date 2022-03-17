@@ -43,6 +43,7 @@ namespace smc_mapping {
     double *TWI;
     double *dist_area_TWI;
     double *grid_SMC;
+    double *grid_total_area;
     
     int *ngrids;
     int *ngrids_u; // u: unique
@@ -51,16 +52,18 @@ namespace smc_mapping {
     double cat_storage_max;
     double cat_global_storage;
     double total_area;
+    double areal_avg_TWI; // area weighted average TWI
     
     SMCMapping();
     SMCMapping(std::string config_file);
 
-    void MapFromBasinToGrid();
+    void SMCFromBasinToGrid();
     void InitFromConfigFile(std::string config_file);
     void ReadSpatialData(std::string spatial_file);
     void ReadTWIData(std::string spatial_file);
-    void ComputeLocalMoisture();
-    void ComputeGridedMoisture();
+    void AreaWeightedAverageTWI();
+    void ComputeLocalSoilMoisture();
+    void ComputeGridedSoilMoisture();
     ~SMCMapping();
   };
 
