@@ -35,21 +35,9 @@ int main(int argc, char *argv[])
   {
     std::string var_name_id = "grid_gid_unique";
     std::string var_name_smc = "grid_SMC";
-    
-    //    int grid, rank, *shape;
-    
 
     fprintf(fp, "variable = %s\n", var_name_id.c_str());
     fprintf(fp, "variable = %s\n", var_name_smc.c_str());
-    
-    //grid = model.GetVarGrid(var_name_s);
-
-    //rank = model.GetGridRank(grid);
-    //fprintf(fp, "rank = %d\n", rank);
-    //shape = new int[rank];
-    //model.GetGridShape(grid, shape);
-
-    //fprintf(fp, "shape = %d x %d x %d\n", shape[0],1,1);
 
     // Set values
     int ngrids = 575;
@@ -70,15 +58,20 @@ int main(int argc, char *argv[])
     double smc_mean_sim = std::accumulate(smc_vec.begin(), smc_vec.end(),0.0);
     smc_mean_sim /=smc_vec.size();
 
+    // this is for testing: call it 10 times to make sure old values of grid_SMC are always set to zero
+    for (int i=0; i < 10; i++)
+      model.Update();
     
-    //model.Update();
-    // values from python for comparison
-    double smc_min = 0.1040445;
-    double smc_max = 0.30984;
-    double smc_mean = 0.233984;
-    std::cout<<"Max: "<<smc_max<<" "<<smc_max_sim<<"\n";
-    std::cout<<"Min: "<<smc_min<<" "<<smc_min_sim<<"\n";
-    std::cout<<"Mean: "<<smc_mean<<" "<<smc_mean_sim<<"\n";
+    // values from python (reference case) for comparison with BMI based values
+    double smc_min = 0.10404457;
+    double smc_max = 0.30984588;
+    double smc_mean = 0.23398412;
+
+    std::cout<<"Max SMC Ref  = "<<smc_max<<" | Max SMC Simulated = "<<smc_max_sim<<" | Error = "<< (smc_max - smc_max_sim)<<"\n \n";
+    std::cout<<"Min SMC Ref  = "<<smc_min<<" | Max SMC Simulated = "<<smc_min_sim<<" | Error = "<< (smc_min - smc_min_sim)<<"\n \n";
+
+    std::cout<<"Mean SMC Ref = "<<smc_max<<" | Mean SMC Simulated = "<<smc_max_sim<<" | Error = "<< (smc_mean - smc_mean_sim)<<"\n";
+
     for (int i=0; i < 575; i++) {
       //      assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
       fprintf(fp, "%d,%lf", var_id[i], var_smc[i]);

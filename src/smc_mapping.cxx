@@ -116,9 +116,9 @@ ComputeGridedSoilMoisture()
     int map_cid = this->cat_grid_id[i]; //catchment id
     int cat_index = this->cat_id_index[map_cid];
 
-     grid_SMC[gid_index] = grid_SMC[gid_index] + grid_area_fraction[i] * cat_local_moisture[cat_index];
+     grid_SMC[gid_index] += grid_area_fraction[i] * cat_local_moisture[cat_index];
 
-     grid_total_area[gid_index] = grid_total_area[gid_index] + grid_area_fraction[i];
+     grid_total_area[gid_index] += grid_area_fraction[i];
      
   }
 
