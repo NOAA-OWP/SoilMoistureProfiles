@@ -10,7 +10,7 @@
   
 ## Standalone run:
  * run [make_bmi_coupler.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_bmi_coupler.sh) to get the executable (e.g., run_bmi_coupler)
- * run './run_bmi_coupler test/config.txt'
+ * run ./run_bmi_coupler test/config.txt
 
 ## Coupled mode:
  * Coupling SoilMoistureProfiles to any module (for instance, CFE or SFT) **must** follow these [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw/tree/ajk/sft_only) for building and running
