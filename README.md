@@ -16,7 +16,7 @@
  * Coupling SoilMoistureProfiles to any module (for instance, CFE or SFT) **must** follow these [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw/tree/ajk/sft_only) for building and running
  * Follow this example: [couple SMP with SFT](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/src/main_cfe_aorc_pet_ftm.cxx)
 
-## Options in the config file
+## Parameters in the config file
 * `smcmax` (porosity; maximum moisture content), `b`, `satpsi` (saturated matric potential) are needed for the soil moisture characteristic function
 * `Z` is the soil layer thickness (for instance, if SMP is coupled with SFT then this `Z` is the vertical resolution of the SFT model)
 * `smc_profile` = `conceptual` if conceptual model(e.g., CFE) or `layered` if layered based soil moisture model is used (e.g., LGAR)
