@@ -1,0 +1,6 @@
+spatial_map_file=./test/grid_mapping.csv
+TWI_file=./test/twi_data.csv
+global_deficit=0.315843
+porosity=0.5
+depth=1.0
+szm=0.032
