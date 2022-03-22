@@ -23,6 +23,9 @@
 * if `smc_profile` = `layered`, then set `smc_profile_option` = `constant` for layered-constant profile or `linear`  for linearly interpolated profile between layers
 * `water_table` depth of the initial water table
 
+_________________________________________________________________
+_________________________________________________________________
+
 # SoilMoistureMapping
 SMCMapping BMI computes and maps local (subcatchment) soil moisture from catchment to NWM grid (1x1 km). The idea of computing local soil moisture is based on the concept of [TopModel](https://github.com/NOAA-OWP/topmodel), where given the global (mean) watershed soil moisture deficit and TWI, local soil moisture deficit is computed. Here, we use the watershed maximum storage capacity and TWI to compute local soil moisture content which is then mapped onto NWM 1x1 km grid using the spatial mapping information provided in the hydrofabric.
 
