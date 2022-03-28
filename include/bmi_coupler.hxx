@@ -4,7 +4,7 @@
 using namespace std;
 
 #include <string.h>
-#include "../../bmi/bmi.hxx"
+#include "../bmi/bmi.hxx"
 #include "smc_profile.hxx"
 
 namespace coupler {

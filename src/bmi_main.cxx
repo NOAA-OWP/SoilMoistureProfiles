@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 
-#include "../../bmi/bmi.hxx"
+#include "../bmi/bmi.hxx"
 #include "../include/bmi_coupler.hxx"
 #include "../include/smc_profile.hxx"
 
