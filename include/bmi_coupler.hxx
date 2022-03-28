@@ -17,12 +17,12 @@ class NotImplemented : public std::logic_error {
 class BmiCoupler : public bmixx::Bmi {
   public:
     BmiCoupler() {
-      this->input_var_names[0] = "soil__storage";
-      this->input_var_names[1] = "soil__storage_change";
-      this->input_var_names[2] = "soil__water_table";
-      this->input_var_names[3] = "soil__moisture_content_layered";
+      this->input_var_names[0] = "soil_storage";
+      this->input_var_names[1] = "soil_storage_change";
+      this->input_var_names[2] = "soil_moisture_content_layered";
       
-      this->output_var_names[0] = "soil__moisture_content_total";
+      this->output_var_names[0] = "soil_moisture_content_profile";
+      this->output_var_names[1] = "soil_water_table";
     };
 
   void Initialize(std::string config_file);
@@ -79,11 +79,11 @@ class BmiCoupler : public bmixx::Bmi {
     void GetGridNodesPerFace(const int grid, int *nodes_per_face);
   private:
     smc_profile::SMCProfile _model;
-    static const int input_var_name_count = 4;
-    static const int output_var_name_count = 1;
+    static const int input_var_name_count = 3;
+    static const int output_var_name_count = 2;
 
-    std::string input_var_names[4];
-    std::string output_var_names[1];
+    std::string input_var_names[3];
+    std::string output_var_names[2];
 };
 
 #endif

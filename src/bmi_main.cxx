@@ -33,12 +33,12 @@ int main(int argc, char *argv[])
   }
 
   {
-    std::string var_name_s = "soil__storage";
-    std::string var_name_sc = "soil__storage_change";
-    std::string var_name_wt = "soil__water_table";
-    std::string var_name_smc = "soil__moisture_content_total";
-    std::string var_name_smcl = "soil__moisture_content_layered";
-    std::string var_name_smc_bmi = "soil__smc_profile_option_bmi";
+    std::string var_name_s = "soil_storage";
+    std::string var_name_sc = "soil_storage_change";
+    std::string var_name_wt = "soil_water_table";
+    std::string var_name_smc = "soil_moisture_content_profile";
+    std::string var_name_smcl = "soil_moisture_content_layered";
+    std::string var_name_smc_bmi = "soil_smc_profile_option_bmi";
     
     int grid, rank, *shape;
     double *var_s = NULL;
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     fprintf(fp, "variable = %s\n", var_name_smcl.c_str());
     fprintf(fp, "variable = %s\n", var_name_smc_bmi.c_str());
     
-    grid = model.GetVarGrid(var_name_s);
+    grid = model.GetVarGrid(var_name_smc);
 
     rank = model.GetGridRank(grid);
     fprintf(fp, "rank = %d\n", rank);
@@ -68,11 +68,10 @@ int main(int argc, char *argv[])
     double *storage_change_m_ptr = &storage_change_m;
     double smc_layers[] = {0.25, 0.15, 0.1, 0.12};
 
+    int smc_option_bmi;
 
-    int *smc_option_bmi = new int[1];
-
-    model.GetValue(var_name_smc_bmi,&smc_option_bmi[0]);
-    
+    model.GetValue(var_name_smc_bmi,&smc_option_bmi);
+	
     model.SetValue(var_name_s,storage_m_ptr);
 
     model.SetValue(var_name_sc,storage_change_m_ptr);
@@ -82,6 +81,7 @@ int main(int argc, char *argv[])
     var_s = (double *)model.GetValuePtr(var_name_s);
     var_sc = (double *)model.GetValuePtr(var_name_sc);
 
+    std::cout<<"smc_option: "<<smc_option_bmi<<"\n";
     std::cout<<"storage: "<<*var_s<<"\n";
     std::cout<<"storage change: "<<*var_sc<<"\n";
 
@@ -96,9 +96,9 @@ int main(int argc, char *argv[])
     double *var_smc = new double[4];
     
     model.GetValue(var_name_smc,&var_smc[0]);
-    std::string smc_profile = "linear";
-
-    if (smc_profile == "constant")
+    std::string smc_profile = "conceptual";
+    
+    if (smc_profile == "conceptual")
       for (int i=0; i < shape[0]; i++) {
 	std::cout<<"Main: "<<var_smc[i]<<" "<<SMCT[i]<<" "<<abs(var_smc[i] - SMCT[i])<<"\n";
 	assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
