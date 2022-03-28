@@ -90,7 +90,6 @@ InitFromConfigFile()
     if (key_sub == "Z") {
       std::string tmp_key = key.substr(loc+1,key.length());
       std::vector<double> vec = ReadVectorData(tmp_key);
-      
       this->Z = new double[vec.size()];
       
       for (unsigned int i=0; i < vec.size(); i++)
@@ -221,18 +220,31 @@ ReadVectorData(std::string key)
   std::string delimiter = ",";
   std::vector<double> value(0.0);
   std::string z1 = key;
-
-  while (z1.find(delimiter) != std::string::npos) {
-    pos = z1.find(delimiter);
-    std::string z_v = z1.substr(0, pos);
-
-    value.push_back(stod(z_v.c_str()));
-
-    z1.erase(0, pos + delimiter.length());
-    if (z1.find(delimiter) == std::string::npos)
-      value.push_back(stod(z1));
+  
+  if (z1.find(delimiter) == std::string::npos) {
+    double v = stod(z1);
+    if (v == 0.0) {
+      std::stringstream errMsg;
+      errMsg << "Z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< config_file << "\n";
+      throw std::runtime_error(errMsg.str());
+    }
+    
+    value.push_back(v);
+    
   }
+  else {
+    while (z1.find(delimiter) != std::string::npos) {
+      pos = z1.find(delimiter);
+      std::string z_v = z1.substr(0, pos);
 
+      value.push_back(stod(z_v.c_str()));
+      
+      z1.erase(0, pos + delimiter.length());
+      if (z1.find(delimiter) == std::string::npos)
+	value.push_back(stod(z1));
+    }
+  }
+  
   return value;
 }
 
