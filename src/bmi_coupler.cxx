@@ -398,31 +398,31 @@ GetOutputVarNames()
 
 double BmiCoupler::
 GetStartTime () {
-  throw coupler::NotImplemented();
+  return 0.0;
 }
 
 
 double BmiCoupler::
 GetEndTime () {
-  throw coupler::NotImplemented();
+  return 0.0;
 }
 
 
 double BmiCoupler::
 GetCurrentTime () {
-  throw coupler::NotImplemented();
+  return 0.0;
 }
 
 
 std::string BmiCoupler::
 GetTimeUnits() {
-  throw coupler::NotImplemented();
+  return "s";
 }
 
 
 double BmiCoupler::
 GetTimeStep () {
-  throw coupler::NotImplemented();
+  return 0;
 }
 
 #endif

@@ -26,7 +26,7 @@ SMCProfile()
   this->origin[0] = 0.;
   this->origin[1] = 0.;
   this->D =0.0;
-  this->config_file = "";
+  //this->config_file = "";
   this->smc_profile= "";
   this->nz=0;
   this->smc_profile_option_bmi= new int[1];
@@ -35,9 +35,9 @@ SMCProfile()
 smc_profile::SMCProfile::
 SMCProfile(std::string config_file)
 {
-  this->config_file = config_file;
+  //this->config_file = config_file;
   this->smc_profile_option_bmi= new int[1];
-  this->InitFromConfigFile();
+  this->InitFromConfigFile(config_file);
   this->shape[0] = this->nz;
   this->shape[1] = 1;
   this->shape[2] = 1;
@@ -65,7 +65,7 @@ InitializeArrays(void)
 }
 
 void smc_profile::SMCProfile::
-InitFromConfigFile()
+InitFromConfigFile(std::string config_file)
 { 
   std::ifstream fp;
   fp.open(config_file);
@@ -225,7 +225,7 @@ ReadVectorData(std::string key)
     double v = stod(z1);
     if (v == 0.0) {
       std::stringstream errMsg;
-      errMsg << "Z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< config_file << "\n";
+      errMsg << "Z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
       throw std::runtime_error(errMsg.str());
     }
     
@@ -271,7 +271,7 @@ SMPVertical()
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file "<< config_file << " is " << this->smc_profile<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << this->smc_profile<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
     throw std::runtime_error(errMsg.str());
 
   }
@@ -470,7 +470,7 @@ SMPFromLayeredReservoir()
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile "<< this->smc_profile << " works with options \'constant\' and \'linear\'. Provide at least one option in the config file "<< config_file <<"\n";
+    errMsg << "Soil moisture profile "<< this->smc_profile << " works with options \'constant\' and \'linear\'. Provide at least one option in the config file "<<"\n";
     throw std::runtime_error(errMsg.str());
   }
   

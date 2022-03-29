@@ -15,7 +15,7 @@ namespace smc_profile {
   
   class SMCProfile{
   private:
-    std::string config_file;
+    //std::string config_file;
     void InitializeArrays(void);
     
   public:
@@ -48,7 +48,7 @@ namespace smc_profile {
     SMCProfile(std::string config_file);
     
     void SetLayerThickness();
-    void InitFromConfigFile();
+    void InitFromConfigFile(std::string config_file);
     
     std::vector<double> ReadVectorData(std::string key);
     void ReadForcingData(std::string key);
