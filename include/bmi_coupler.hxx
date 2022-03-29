@@ -10,7 +10,7 @@ using namespace std;
 namespace coupler {
 class NotImplemented : public std::logic_error {
   public:
-  NotImplemented() : std::logic_error("Not Implemented") { };
+  NotImplemented() : std::logic_error("Not Implemented Function in SMP") { };
 };
 
 }
@@ -29,7 +29,7 @@ class BmiCoupler : public bmixx::Bmi {
     
   void Update();
   void UpdateUntil(double time);
-    void Finalize();
+  void Finalize();
 
     std::string GetComponentName();
     int GetInputItemCount();
@@ -85,5 +85,34 @@ class BmiCoupler : public bmixx::Bmi {
     std::string input_var_names[3];
     std::string output_var_names[2];
 };
+
+
+//#ifndef __cplusplus
+extern "C"
+{
+
+    /**
+    * Construct this BMI instance as a normal C++ object, to be returned to the framework.
+    *
+    * @return A pointer to the newly allocated instance.
+    */
+  BmiCoupler *bmi_model_create()
+  {
+    return new BmiCoupler();
+  }
+  
+    /**
+     * @brief Destroy/free an instance created with @see bmi_model_create
+     * 
+     * @param ptr 
+     */
+  void bmi_model_destroy(BmiCoupler *ptr)
+  {
+    delete ptr;
+  }
+
+}
+
+//#endif
 
 #endif

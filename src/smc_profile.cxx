@@ -194,14 +194,24 @@ InitFromConfigFile(std::string config_file)
   
   if(is_smc_profile_set) {
     
-    if (this->smc_profile == "conceptual" || this->smc_profile == "Conceptual")
+    if (this->smc_profile == "conceptual" || this->smc_profile == "Conceptual") {
+      input_var_names_model = new std::vector<std::string>;
+      input_var_names_model->push_back("soil_storage");
+      input_var_names_model->push_back("soil_storage_change");
       *this->smc_profile_option_bmi=1;
+
+    }
     else if (this->smc_profile == "layered" || this->smc_profile == "Layered") {
       if (!is_smc_profile_option_set) {
 	std::stringstream errMsg;
 	errMsg << "soil moisture profile option not set in the config file "<< config_file << "\n";
 	throw std::runtime_error(errMsg.str());
       }
+      input_var_names_model = new std::vector<std::string>;
+      input_var_names_model->push_back("soil_storage");
+      input_var_names_model->push_back("soil_storage_change");
+      input_var_names_model->push_back("soil_moisture_content_layered");
+
       *this->smc_profile_option_bmi=2;
       
     }
@@ -212,6 +222,11 @@ InitFromConfigFile(std::string config_file)
   
 }
 
+std::vector<std::string>* smc_profile::SMCProfile::
+InputVarNamesModel()
+{
+  return input_var_names_model;
+}
 
 std::vector<double> smc_profile::SMCProfile::
 ReadVectorData(std::string key)
