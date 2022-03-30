@@ -44,7 +44,7 @@ Finalize()
 int BmiCoupler::
 GetVarGrid(std::string name)
 {
-  if (name.compare("soil_smc_profile_option_bmi") == 0)   // int
+  if (name.compare("smc_profile_option_bmi") == 0)   // int
     return 0;
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
     return 1; 
@@ -58,7 +58,7 @@ GetVarGrid(std::string name)
 std::string BmiCoupler::
 GetVarType(std::string name)
 {
-  if (name.compare("soil_smc_profile_option_bmi") == 0)
+  if (name.compare("smc_profile_option_bmi") == 0)
     return "int";
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return "double";
@@ -72,7 +72,7 @@ GetVarType(std::string name)
 int BmiCoupler::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("soil_smc_profile_option_bmi") == 0)
+  if (name.compare("smc_profile_option_bmi") == 0)
     return sizeof(int);
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return sizeof(double);
@@ -280,7 +280,7 @@ GetValuePtr (std::string name)
     return (void*)(&this->_model.SMCT);
   else if (name.compare("soil_moisture_layered") == 0)
     return (void*)(&this->_model.SMCL);
-  else if (name.compare("soil_smc_profile_option_bmi") == 0)
+  else if (name.compare("smc_profile_option_bmi") == 0)
     return (void*)(&this->_model.smc_profile_option_bmi);
   else {
     std::stringstream errMsg;
