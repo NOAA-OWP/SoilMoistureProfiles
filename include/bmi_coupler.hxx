@@ -19,9 +19,9 @@ class BmiCoupler : public bmixx::Bmi {
     BmiCoupler() {
       this->input_var_names[0] = "soil_storage";
       this->input_var_names[1] = "soil_storage_change";
-      this->input_var_names[2] = "soil_moisture_content_layered";
+      this->input_var_names[2] = "soil_moisture_layered";
       
-      this->output_var_names[0] = "soil_moisture_content_profile";
+      this->output_var_names[0] = "soil_moisture_profile";
       this->output_var_names[1] = "soil_water_table";
     };
 
