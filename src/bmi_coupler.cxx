@@ -276,12 +276,13 @@ GetValuePtr (std::string name)
     return (void*)this->_model.storage_change_m;
   else  if (name.compare("soil_water_table") == 0)
     return (void*)this->_model.water_table_m;
-  else if (name.compare("soil_moisture_profile") == 0)
-    return (void*)(&this->_model.SMCT);
+  else if (name.compare("soil_moisture_profile") == 0) {
+    return (void*)this->_model.SMCT;
+  }
   else if (name.compare("soil_moisture_layered") == 0)
-    return (void*)(&this->_model.SMCL);
+    return (void*)this->_model.SMCL;
   else if (name.compare("smc_profile_option_bmi") == 0)
-    return (void*)(&this->_model.smc_profile_option_bmi);
+    return (void*)this->_model.smc_profile_option_bmi;
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
