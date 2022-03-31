@@ -7,9 +7,10 @@
 #include <cstring>
 #include <cstdlib>
 #include <vector>
-#include "../../bmi/bmi.hxx"
+#include "../bmi/bmi.hxx"
 #include "../include/bmi_coupler.hxx"
 #include "../include/smc_profile.hxx"
+#include <algorithm>
 
 void BmiCoupler::
 Initialize (std::string config_file)
@@ -43,12 +44,12 @@ Finalize()
 int BmiCoupler::
 GetVarGrid(std::string name)
 {
-  if (name.compare("soil__storage") == 0 || name.compare("soil__storage_change") == 0 || name.compare("soil__water_table") == 0)
+  if (name.compare("smc_profile_option_bmi") == 0)   // int
     return 0;
-  else if (name.compare("soil__moisture_content_total") == 0 || name.compare("soil__moisture_content_layered") == 0)
-    return 1;
-  else if (name.compare("soil__smc_profile_option_bmi") == 0)
-    return 2;
+  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
+    return 1; 
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0) // array of doubles 
+    return 2; 
   else 
     return -1;
 }
@@ -57,12 +58,12 @@ GetVarGrid(std::string name)
 std::string BmiCoupler::
 GetVarType(std::string name)
 {
-   if (name.compare("soil__storage") == 0 || name.compare("soil__storage_change") == 0 || name.compare("soil__water_table") == 0)
-    return "double";
-  else if (name.compare("soil__moisture_content_total") == 0 || name.compare("soil__moisture_content_layered") == 0)
-    return "double";
-  else if (name.compare("soil__smc_profile_option_bmi") == 0)
+  if (name.compare("smc_profile_option_bmi") == 0)
     return "int";
+  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
+    return "double";
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+    return "double";
   else
     return "";
 }
@@ -71,12 +72,12 @@ GetVarType(std::string name)
 int BmiCoupler::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("soil__storage") == 0 || name.compare("soil__storage_change") == 0 || name.compare("soil__water_table") == 0)
-    return sizeof(double);
-  else if (name.compare("soil__moisture_content_total") == 0 || name.compare("soil__moisture_content_layered") == 0)
-    return sizeof(double);
-  else if (name.compare("soil__smc_profile_option_bmi") == 0)
+  if (name.compare("smc_profile_option_bmi") == 0)
     return sizeof(int);
+  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
+    return sizeof(double);
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+    return sizeof(double);
   else
     return 0;
 }
@@ -85,9 +86,9 @@ GetVarItemsize(std::string name)
 std::string BmiCoupler::
 GetVarUnits(std::string name)
 {
-  if (name.compare("soil__storage") == 0 || name.compare("soil__storage_change") == 0 || name.compare("soil__water_table") == 0)
+  if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0  || name.compare("soil_water_table") == 0)
     return "m";
-  else if (name.compare("soil__moisture_content_total") == 0 || name.compare("soil__moisture_content_layered") == 0)
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
     return "";
   else
     return "";
@@ -109,14 +110,10 @@ GetVarNbytes(std::string name)
 std::string BmiCoupler::
 GetVarLocation(std::string name)
 {
-  if (name.compare("soil__storage") == 0 || name.compare("soil__storage_change") == 0)
-    return "domain";
-  else if (name.compare("soil__water_table") == 0)
+  if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return "node";
-  else if (name.compare("soil__moisture_content_total") == 0)
-    return "domain";
-  else if (name.compare("soil__moisture_content_layered") == 0)
-    return "layers";
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+    return "node";
   else
     return "";
 }
@@ -125,7 +122,7 @@ GetVarLocation(std::string name)
 void BmiCoupler::
 GetGridShape(const int grid, int *shape)
 {
-  if (grid == 0) {
+  if (grid == 2) {
     shape[0] = this->_model.shape[0];
   }
 }
@@ -152,7 +149,7 @@ GetGridOrigin (const int grid, double *origin)
 int BmiCoupler::
 GetGridRank(const int grid)
 {
-  if (grid == 0)
+  if (grid == 0 || grid == 1 || grid == 2)
     return 1;
   else
     return -1;
@@ -162,9 +159,9 @@ GetGridRank(const int grid)
 int BmiCoupler::
 GetGridSize(const int grid)
 {
-  if (grid == 0 || grid == 2)
+  if (grid == 0 || grid == 1)
     return 1;
-  else if (grid == 1)
+  else if (grid == 2)
     return this->_model.shape[0];
   else
     return -1;
@@ -273,17 +270,18 @@ GetValue (std::string name, void *dest)
 void *BmiCoupler::
 GetValuePtr (std::string name)
 {
-  if (name.compare("soil__storage") == 0)
+  if (name.compare("soil_storage") == 0)
     return (void*)this->_model.storage_m;
-  else if (name.compare("soil__storage_change") == 0)
+  else if (name.compare("soil_storage_change") == 0)
     return (void*)this->_model.storage_change_m;
-  else  if (name.compare("soil__water_table") == 0)
+  else  if (name.compare("soil_water_table") == 0)
     return (void*)this->_model.water_table_m;
-  else if (name.compare("soil__moisture_content_total") == 0)
+  else if (name.compare("soil_moisture_profile") == 0) {
     return (void*)this->_model.SMCT;
-  else if (name.compare("soil__moisture_content_layered") == 0)
+  }
+  else if (name.compare("soil_moisture_layered") == 0)
     return (void*)this->_model.SMCL;
-  else if (name.compare("soil__smc_profile_option_bmi") == 0)
+  else if (name.compare("smc_profile_option_bmi") == 0)
     return (void*)this->_model.smc_profile_option_bmi;
   else {
     std::stringstream errMsg;
@@ -381,9 +379,14 @@ GetInputVarNames()
 {
   std::vector<std::string> names;
 
-  for (int i=0; i<this->input_var_name_count; i++)
-    names.push_back(this->input_var_names[i]);
-
+  std::vector<std::string>* names_m = _model.InputVarNamesModel();
+  
+  for (int i=0; i<this->input_var_name_count; i++) {
+    if (std::find(names_m->begin(), names_m->end(), this->input_var_names[i]) != names_m->end()) {
+      names.push_back(this->input_var_names[i]);
+    }
+  }
+  
   return names;
 }
 
@@ -402,31 +405,31 @@ GetOutputVarNames()
 
 double BmiCoupler::
 GetStartTime () {
-  throw coupler::NotImplemented();
+  return 0.0;
 }
 
 
 double BmiCoupler::
 GetEndTime () {
-  throw coupler::NotImplemented();
+  return 0.0;
 }
 
 
 double BmiCoupler::
 GetCurrentTime () {
-  throw coupler::NotImplemented();
+  return 0.0;
 }
 
 
 std::string BmiCoupler::
 GetTimeUnits() {
-  throw coupler::NotImplemented();
+  return "s";
 }
 
 
 double BmiCoupler::
 GetTimeStep () {
-  throw coupler::NotImplemented();
+  return 0;
 }
 
 #endif

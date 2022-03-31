@@ -4,32 +4,34 @@
 using namespace std;
 
 #include <string.h>
-#include "../../bmi/bmi.hxx"
+#include "../bmi/bmi.hxx"
 #include "smc_profile.hxx"
+
+#define NGEN_ON 0
 
 namespace coupler {
 class NotImplemented : public std::logic_error {
   public:
-  NotImplemented() : std::logic_error("Not Implemented") { };
+  NotImplemented() : std::logic_error("Not Implemented Function in SMP") { };
 };
 
 }
 class BmiCoupler : public bmixx::Bmi {
   public:
     BmiCoupler() {
-      this->input_var_names[0] = "soil__storage";
-      this->input_var_names[1] = "soil__storage_change";
-      this->input_var_names[2] = "soil__water_table";
-      this->input_var_names[3] = "soil__moisture_content_layered";
+      this->input_var_names[0] = "soil_storage";
+      this->input_var_names[1] = "soil_storage_change";
+      this->input_var_names[2] = "soil_moisture_layered";
       
-      this->output_var_names[0] = "soil__moisture_content_total";
+      this->output_var_names[0] = "soil_moisture_profile";
+      this->output_var_names[1] = "soil_water_table";
     };
 
   void Initialize(std::string config_file);
     
   void Update();
   void UpdateUntil(double time);
-    void Finalize();
+  void Finalize();
 
     std::string GetComponentName();
     int GetInputItemCount();
@@ -79,11 +81,40 @@ class BmiCoupler : public bmixx::Bmi {
     void GetGridNodesPerFace(const int grid, int *nodes_per_face);
   private:
     smc_profile::SMCProfile _model;
-    static const int input_var_name_count = 4;
-    static const int output_var_name_count = 1;
+    static const int input_var_name_count = 3;
+    static const int output_var_name_count = 2;
 
-    std::string input_var_names[4];
-    std::string output_var_names[1];
+    std::string input_var_names[3];
+    std::string output_var_names[2];
 };
+
+
+#if NGEN_ON
+extern "C"
+{
+
+    /**
+    * Construct this BMI instance as a normal C++ object, to be returned to the framework.
+    *
+    * @return A pointer to the newly allocated instance.
+    */
+  BmiCoupler *bmi_model_create()
+  {
+    return new BmiCoupler();
+  }
+  
+    /**
+     * @brief Destroy/free an instance created with @see bmi_model_create
+     * 
+     * @param ptr 
+     */
+  void bmi_model_destroy(BmiCoupler *ptr)
+  {
+    delete ptr;
+  }
+
+}
+
+#endif
 
 #endif

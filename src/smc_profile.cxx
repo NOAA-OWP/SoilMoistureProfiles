@@ -26,7 +26,7 @@ SMCProfile()
   this->origin[0] = 0.;
   this->origin[1] = 0.;
   this->D =0.0;
-  this->config_file = "";
+  //this->config_file = "";
   this->smc_profile= "";
   this->nz=0;
   this->smc_profile_option_bmi= new int[1];
@@ -35,9 +35,9 @@ SMCProfile()
 smc_profile::SMCProfile::
 SMCProfile(std::string config_file)
 {
-  this->config_file = config_file;
+  //this->config_file = config_file;
   this->smc_profile_option_bmi= new int[1];
-  this->InitFromConfigFile();
+  this->InitFromConfigFile(config_file);
   this->shape[0] = this->nz;
   this->shape[1] = 1;
   this->shape[2] = 1;
@@ -65,7 +65,7 @@ InitializeArrays(void)
 }
 
 void smc_profile::SMCProfile::
-InitFromConfigFile()
+InitFromConfigFile(std::string config_file)
 { 
   std::ifstream fp;
   fp.open(config_file);
@@ -90,7 +90,6 @@ InitFromConfigFile()
     if (key_sub == "Z") {
       std::string tmp_key = key.substr(loc+1,key.length());
       std::vector<double> vec = ReadVectorData(tmp_key);
-      
       this->Z = new double[vec.size()];
       
       for (unsigned int i=0; i < vec.size(); i++)
@@ -195,14 +194,24 @@ InitFromConfigFile()
   
   if(is_smc_profile_set) {
     
-    if (this->smc_profile == "conceptual" || this->smc_profile == "Conceptual")
+    if (this->smc_profile == "conceptual" || this->smc_profile == "Conceptual") {
+      input_var_names_model = new std::vector<std::string>;
+      input_var_names_model->push_back("soil_storage");
+      input_var_names_model->push_back("soil_storage_change");
       *this->smc_profile_option_bmi=1;
+
+    }
     else if (this->smc_profile == "layered" || this->smc_profile == "Layered") {
       if (!is_smc_profile_option_set) {
 	std::stringstream errMsg;
 	errMsg << "soil moisture profile option not set in the config file "<< config_file << "\n";
 	throw std::runtime_error(errMsg.str());
       }
+      input_var_names_model = new std::vector<std::string>;
+      input_var_names_model->push_back("soil_storage");
+      input_var_names_model->push_back("soil_storage_change");
+      input_var_names_model->push_back("soil_moisture_content_layered");
+
       *this->smc_profile_option_bmi=2;
       
     }
@@ -213,6 +222,11 @@ InitFromConfigFile()
   
 }
 
+std::vector<std::string>* smc_profile::SMCProfile::
+InputVarNamesModel()
+{
+  return input_var_names_model;
+}
 
 std::vector<double> smc_profile::SMCProfile::
 ReadVectorData(std::string key)
@@ -221,18 +235,31 @@ ReadVectorData(std::string key)
   std::string delimiter = ",";
   std::vector<double> value(0.0);
   std::string z1 = key;
-
-  while (z1.find(delimiter) != std::string::npos) {
-    pos = z1.find(delimiter);
-    std::string z_v = z1.substr(0, pos);
-
-    value.push_back(stod(z_v.c_str()));
-
-    z1.erase(0, pos + delimiter.length());
-    if (z1.find(delimiter) == std::string::npos)
-      value.push_back(stod(z1));
+  
+  if (z1.find(delimiter) == std::string::npos) {
+    double v = stod(z1);
+    if (v == 0.0) {
+      std::stringstream errMsg;
+      errMsg << "Z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
+      throw std::runtime_error(errMsg.str());
+    }
+    
+    value.push_back(v);
+    
   }
+  else {
+    while (z1.find(delimiter) != std::string::npos) {
+      pos = z1.find(delimiter);
+      std::string z_v = z1.substr(0, pos);
 
+      value.push_back(stod(z_v.c_str()));
+      
+      z1.erase(0, pos + delimiter.length());
+      if (z1.find(delimiter) == std::string::npos)
+	value.push_back(stod(z1));
+    }
+  }
+  
   return value;
 }
 
@@ -259,7 +286,7 @@ SMPVertical()
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file "<< config_file << " is " << this->smc_profile<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << this->smc_profile<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
     throw std::runtime_error(errMsg.str());
 
   }
@@ -458,7 +485,7 @@ SMPFromLayeredReservoir()
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile "<< this->smc_profile << " works with options \'constant\' and \'linear\'. Provide at least one option in the config file "<< config_file <<"\n";
+    errMsg << "Soil moisture profile "<< this->smc_profile << " works with options \'constant\' and \'linear\'. Provide at least one option in the config file "<<"\n";
     throw std::runtime_error(errMsg.str());
   }
   

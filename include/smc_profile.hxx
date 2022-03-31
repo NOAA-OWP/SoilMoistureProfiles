@@ -15,7 +15,7 @@ namespace smc_profile {
   
   class SMCProfile{
   private:
-    std::string config_file;
+    //std::string config_file;
     void InitializeArrays(void);
     
   public:
@@ -43,12 +43,14 @@ namespace smc_profile {
     std::string smc_profile;
     std::string smc_profile_option;
     int *smc_profile_option_bmi;
+
+    std::vector<std::string>* input_var_names_model;
     
     SMCProfile();
     SMCProfile(std::string config_file);
     
     void SetLayerThickness();
-    void InitFromConfigFile();
+    void InitFromConfigFile(std::string config_file);
     
     std::vector<double> ReadVectorData(std::string key);
     void ReadForcingData(std::string key);
@@ -60,6 +62,9 @@ namespace smc_profile {
     void SMPFromLayeredReservoir();
 
     double LinearInterpolation(double z1, double z2, double t1, double t2, double z);
+
+    std::vector<std::string>* InputVarNamesModel();
+    
     //    static const double grav;
     //    static const double wden;
     ~SMCProfile();
