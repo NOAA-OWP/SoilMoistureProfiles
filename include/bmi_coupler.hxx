@@ -7,7 +7,7 @@ using namespace std;
 #include "../bmi/bmi.hxx"
 #include "smc_profile.hxx"
 
-#define NGEN_ON 0
+#define NGEN 0
 
 namespace coupler {
 class NotImplemented : public std::logic_error {
@@ -89,7 +89,7 @@ class BmiCoupler : public bmixx::Bmi {
 };
 
 
-#if NGEN_ON
+#if NGEN
 extern "C"
 {
 
