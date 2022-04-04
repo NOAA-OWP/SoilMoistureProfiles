@@ -23,14 +23,38 @@ Initialize (std::string config_file)
 void BmiCoupler::
 Update()
 {
-  this->_model.SMPVertical();
+  //this->_model.SoilMoistureProfileVertical();
+  if (_model.soil_storage_model == "conceptual" || _model.soil_storage_model == "Conceptual") {
+    _model.SoilMoistureProfileFromConceptualReservoir();
+  }
+  else if (_model.soil_storage_model == "layered" || _model.soil_storage_model == "Layered") {
+    _model.SoilMoistureProfileFromLayeredReservoir();
+  }
+  else {
+    std::stringstream errMsg;
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model.soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    throw std::runtime_error(errMsg.str());
+
+  }
 }
 
 
 void BmiCoupler::
 UpdateUntil(double t)
 {
-  this->_model.SMPVertical();
+  if (_model.soil_storage_model == "conceptual" || _model.soil_storage_model == "Conceptual") {
+    _model.SoilMoistureProfileFromConceptualReservoir();
+  }
+  else if (_model.soil_storage_model == "layered" || _model.soil_storage_model == "Layered") {
+    _model.SoilMoistureProfileFromLayeredReservoir();
+  }
+  else {
+    std::stringstream errMsg;
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model.soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    throw std::runtime_error(errMsg.str());
+    
+  }
+  //  this->_model.SoilMoistureProfileVertical();
 }
 
 

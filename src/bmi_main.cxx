@@ -90,8 +90,11 @@ int main(int argc, char *argv[])
     std::cout<<"water table: "<<*var_wt<<"\n";
 
     model.Update();
+    
     // unit test
-    double SMCT[] ={0.322036, 0.33341, 0.367307, 0.439};
+    //double SMCT[] ={0.322036, 0.33341, 0.367307, 0.439};
+    double SMCT[] ={0.32207, 0.333438, 0.367336, 0.439};
+   
     // Get values
     double *var_smc = new double[4];
     

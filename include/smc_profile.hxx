@@ -38,7 +38,7 @@ namespace smc_profile {
 
     // model static parameters from config file
     double smcmax; //maximum soil moisture content (porosity)
-    double bb;  // pore size distribution [-], beta exponent on Clapp-Hornberger (1978)
+    double bb;  // pore size distribution [-], beta exponent in Clapp-Hornberger (1978)
     double satpsi; // saturated capillary head (saturated moisture potential) [m]
     int ncells; // number of cells of the discretized soil column
     int nlayers; // numer of soil moisture layers
@@ -63,14 +63,11 @@ namespace smc_profile {
     // reading 1D array from the config file
     std::vector<double> ReadVectorData(std::string key);
 
-    // main function for calling profile module based on the soil storage model
-    void SMPVertical();
-
     // computes soil moisture profile for conceptual reservoir
-    void SMPFromConceptualReservoir();
+    void SoilMoistureProfileFromConceptualReservoir();
 
     // computes soil moisture profile for layered-reservoir
-    void SMPFromLayeredReservoir();
+    void SoilMoistureProfileFromLayeredReservoir();
 
     // computes linearly interpolated values for layered-reservoir with option = linear
     double LinearInterpolation(double z1, double z2, double t1, double t2, double z);
