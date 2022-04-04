@@ -44,7 +44,7 @@ Finalize()
 int BmiCoupler::
 GetVarGrid(std::string name)
 {
-  if (name.compare("smc_profile_option_bmi") == 0)   // int
+  if (name.compare("soil_moisture_profile_option_bmi") == 0)   // int
     return 0;
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
     return 1; 
@@ -58,7 +58,7 @@ GetVarGrid(std::string name)
 std::string BmiCoupler::
 GetVarType(std::string name)
 {
-  if (name.compare("smc_profile_option_bmi") == 0)
+  if (name.compare("soil_moisture_profile_option_bmi") == 0)
     return "int";
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return "double";
@@ -72,7 +72,7 @@ GetVarType(std::string name)
 int BmiCoupler::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("smc_profile_option_bmi") == 0)
+  if (name.compare("soil_moisture_profile_option_bmi") == 0)
     return sizeof(int);
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return sizeof(double);
@@ -271,18 +271,18 @@ void *BmiCoupler::
 GetValuePtr (std::string name)
 {
   if (name.compare("soil_storage") == 0)
-    return (void*)this->_model.storage_m;
+    return (void*)(&this->_model.soil_storage_m);
   else if (name.compare("soil_storage_change") == 0)
-    return (void*)this->_model.storage_change_m;
+    return (void*)(&this->_model.soil_storage_change_per_timestep_m);
   else  if (name.compare("soil_water_table") == 0)
-    return (void*)this->_model.water_table_m;
+    return (void*)(&this->_model.water_table_depth_m);
   else if (name.compare("soil_moisture_profile") == 0) {
-    return (void*)this->_model.SMCT;
+    return (void*)this->_model.soil_moisture_profile;
   }
   else if (name.compare("soil_moisture_layered") == 0)
-    return (void*)this->_model.SMCL;
-  else if (name.compare("smc_profile_option_bmi") == 0)
-    return (void*)this->_model.smc_profile_option_bmi;
+    return (void*)this->_model.soil_moisture_layered;
+  else if (name.compare("soil_moisture_profile_option_bmi") == 0)
+    return (void*)(&this->_model.soil_moisture_profile_option_bmi);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";

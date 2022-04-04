@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     std::string var_name_wt = "soil_water_table";
     std::string var_name_smc = "soil_moisture_profile";
     std::string var_name_smcl = "soil_moisture_layered";
-    std::string var_name_smc_bmi = "soil_smc_profile_option_bmi";
+    std::string var_name_smc_bmi = "soil_moisture_profile_option_bmi";
     
     int grid, rank, *shape;
     double *var_s = NULL;
