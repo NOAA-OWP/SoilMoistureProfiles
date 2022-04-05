@@ -3,7 +3,36 @@
 
 /*
   @author: Ahmad Jan (ahmad.jan@noaa.gov)
-*/
+  Soil moisture mapping module maps topographic wetness index (TWI) based soil moisture to National Water Model (NWM) 1x1 km grid
+  IDEA: Module computes and maps local (subcatchment) soil moisture from catchment to NWM grid (1x1 km). The idea of computing local soil moisture is based on the concept of TopModel, where given the global (mean) watershed soil moisture deficit and TWI, local soil moisture deficit is computed. Here, we use the watershed maximum storage capacity and TWI to compute local soil moisture content which is then mapped onto NWM 1x1 km grid using the spatial mapping information provided in the hydrofabric.
+
+
+  Inputs:
+  @param phi  [-]                : porosity (maximum soil moisture)
+  @param cat_global_deficit [m]  : Basin soil moisture deficit
+  @param cat_local_deficit [m]   : catchment local soil deficit
+  @param cat_local_moisture [m]  : catchment local soil moisture
+  @param depth                   : depth/thickness of the soil column (needed to compute maximum soil moisture storage)
+  @param szm                     : a decay factor of transmissivity with increase in storage deficit with dimensions of length (m in the TopModel)
+  @param grid_id                 : global grid id of the NWM (provided by the hydrofabric)
+  @param cat_grid_id             : catchment id in the spatial data file corresponding to each grid_id. Spatial file has the mapping between catchments' ids and NWM grid
+  @param cat_id                  : catchment id in the attribute data file. Length is the number of catchments
+  @param grid_id_unique          : unique grid id (removes all duplicate ids from grid_id). 
+  @param grid_id_unique_index    : index of the unique grid id. Needed to store the soil moisture fraction at the right index. Note grid_ids are not unique and not sorted so we index them based on their first appearance
+  @param cat_id_index            : index of catchment ids. Again since the catchments are not properly ordered so we keep track of them through their indices 
+  @param grid_area_fraction  [mxm]   : fractional area of NWM grid contained withing a catchment
+  @param TWI                    : topographic wetness index of each catchment
+  @param dist_area_TWI          : the distribution of area corresponding to ln(A/tanB) histogram
+  @param grid_soil_moisture     : grided soil moisutre content
+  @param grid_total_area        : total area of grid. needed for grid other than 1x1
+  @param ngrids                 : total number of grid_id (include duplicate ids)
+  @param ngrids_u                     : total number of unique grid_id
+  @param ncats                        : total number of catchments
+  @param cat_storage_max              : catchment maximum soil moisture storage = porosity * depth
+  @param cat_global_storage           : basin (all catchments) soil moisture storage
+  @param total_area                   :
+  @param areal_avg_TWI                : areal (area weighted) average TWI (A_i * TWI_i, i=catchment)
+ */
 
 #include <vector>
 #include <string>
@@ -17,7 +46,7 @@ using namespace std;
 
 namespace smc_mapping {
 
-  class SMCMapping {
+  class SoilMoistureMapping {
   private:
     //std::string config_file;
         
@@ -27,7 +56,6 @@ namespace smc_mapping {
     double spacing[8];
     double origin[3];
     
-    //    double *soil_texture;
     double *phi; // porosity
     double *cat_global_deficit; // sbar [m]
     double *cat_local_deficit; // soil moisture deficit [m]
@@ -45,7 +73,7 @@ namespace smc_mapping {
     double *grid_area_fraction;
     double *TWI;
     double *dist_area_TWI;
-    double *grid_SMC;
+    double *grid_soil_moisture;
     double *grid_total_area;
     
     int *ngrids;
@@ -57,17 +85,18 @@ namespace smc_mapping {
     double total_area;
     double areal_avg_TWI; // area weighted average TWI
     
-    SMCMapping();
-    SMCMapping(std::string config_file);
+    SoilMoistureMapping();
+    SoilMoistureMapping(std::string config_file);
 
-    void SMCFromBasinToGrid();
+    void SoilMoistureFromBasinToGrid();
     void InitFromConfigFile(std::string config_file);
     void ReadSpatialData(std::string spatial_file);
     void ReadTWIData(std::string spatial_file);
     void AreaWeightedAverageTWI();
     void ComputeLocalSoilMoisture();
     void ComputeGridedSoilMoisture();
-    ~SMCMapping();
+
+    ~SoilMoistureMapping();
   };
 
 };

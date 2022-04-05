@@ -5,11 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include <vector>
 #include "../include/soil_moisture_mapping.hxx"
 
-smc_mapping::SMCMapping::
-SMCMapping()
+smc_mapping::SoilMoistureMapping::
+SoilMoistureMapping()
 {
   this->shape[0] = 1;
   this->shape[1] = 1;
@@ -24,8 +23,8 @@ SMCMapping()
   
 }
 
-smc_mapping::SMCMapping::
-SMCMapping(std::string config_file)
+smc_mapping::SoilMoistureMapping::
+SoilMoistureMapping(std::string config_file)
 {
   this->InitFromConfigFile(config_file);
   
@@ -41,23 +40,27 @@ SMCMapping(std::string config_file)
   this->cat_local_deficit = new double[*this->ncats];
   this->cat_local_moisture = new double[*this->ncats];
 
-  this->grid_SMC = new double[*ngrids_u];
+  this->grid_soil_moisture = new double[*ngrids_u];
   this->grid_total_area = new double[*ngrids_u];
   
   this->cat_storage_max = (*this->depth) * (*this->phi);
 
-  // initial cat_global_deficit (but(it updates every timestep)
-  //this->cat_global_storage = cat_storage_max - *cat_global_deficit;
-
-  // this needs to be called once
+  // this needs to be called once; so calling here in the constructor
   AreaWeightedAverageTWI();
-    
+
+  // call to initialize local soil moisture content
   ComputeLocalSoilMoisture();
+
+  // call to map the initialized soil moisture to the NWM grid
   ComputeGridedSoilMoisture();
+  
 }
 
-void smc_mapping::SMCMapping::
-SMCFromBasinToGrid()
+/*
+BMI call this method to update and map soil moisture from catchment from NWM grid
+*/
+void smc_mapping::SoilMoistureMapping::
+SoilMoistureFromBasinToGrid()
 {
   //update global storage
   // this->cat_global_storage = cat_storage_max - *cat_global_deficit;
@@ -70,13 +73,18 @@ SMCFromBasinToGrid()
   
 }
 
-void smc_mapping::SMCMapping::
+/*
+Computes the areal (area weighted) average of TWI
+areal average: 1/Area * integral (sub_cat_area_i * TWI_i)
+
+*/
+void smc_mapping::SoilMoistureMapping::
 AreaWeightedAverageTWI()
 {
   // Get total area (TWI area which should sum to 1.0)
   // and areal average (area weighted-average of TWI) 
 
-  this->areal_avg_TWI = 0.0; // areal average: 1/Area * integral (sub_cat_area_i * TWI_i)
+  this->areal_avg_TWI = 0.0; 
   
   std::vector<double> dist_area_lnaotb(*ncats);
   total_area = 1.0; // hacked value for testing
@@ -91,7 +99,7 @@ AreaWeightedAverageTWI()
 
 }
 
-void smc_mapping::SMCMapping::
+void smc_mapping::SoilMoistureMapping::
 ComputeLocalSoilMoisture()
 {
   for (int i=0; i < *ncats; i++) {
@@ -101,13 +109,13 @@ ComputeLocalSoilMoisture()
   
 }
 
-void smc_mapping::SMCMapping::
+void smc_mapping::SoilMoistureMapping::
 ComputeGridedSoilMoisture()
 {
   
   // make sure smc and area are set to zero before mapping
   for (int i=0; i<*ngrids_u;i++) {
-    this->grid_SMC[i] = 0.0;
+    this->grid_soil_moisture[i] = 0.0;
     this->grid_total_area[i] = 0.0;
   }
   
@@ -116,7 +124,7 @@ ComputeGridedSoilMoisture()
     int map_cid = this->cat_grid_id[i]; //catchment id
     int cat_index = this->cat_id_index[map_cid];
 
-     grid_SMC[gid_index] += grid_area_fraction[i] * cat_local_moisture[cat_index];
+     grid_soil_moisture[gid_index] += grid_area_fraction[i] * cat_local_moisture[cat_index];
 
      grid_total_area[gid_index] += grid_area_fraction[i];
      
@@ -125,14 +133,14 @@ ComputeGridedSoilMoisture()
   // std::cout<<"ID,SMC"<<"\n";
   for (int i=0; i <*ngrids_u; i++) {
     //int id = this->grid_id_unique[i];
-    grid_SMC[i] /= grid_total_area[i];
+    grid_soil_moisture[i] /= grid_total_area[i];
     //std::cout<<id<<","<<grid_SMC[i]<<"\n";
   }
   
 }
 
 
-void smc_mapping::SMCMapping::
+void smc_mapping::SoilMoistureMapping::
 InitFromConfigFile(std::string config_file)
 { 
   std::ifstream fp;
@@ -220,7 +228,7 @@ InitFromConfigFile(std::string config_file)
 
 }
 
-void smc_mapping::SMCMapping::
+void smc_mapping::SoilMoistureMapping::
 ReadSpatialData(std::string spatial_file)
 {
   std::ifstream fp;
@@ -342,7 +350,7 @@ ReadSpatialData(std::string spatial_file)
 }
 
 
-void smc_mapping::SMCMapping::
+void smc_mapping::SoilMoistureMapping::
 ReadTWIData(std::string spatial_file)
 {
   std::ifstream fp;
@@ -428,8 +436,8 @@ ReadTWIData(std::string spatial_file)
   
 }
 
-smc_mapping::SMCMapping::
-~SMCMapping()
+smc_mapping::SoilMoistureMapping::
+~SoilMoistureMapping()
 {}
 
 #endif

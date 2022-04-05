@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
   {
     std::string var_name_id = "grid_gid_unique";
-    std::string var_name_smc = "grid_SMC";
+    std::string var_name_smc = "grid_soil_moisture";
 
     fprintf(fp, "variable = %s\n", var_name_id.c_str());
     fprintf(fp, "variable = %s\n", var_name_smc.c_str());

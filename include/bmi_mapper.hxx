@@ -87,7 +87,7 @@ public:
   void GetGridFaceNodes(const int grid, int *face_nodes);
   void GetGridNodesPerFace(const int grid, int *nodes_per_face);
 private:
-  smc_mapping::SMCMapping _model;
+  smc_mapping::SoilMoistureMapping _model;
   static const int input_var_name_count = 6;
   static const int output_var_name_count = 2;
   

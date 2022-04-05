@@ -15,35 +15,35 @@ void BmiMapper::
 Initialize (std::string config_file)
 {
   if (config_file.compare("") != 0 )
-    this->_model = smc_mapping::SMCMapping(config_file);
+    this->_model = smc_mapping::SoilMoistureMapping(config_file);
 }
 
 
 void BmiMapper::
 Update()
 {
-  this->_model.SMCFromBasinToGrid();
+  this->_model.SoilMoistureFromBasinToGrid();
 }
 
 
 void BmiMapper::
 UpdateUntil(double t)
 {
-  this->_model.SMCFromBasinToGrid();
+  this->_model.SoilMoistureFromBasinToGrid();
 }
 
 
 void BmiMapper::
 Finalize()
 {
-  this->_model.~SMCMapping();
+  this->_model.~SoilMoistureMapping();
 }
 
 
 int BmiMapper::
 GetVarGrid(std::string name)
 {
-  if (name.compare("area_fraction") == 0 || name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0 || name.compare("grid_SMC") == 0)
+  if (name.compare("area_fraction") == 0 || name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0 || name.compare("grid_soil_moisture") == 0)
     return 0;
   else if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0)
     return 1;
@@ -55,7 +55,7 @@ GetVarGrid(std::string name)
 std::string BmiMapper::
 GetVarType(std::string name)
 {
-  if (name.compare("area_fraction") == 0 || name.compare("grid_SMC") == 0)
+  if (name.compare("area_fraction") == 0 || name.compare("grid_soil_moisture") == 0)
     return "double";
   else if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0)
     return "double";
@@ -69,7 +69,7 @@ GetVarType(std::string name)
 int BmiMapper::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("area_fraction") == 0 || name.compare("grid_SMC") == 0)
+  if (name.compare("area_fraction") == 0 || name.compare("grid_soil_moisture") == 0)
     return sizeof("double");
   if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0 )
     return sizeof(double);
@@ -111,7 +111,7 @@ GetVarNbytes(std::string name)
 std::string BmiMapper::
 GetVarLocation(std::string name)
 {
-  if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0 || name.compare("area_fraction") == 0 || name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0 || name.compare("grid_SMC") == 0)
+  if (name.compare("TWI") == 0 || name.compare("global_deficit") == 0 || name.compare("porosity") == 0 || name.compare("depth") == 0 || name.compare("area_fraction") == 0 || name.compare("grid_gid") == 0 || name.compare("grid_gid_unique") == 0 || name.compare("grid_soil_moisture") == 0)
     return "node";
   else
     return "";
@@ -283,8 +283,8 @@ GetValuePtr (std::string name)
     return (void*)this->_model.grid_id_unique;
   else if (name.compare("area_fraction") == 0)
     return (void*)this->_model.grid_area_fraction;
-  else if (name.compare("grid_SMC") == 0)
-    return (void*)this->_model.grid_SMC;
+  else if (name.compare("grid_soil_moisture") == 0)
+    return (void*)this->_model.grid_soil_moisture;
     else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
