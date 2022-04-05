@@ -5,7 +5,7 @@ using namespace std;
 
 #include <string.h>
 #include "../bmi/bmi.hxx"
-#include "smc_profile.hxx"
+#include "soil_moisture_profile.hxx"
 
 #define NGEN 0
 

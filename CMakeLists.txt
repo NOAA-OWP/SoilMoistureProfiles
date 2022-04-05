@@ -20,10 +20,10 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 
 # add the executable
 
-#add_executable(smp ./src/bmi_main.cxx ./src/smc_profile.cxx ./src/bmi_coupler.cxx)
+#add_executable(smp ./src/bmi_main.cxx ./src/soil_moisture_profile.cxx ./src/bmi_coupler.cxx)
 
 # ngen (add shared library
-add_library(smpbmi SHARED ./src/bmi_coupler.cxx ./src/smc_profile.cxx ./include/bmi_coupler.hxx ./include/smc_profile.hxx)
+add_library(smpbmi SHARED ./src/bmi_coupler.cxx ./src/soil_moisture_profile.cxx ./include/bmi_coupler.hxx ./include/soil_moisture_profile.hxx)
 
 #target_link_libraries(smp LINK_PUBLIC smplib)
 #target_link_libraries(cfesft PRIVATE m)

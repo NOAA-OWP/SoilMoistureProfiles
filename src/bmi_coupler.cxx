@@ -9,7 +9,7 @@
 #include <vector>
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_coupler.hxx"
-#include "../include/smc_profile.hxx"
+#include "../include/soil_moisture_profile.hxx"
 #include <algorithm>
 
 void BmiCoupler::

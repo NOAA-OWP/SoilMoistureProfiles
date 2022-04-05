@@ -9,7 +9,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
-#include "../include/smc_profile.hxx"
+#include "../include/soil_moisture_profile.hxx"
 
 
 smc_profile::SMCProfile::
