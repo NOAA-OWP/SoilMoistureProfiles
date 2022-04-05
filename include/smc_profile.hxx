@@ -44,7 +44,7 @@ namespace smc_profile {
     int nlayers; // numer of soil moisture layers
     
     double soil_depth; //depth of the column/domain
-    double layers_depth; // depth of the last layer (for non-conceptual reservior; LGAR)
+    double last_layer_depth; // depth of the last layer (for non-conceptual reservior; LGAR)
     double *soilZ; // soil discretization; 1D array of depths from the surface
     double *layersZ; // depth of each layer from the surface
    
