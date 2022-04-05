@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <iostream>
 
-#include "../../bmi/bmi.hxx"
+#include "../bmi/bmi.hxx"
 #include "../include/bmi_mapper.hxx"
-#include "../include/smc_mapping.hxx"
+#include "../include/soil_moisture_mapping.hxx"
 
 #define SUCCESS 0
 int main(int argc, char *argv[])

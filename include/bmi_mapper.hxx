@@ -1,11 +1,15 @@
 #ifndef BMI_MAPPER_H_INCLUDED
 #define BMI_MAPPER_H_INCLUDED
 
-using namespace std;
+/*
+  @author: Ahmad Jan (ahmad.jan@noaa.gov)
+*/
 
 #include <string.h>
-#include "../../bmi/bmi.hxx"
-#include "smc_mapping.hxx"
+#include "../bmi/bmi.hxx"
+#include "soil_moisture_mapping.hxx"
+
+using namespace std;
 
 namespace mapper {
 class NotImplemented : public std::logic_error {

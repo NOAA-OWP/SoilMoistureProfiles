@@ -7,9 +7,9 @@
 #include <cstring>
 #include <cstdlib>
 #include <vector>
-#include "../../bmi/bmi.hxx"
+#include "../bmi/bmi.hxx"
 #include "../include/bmi_mapper.hxx"
-#include "../include/smc_mapping.hxx"
+#include "../include/soil_moisture_mapping.hxx"
 
 void BmiMapper::
 Initialize (std::string config_file)

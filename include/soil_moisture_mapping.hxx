@@ -1,6 +1,9 @@
 #ifndef SMCM_H_INCLUDED
 #define SMCM_H_INCLUDED
 
+/*
+  @author: Ahmad Jan (ahmad.jan@noaa.gov)
+*/
 
 #include <vector>
 #include <string>

@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
-#include "../include/smc_mapping.hxx"
+#include "../include/soil_moisture_mapping.hxx"
 
 smc_mapping::SMCMapping::
 SMCMapping()
