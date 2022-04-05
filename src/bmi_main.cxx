@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
     double *storage_change_m_ptr = &storage_change_m;
     double smc_layers[] = {0.25, 0.15, 0.1, 0.12};
 
-    int smc_option_bmi;
+    int soil_moisture_profile_option;
 
-    model.GetValue(var_name_smc_bmi,&smc_option_bmi);
+    model.GetValue(var_name_smc_bmi,&soil_moisture_profile_option);
 	
     model.SetValue(var_name_s,storage_m_ptr);
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     var_s = (double *)model.GetValuePtr(var_name_s);
     var_sc = (double *)model.GetValuePtr(var_name_sc);
 
-    std::cout<<"smc_option: "<<smc_option_bmi<<"\n";
+    std::cout<<"soil_moisture_profile_option: "<<soil_moisture_profile_option<<"\n";
     std::cout<<"storage: "<<*var_s<<"\n";
     std::cout<<"storage change: "<<*var_sc<<"\n";
 
@@ -99,9 +99,10 @@ int main(int argc, char *argv[])
     double *var_smc = new double[4];
     
     model.GetValue(var_name_smc,&var_smc[0]);
-    std::string smc_profile = "conceptual";
     
-    if (smc_profile == "conceptual")
+    enum option { Conceptual = 1, Layered = 2};
+      
+    if (soil_moisture_profile_option == Conceptual)
       for (int i=0; i < shape[0]; i++) {
 	std::cout<<"Main: "<<var_smc[i]<<" "<<SMCT[i]<<" "<<abs(var_smc[i] - SMCT[i])<<"\n";
 	assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
