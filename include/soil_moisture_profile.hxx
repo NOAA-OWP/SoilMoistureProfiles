@@ -32,7 +32,8 @@ namespace smc_profile {
     // Model input/output variables
     double soil_storage_m; // soil storage [m]
     double soil_storage_change_per_timestep_m; // change in the soil storage per timestep [m]
-    double water_table_depth_m; // depth to water table from the surface [m]
+    //double water_table_depth_m; // depth to water table from the surface [m]
+    double water_table_thickness_m; // thickness of the water table from the bottom of the computational domain [m]
     double *soil_moisture_profile; // soil moisture content vertical profile [-] (output) 
     double *soil_moisture_layered; // layered-soil moisture content [-], input
 

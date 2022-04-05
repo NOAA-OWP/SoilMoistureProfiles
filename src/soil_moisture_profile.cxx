@@ -58,7 +58,7 @@ Read and initialize values from configuration file
 @input - satpsi  (double) : saturated capillary head (saturated moisture potential) [m]
 @input - ncells  (int) : number of cells of the discretized soil column
 @input - nlayers (int) : numer of soil moisture layers
-@input - water_table_depth_m : depth to water table from the surface [m]; the config file provides the initial value. Default value is set to 1.9 m depth from the surface
+@input - water_table_thickness_m : thickness of the water table from the bottom of the computational domain (soil column) [m]; the config file provides the initial value. Default value is set to 0.1 m thickness
 @input - soil_storage_model (string) : Conceptual or Layered soil reservoir models
 @input - soil_moisture_profile_option (string) : valid only when layered soil reservoir model is chosen; option include `constant` or `linear`. The option `constant` assigns a constant value to discretized cells within each layer, `linear` option linearly interpolate values between layers and interpolated values are assigned to the soil discretization
 @params - input_var_names_model (1D) : dynamically sets model inputs to be used in the bmi input_var_names
@@ -131,9 +131,8 @@ InitFromConfigFile(std::string config_file)
       is_satpsi_set = true;
       continue;
     }
-    else if (key_sub == "soil_params.water_table_depth") {
-      double wt = std::stod(key.substr(loc+1,key.length()));
-      this->water_table_depth_m = this->soil_depth - wt;
+    else if (key_sub == "soil_params.water_table_thickness") {
+      this->water_table_thickness_m = std::stod(key.substr(loc+1,key.length()));
       is_wt_set = true;
       continue;
     }
@@ -185,7 +184,7 @@ InitFromConfigFile(std::string config_file)
   if (!is_wt_set) {
     std::cout<<"Warning! Water table location not provided, defualt is 1.9 m deep. \n";
     //initial water table location 1.9 m deep, if not provided in the config file
-    this->water_table_depth_m = this->soil_depth - 1.9; 
+    this->water_table_thickness_m = this->soil_depth - 1.9; 
   }
   
   if(is_soil_storage_model_set) {
@@ -278,7 +277,7 @@ ReadVectorData(std::string key)
   @z2  [cm] : depth of the water table at the current timestep (unknown, will use the Newton-Raphson method to find it)
   @soil_storage_max [cm] : maximum soil storage
   @soil_storage_cm [cm] : soil storage at the current timestep
-  @tol [cm] : Error tolerance for finding the new root (i.e., water_table_depth)
+  @tol [cm] : Error tolerance for finding the new root (i.e., water_table_thickness)
   @soil_moisture_profile [-] : OUTPUT (soil moisture content vertical profile [-])
 */
 void smc_profile::SMCProfile::
@@ -287,7 +286,7 @@ SoilMoistureProfileFromConceptualReservoir()
   // converting variables to cm for numerical reasons only
   double satpsi_cm = this->satpsi * 100.;
   double depth = this->soil_depth * 100.;
-  double z1 = this->water_table_depth_m * 100;
+  double z1 = this->water_table_thickness_m * 100;
   double soil_storage_max = depth * this->smcmax;
   double soil_storage_change_per_timestep_cm = soil_storage_change_per_timestep_m * 100.0;
   double soil_storage_cm = 100.0 * this->soil_storage_m;  /* start-up condition before adding any water */
@@ -334,7 +333,7 @@ SoilMoistureProfileFromConceptualReservoir()
   } while (std::fabs(diff)>tol);
   
   z1=z2;  // set z1 (previous water table) to the new water table depth
-  this->water_table_depth_m = z1/100.;
+  this->water_table_thickness_m = z1/100.;
 
 
   /*******************************************************************/
@@ -380,6 +379,7 @@ SoilMoistureProfileFromConceptualReservoir()
 - Two strategies are implemented
   - Constant strategy: A simple technique to map layered values to grids in the soil discretization. That is, all grid cells in the discretization has a constant value within a layer. Note cells at the interface take average value of the layers 
   - Linear strategy: A linear interpolation tehcnique is used to map layered values to grids in the soil discretization. That is, grid cells in the discretization take linearly interpolated value between consecutive layers.
+ - Note: the water table location is the thickness of the water table plus saturated capillary head (satpsi)
 - local_variables:
   @lam  [-]               : 1/bb (bb: pore size distribution)
   @soil_depth  [cm]       : depth of the soil column
@@ -390,7 +390,7 @@ void smc_profile::SMCProfile::
 SoilMoistureProfileFromLayeredReservoir()
 {
   double lam=1.0/this->bb; // pore distribution index
-  double water_table_depth = soil_depth - this->satpsi - this->water_table_depth_m; // water table depth at the current timestep
+  double water_table_thickness = soil_depth - this->satpsi - this->water_table_thickness_m; // water table depth at the current timestep
   std::vector<double> z_layers_n(1,0.0);
   
   for (int i=0; i <this->nlayers; i++)
@@ -432,7 +432,7 @@ SoilMoistureProfileFromLayeredReservoir()
 	double theta1 = soil_moisture_layered[this->nlayers-1] +  theta;
 	double theta2 = std::min(this->smcmax, theta1);
 
-	this->soil_moisture_profile[i] = soilZ[i] <  water_table_depth ? theta2 : this->smcmax;
+	this->soil_moisture_profile[i] = soilZ[i] <  water_table_thickness ? theta2 : this->smcmax;
 	/*
 	if (soilZ[i] < soil_depth - this->satpsi - this->water_table_depth_m)
 	  this->soil_moisture_profile[i] = theta2;
@@ -474,7 +474,7 @@ SoilMoistureProfileFromLayeredReservoir()
 	double theta1 = soil_moisture_layered[this->nlayers-1] +  theta;
 	double theta2 = std::min(this->smcmax, theta1);
 
-	this->soil_moisture_profile[i] = soilZ[i] <  water_table_depth ? theta2 : this->smcmax;
+	this->soil_moisture_profile[i] = soilZ[i] <  water_table_thickness ? theta2 : this->smcmax;
 	
       }
     }
@@ -493,7 +493,7 @@ SoilMoistureProfileFromLayeredReservoir()
   // find and update water table location
   for (int j=0; j< ncells; j++) {
     if (this->soil_moisture_profile[j] == this->smcmax) {
-      this->water_table_depth_m = soil_depth - soilZ[j];
+      this->water_table_thickness_m = soil_depth - soilZ[j] - this->satpsi; // check with Fred??
       break;
     }
   }

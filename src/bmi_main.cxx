@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
   {
     std::string var_name_s = "soil_storage";
     std::string var_name_sc = "soil_storage_change";
-    std::string var_name_wt = "soil_water_table";
+    std::string var_name_wt = "soil_water_table_thickness";
     std::string var_name_smc = "soil_moisture_profile";
     std::string var_name_smcl = "soil_moisture_layered";
     std::string var_name_smc_bmi = "soil_moisture_profile_option_bmi";
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     int grid, rank, *shape;
     double *var_s = NULL;
     double *var_sc = NULL;
-    double *var_wt = NULL;
+    double *water_table_thickness_bmi = NULL;
 
     fprintf(fp, "variable = %s\n", var_name_s.c_str());
     fprintf(fp, "variable = %s\n", var_name_sc.c_str());
@@ -61,6 +61,13 @@ int main(int argc, char *argv[])
 
     fprintf(fp, "shape = %d x %d x %d\n", shape[0],1,1);
 
+    /****************************************************************************/
+    // unit test data for conceptual soil reservoir
+    double SMCT[] ={0.32207, 0.333438, 0.367336, 0.439}; // soil_moisture_profile
+    double water_table_thickness = 0.1; // in meters
+    enum option { Conceptual = 1, Layered = 2};
+    /****************************************************************************/
+    
     // Set values
     double storage_m = 0.526328;
     double storage_change_m = -0.000472;
@@ -68,6 +75,7 @@ int main(int argc, char *argv[])
     double *storage_change_m_ptr = &storage_change_m;
     double smc_layers[] = {0.25, 0.15, 0.1, 0.12};
 
+    
     int soil_moisture_profile_option;
 
     model.GetValue(var_name_smc_bmi,&soil_moisture_profile_option);
@@ -85,22 +93,19 @@ int main(int argc, char *argv[])
     std::cout<<"storage: "<<*var_s<<"\n";
     std::cout<<"storage change: "<<*var_sc<<"\n";
 
-    var_wt = (double *)model.GetValuePtr(var_name_wt);
-    
-    std::cout<<"water table: "<<*var_wt<<"\n";
+    water_table_thickness_bmi = (double *)model.GetValuePtr(var_name_wt);
 
+    if (soil_moisture_profile_option == Conceptual) {
+      std::cout<<"Check: water table thickness = "<<water_table_thickness<<" | water table thickness bmi = "<<*water_table_thickness_bmi<<"\n";
+      assert (water_table_thickness == *water_table_thickness_bmi);
+    }
+    
     model.Update();
     
-    // unit test
-    //double SMCT[] ={0.322036, 0.33341, 0.367307, 0.439};
-    double SMCT[] ={0.32207, 0.333438, 0.367336, 0.439};
-   
     // Get values
     double *var_smc = new double[4];
     
     model.GetValue(var_name_smc,&var_smc[0]);
-    
-    enum option { Conceptual = 1, Layered = 2};
       
     if (soil_moisture_profile_option == Conceptual)
       for (int i=0; i < shape[0]; i++) {
