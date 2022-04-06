@@ -272,11 +272,11 @@ GetValuePtr (std::string name)
   if (name.compare("TWI") == 0)
     return (void*)this->_model.TWI;
   else if (name.compare("global_deficit") == 0)
-    return (void*)this->_model.cat_global_deficit;
+    return (void*)(&this->_model.cat_global_deficit);
   else  if (name.compare("porosity") == 0)
-    return (void*)this->_model.phi;
+    return (void*)(&this->_model.maxsmc);
   else if (name.compare("depth") == 0)
-    return (void*)this->_model.depth;
+    return (void*)(&this->_model.depth);
   else if (name.compare("grid_gid") == 0)
     return (void*)this->_model.grid_id;
   else if (name.compare("grid_gid_unique") == 0)
