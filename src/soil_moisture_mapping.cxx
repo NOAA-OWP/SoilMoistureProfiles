@@ -52,7 +52,7 @@ SoilMoistureMapping(std::string config_file)
   this->grid_soil_moisture = new double[ngrids_unique];
   this->grid_total_area = new double[ngrids_unique];
   
-  this->cat_storage_max = (this->depth) * (this->maxsmc);
+  this->cat_storage_max = this->depth * this->maxsmc;
 
   // this needs to be called once; so calling here in the constructor
   AreaWeightedAverageTWI();
