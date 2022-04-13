@@ -54,6 +54,8 @@ namespace smc_profile {
     int soil_moisture_profile_option_bmi; // option provided as an output if needed by other models that which model was used to compute the proifle.. do we need it? not sure, but it let's keep it for now 
 
     std::vector<std::string>* input_var_names_model; // we have different models and their inputs are different; this is to ensure that bmi inputs are consistent with the model inputs; need for ngen framework
+
+    bool init_profile; //flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
     
     SMCProfile();
     SMCProfile(std::string config_file);

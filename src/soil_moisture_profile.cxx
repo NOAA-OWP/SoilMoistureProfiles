@@ -25,6 +25,7 @@ SMCProfile()
   this->soil_depth =0.0;
   this->soil_storage_model= "";
   this->ncells=0;
+  this->init_profile = true;
 }
 
 smc_profile::SMCProfile::
@@ -38,7 +39,8 @@ SMCProfile(std::string config_file)
   this->spacing[1] = 1.;
   this->origin[0] = 0.;
   this->origin[1] = 0.;
-  this->InitializeArrays(); 
+  this->InitializeArrays();
+  this->init_profile = true;
 }
 
 void smc_profile::SMCProfile::
@@ -305,80 +307,87 @@ SoilMoistureProfileFromConceptualReservoir()
   double soil_storage_previous_timestep_cm = this->smcmax * (z1-z0) + this->smcmax * satpsi_cm + alpha * this->smcmax * (pow((depth-z1),beta)-pow(satpsi_cm,beta));
 
   double soil_storage_change_per_timestep_cm = soil_storage_current_timestep_cm - soil_storage_previous_timestep_cm;
-  
-  // check if the storage is greater than the maximum soil storage. if yes, set it to the maximum storage
-  if(soil_storage_current_timestep_cm >= soil_storage_max) {
-    for(int j=0;j<this->ncells;j++)
-      this->soil_moisture_profile[j] = this->smcmax;
-    return;
-  }
-  
-  double diff=1000.0; // guess for the initial differnce between the roots
-  
-  double f, z2, z2new, df_dz2;
 
-  z2=z1;  /* first guess, use Newton-Raphson to find new Z2 */
-  do {
-    count++;
+  // compute a new profile only if sufficient amount of water is added at this timestep. 1.0E-4 corresponds to 0.001 mm of water
+  
+  if (soil_storage_change_per_timestep_cm > 0.0001 || this->init_profile) {
     
-    if(count>15000) {
-      throw std::runtime_error("No convergence loop count: after 15000 iterations!");
+    // turn of the flag for times t > 0 
+    this->init_profile = false;
+    
+    // check if the storage is greater than the maximum soil storage. if yes, set it to the maximum storage
+    if(soil_storage_current_timestep_cm >= soil_storage_max) {
+      for(int j=0;j<this->ncells;j++)
+	this->soil_moisture_profile[j] = this->smcmax;
+      return;
     }
     
-    // function representing the total amount of soil moisture. 2nd term is the integral of the Clap-Hornberger function (area under the soil moisture curve)
-    f = this->smcmax * (z2-z1) + alpha * this->smcmax * (pow(depth-z2,beta)- pow(depth-z1,beta)) -  soil_storage_change_per_timestep_cm;
-    
-    // derivative of f w.r.t z2
-    df_dz2 = this->smcmax - alpha * this->smcmax * beta * pow((depth-z2),(beta-1.0));
-    
-    // Newton-Raphson method
-    z2new = z2 - f / std::max(df_dz2,1e-6); // to avoid division by zero
-    
-    diff=z2new-z2; // difference betweent the previous and new root
-    
-    z2=z2new;     // update the previous root
-    
-  } while (std::fabs(diff) < tol);
+    double diff=1000.0; // guess for the initial differnce between the roots
   
-  z1=z2;  // set z1 (previous water table) to the new water table depth
-  this->water_table_thickness_m = z1/100.;
-
-  //soil_storage_previous_timestep_cm = this->smcmax * (z1-z0) + this->smcmax * satpsi_cm + alpha * this->smcmax * (pow((depth-z1),beta)-pow(satpsi_cm,beta));
- 
-  /*******************************************************************/
-  /* get a high resolution moisture profile that will be mapped on the desired soil discretization */
-  
-  int z_hres = 1001;
-  double *smct_temp = new double[z_hres];
-  double *z_temp = new double[z_hres];
-
-  // we have the new water table location now, so let's compute the soil moisture curve now
-  double z = z1 + satpsi_cm;
-  double dz_v = (depth-z1-satpsi_cm)/(z_hres-1); // vertical spacing
-  double z_head = satpsi_cm; // input variable to the soil moisture function
-  
-  for (int i=0;i<z_hres;i++) {
-    z_head += dz_v;
-    smct_temp[i] = std::pow((satpsi_cm/z_head),lam) * this->smcmax;
-
-    z+=dz_v;
-    z_temp[i] = z;
-  }
-  
-  // map the high resolution soil moisture curve to the soil discretization depth that is provided in the config file
-  for (int i=0; i<this->ncells; i++) {
-    for (int j=0; j<z_hres; j++) {
-      if ( (depth - soilZ[ncells-1-i]*100 <= z1 + satpsi_cm) &&  (depth - soilZ[ncells-2-i]*100 <= z1+ satpsi_cm))
-	this->soil_moisture_profile[i] = smcmax;
-      else if (z_temp[j]  >= (depth - this->soilZ[i]*100) ) {
-	this->soil_moisture_profile[i] = smct_temp[j];
-	break;
+    double f, z2, z2new, df_dz2;
+    
+    z2=z1;  /* first guess, use Newton-Raphson to find new Z2 */
+    do {
+      count++;
+      
+      if(count>15000) {
+	throw std::runtime_error("No convergence loop count: after 15000 iterations!");
+      }
+      
+      // function representing the total amount of soil moisture. 2nd term is the integral of the Clap-Hornberger function (area under the soil moisture curve)
+      f = this->smcmax * (z2-z1) + alpha * this->smcmax * (pow(depth-z2,beta)- pow(depth-z1,beta)) -  soil_storage_change_per_timestep_cm;
+      
+      // derivative of f w.r.t z2
+      df_dz2 = this->smcmax - alpha * this->smcmax * beta * pow((depth-z2),(beta-1.0));
+      
+      // Newton-Raphson method
+      z2new = z2 - f / std::max(df_dz2,1e-6); // to avoid division by zero
+      
+      diff=z2new-z2; // difference betweent the previous and new root
+      
+      z2=z2new;     // update the previous root
+      
+    } while (std::fabs(diff) < tol);
+    
+    z1=z2;  // set z1 (previous water table) to the new water table depth
+    this->water_table_thickness_m = z1/100.;
+    
+    
+    /*******************************************************************/
+    /* get a high resolution moisture profile that will be mapped on the desired soil discretization */
+    
+    int z_hres = 1001;
+    double *smct_temp = new double[z_hres];
+    double *z_temp = new double[z_hres];
+    
+    // we have the new water table location now, so let's compute the soil moisture curve now
+    double z = z1 + satpsi_cm;
+    double dz_v = (depth-z1-satpsi_cm)/(z_hres-1); // vertical spacing
+    double z_head = satpsi_cm; // input variable to the soil moisture function
+    
+    for (int i=0;i<z_hres;i++) {
+      z_head += dz_v;
+      smct_temp[i] = std::pow((satpsi_cm/z_head),lam) * this->smcmax;
+      
+      z+=dz_v;
+      z_temp[i] = z;
+    }
+    
+    // map the high resolution soil moisture curve to the soil discretization depth that is provided in the config file
+    for (int i=0; i<this->ncells; i++) {
+      for (int j=0; j<z_hres; j++) {
+	if ( (depth - soilZ[ncells-1-i]*100 <= z1 + satpsi_cm) &&  (depth - soilZ[ncells-2-i]*100 <= z1+ satpsi_cm))
+	  this->soil_moisture_profile[i] = smcmax;
+	else if (z_temp[j]  >= (depth - this->soilZ[i]*100) ) {
+	  this->soil_moisture_profile[i] = smct_temp[j];
+	  break;
+	}
       }
     }
+    
   }
   
 }
-
 
 /*
 - Computes 1D soil moisture profile for layered/calculated reservoir. That is, take layered reservior soil moisture and distribute it vertically to the desired soil discretization
