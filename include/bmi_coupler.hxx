@@ -7,7 +7,6 @@ using namespace std;
 #include "../bmi/bmi.hxx"
 #include "soil_moisture_profile.hxx"
 
-#define NGEN 0
 
 namespace coupler {
 class NotImplemented : public std::logic_error {
@@ -89,7 +88,7 @@ class BmiCoupler : public bmixx::Bmi {
 };
 
 
-#if NGEN
+#ifdef NGEN
 extern "C"
 {
 

@@ -1,37 +1,47 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
-set(CMAKE_C_COMPILER $ENV{CC})
-set(CMAKE_CXX_COMPILER $ENV{CXX})
-
-
-# set the project name
-project(smp)
-
+# Uncomment this and rebuild artifacts to enable debugging
 set(CMAKE_BUILD_TYPE Debug)
-IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    message("Debug build.")
-ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
-message(CMAKE_CXX_COMPILER " ${CMAKE_CXX_COMPILER}")
-message(CMAKE_C_COMPILER " ${CMAKE_C_COMPILER}")
-message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# add the executable
+project(smpbmi VERSION 1.0.0 DESCRIPTION "OWP SMP BMI Module Shared Library")
 
-#add_executable(smp ./src/bmi_main.cxx ./src/soil_moisture_profile.cxx ./src/bmi_coupler.cxx)
+option(NGEN "NGEN" OFF)
 
-# ngen (add shared library
-add_library(smpbmi SHARED ./src/bmi_coupler.cxx ./src/soil_moisture_profile.cxx ./include/bmi_coupler.hxx ./include/soil_moisture_profile.hxx)
+if(NGEN)
+   add_definitions(-DNGEN)
+endif()
 
-#target_link_libraries(smp LINK_PUBLIC smplib)
-#target_link_libraries(cfesft PRIVATE m)
+# SMP
+set(SMP_LIB_NAME_CMAKE smpbmi)
+set(SMP_LIB_DESC_CMAKE "OWP SMP BMI Module Shared Library")
 
-target_include_directories(smpbmi PRIVATE /include)
+# Make sure these are compiled with this directive
+add_compile_definitions(BMI_ACTIVE)
 
-##cmake -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_C_COMPILER=$CC -DCMAKE_INSTALL_PREFIX=`pwd` -DCMAKE_BUILD_TYPE=Debug ../
-##cmake --build .
+if(WIN32)
+    add_library(smpbmi src/bmi_coupler.cxx src/soil_moisture_profile.cxx)
+else()
+    add_library(smpbmi SHARED src/bmi_coupler.cxx src/soil_moisture_profile.cxx)
+endif()
 
+target_include_directories(smpbmi PRIVATE include)
 
+set_target_properties(smpbmi PROPERTIES VERSION ${PROJECT_VERSION})
 
+set_target_properties(smpbmi PROPERTIES PUBLIC_HEADER ./include/bmi_coupler.hxx)
+
+# Code requires minimum of C99 standard to compile
+set_target_properties(smpbmi PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON)
+
+include(GNUInstallDirs)
+
+install(TARGETS smpbmi
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+configure_file(smpbmi.pc.in smpbmi.pc @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/smpbmi.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
