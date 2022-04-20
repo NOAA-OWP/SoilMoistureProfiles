@@ -10,7 +10,7 @@
   
 ## Standalone run:
  * run [make_bmi_coupler.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_bmi_coupler.sh) to get the executable (e.g., run_bmi_coupler)
- * run `./run_bmi_coupler test/config.txt`
+ * run `./run_bmi_coupler config/config_conceptual.txt`
 
 ## Coupled mode (ngen and pseudo frameworks):
  * Coupling SoilMoistureProfiles to any module (for instance, CFE or SFT) **must** follow these [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw) for building and running. **Note separate instructions are provided for building/running in the ngen framework on the SoilFreezeThaw repo.**
@@ -19,9 +19,8 @@
 ## Parameters in the config file
 * `smcmax` (porosity; maximum moisture content), `b`, `satpsi` (saturated matric potential) are needed for the soil moisture characteristic function
 * `Z` is the soil layer thickness (for instance, if SMP is coupled with SFT then this `Z` is the vertical resolution of the SFT model)
-* `smc_profile` = `conceptual` if conceptual model(e.g., CFE) or `layered` if layered based soil moisture model is used (e.g., LGAR)
-* if `smc_profile` = `layered`, then set `smc_profile_option` = `constant` for layered-constant profile or `linear`  for linearly interpolated profile between layers
-* `water_table` depth of the initial water table
+* `soil_storage_model` = `conceptual` if conceptual model(e.g., CFE) or `layered` if layered based soil moisture model is used (e.g., LGAR)
+* if `soil_storage_model` = `layered`, then set `soil_moisture_profile_option` = `constant` for layered-constant profile or `linear`  for linearly interpolated profile between layers
 
 _________________________________________________________________
 _________________________________________________________________
