@@ -60,7 +60,6 @@ Read and initialize values from configuration file
 @input - satpsi  (double) : saturated capillary head (saturated moisture potential) [m]
 @input - ncells  (int) : number of cells of the discretized soil column
 @input - nlayers (int) : numer of soil moisture layers
-@input - water_table_thickness_m : thickness of the water table from the bottom of the computational domain (soil column) [m]; the config file provides the initial value. Default value is set to 0.1 m thickness
 @input - soil_storage_model (string) : Conceptual or Layered soil reservoir models
 @input - soil_moisture_profile_option (string) : valid only when layered soil reservoir model is chosen; option include `constant` or `linear`. The option `constant` assigns a constant value to discretized cells within each layer, `linear` option linearly interpolate values between layers and interpolated values are assigned to the soil discretization
 @params - input_var_names_model (1D) : dynamically sets model inputs to be used in the bmi input_var_names
@@ -77,7 +76,6 @@ InitFromConfigFile(std::string config_file)
   bool is_smcmax_set = false;
   bool is_bb_set = false;
   bool is_satpsi_set = false;
-  bool is_wt_set = false;
   bool is_soil_storage_model_set = false;
   bool is_soil_moisture_profile_option_set = false; // option for linear or piece-wise constant layered profile
   
@@ -133,11 +131,6 @@ InitFromConfigFile(std::string config_file)
       is_satpsi_set = true;
       continue;
     }
-    else if (key_sub == "soil_params.water_table_thickness") {
-      this->water_table_thickness_m = std::stod(key.substr(loc+1,key.length()));
-      is_wt_set = true;
-      continue;
-    }
     else if (key_sub == "soil_storage_model") {
       this->soil_storage_model = key.substr(loc+1,key.length());
       is_soil_storage_model_set = true;
@@ -181,12 +174,6 @@ InitFromConfigFile(std::string config_file)
     std::stringstream errMsg;
     errMsg << "satpsi not set in the config file "<< config_file << "\n";
     throw std::runtime_error(errMsg.str());
-  }
-  
-  if (!is_wt_set) {
-    std::cout<<"Warning! Water table location not provided, defualt is 1.9 m deep. \n";
-    //initial water table location 1.9 m deep, if not provided in the config file
-    this->water_table_thickness_m = this->soil_depth - 1.9; 
   }
   
   if(is_soil_storage_model_set) {
@@ -323,7 +310,7 @@ SoilMoistureProfileFromConceptualReservoir()
     
     double diff=1000.0; // guess for the initial differnce between the roots
   
-    double f,  zi_new, df_dzi;
+    double f, zi_new, df_dzi;
     
     do {
       count++;
@@ -333,8 +320,9 @@ SoilMoistureProfileFromConceptualReservoir()
       }
       
       // function representing the total amount of soil moisture. 2nd term is the integral of the Clap-Hornberger function (area under the soil moisture curve)
-      //f = this->smcmax * (z2-z1) + alpha * this->smcmax * (pow(depth-z2,beta)- pow(depth-z1,beta)) -  soil_storage_change_per_timestep_cm;
 
+      // fis is integrates the function from z0 to the surface: 1st part: saturated soil between zi and z0; 2nd part: capillary fringe; 3rd: enclosed area between satpis and the surface
+      // fib is non-zero for zi <0, zero otherwise. this is the volume of water that needs to be subtracted from "fis" to get the water storage in the computational domain (say top 2 m if soil column has depth 2m)
       double fis = this->smcmax * (zi - z0) + this->smcmax * satpsi_cm + alpha * this->smcmax * ( pow((depth-zi),beta) - pow(satpsi_cm,beta) );
       double fib = this->smcmax * (zi - z0) + this->smcmax * satpsi_cm + alpha * this->smcmax * ( pow(abs(zb-zi),beta) - pow(satpsi_cm,beta) );
 	
@@ -359,12 +347,10 @@ SoilMoistureProfileFromConceptualReservoir()
 
       z0 = zi >= 0.0 ? zb : zi - satpsi_cm;
       
-	
-    } while (std::fabs(diff) < tol);
+      //std::cout<<"water table: "<<count<<" "<<zi <<" "<<fis<<" "<<fib<<" "<<f<<" "<<dfis<<" "<<dfib<<" "<<df_dzi<<": "<<diff<<" "<<std::fabs(diff)<<" "<<tol<<"\n";	
+    } while (std::fabs(diff) > tol);
 
-    
     this->water_table_thickness_m = zi/100.;
-    
     
     /*******************************************************************/
     /* get a high resolution moisture profile that will be mapped on the desired soil discretization */
@@ -389,7 +375,7 @@ SoilMoistureProfileFromConceptualReservoir()
     // map the high resolution soil moisture curve to the soil discretization depth that is provided in the config file
     for (int i=0; i<this->ncells; i++) {
       for (int j=0; j<z_hres; j++) {
-	if ( depth - soilZ[ncells-1-i]*100 <= zi + satpsi_cm)
+	if ( depth - soilZ[i]*100 <= zi + satpsi_cm)
 	  this->soil_moisture_profile[i] = smcmax;
 	else if (z_temp[j]  >= (depth - this->soilZ[i]*100) ) {
 	  this->soil_moisture_profile[i] = smct_temp[j];
@@ -399,7 +385,7 @@ SoilMoistureProfileFromConceptualReservoir()
     }
     
   }
-  
+
 }
 
 /*

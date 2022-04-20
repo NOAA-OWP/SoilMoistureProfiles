@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <cmath>
 
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_coupler.hxx"
@@ -63,13 +64,14 @@ int main(int argc, char *argv[])
 
     /****************************************************************************/
     // unit test data for conceptual soil reservoir
-    double SMCT[] ={0.32207, 0.333438, 0.367336, 0.439}; // soil_moisture_profile
-    double water_table_thickness = 0.1; // in meters
+    //double SMCT[] ={0.32207, 0.333438, 0.367336, 0.439}; // soil_moisture_profile
+    double SMCT[] = {0.3375634,0.34234789,0.34752731,0.35330897,0.35974973,0.3669139,0.37517657,0.38464055,0.39596964,0.40977129,0.42703622,0.439,0.439,0.439,0.439,0.439,0.439,0.439,0.439,0.439};
+    double water_table_thickness = 0.490438; // in meters
     enum option { Conceptual = 1, Layered = 2};
     /****************************************************************************/
     
     // Set values
-    double storage_m = 0.526328;
+    double storage_m = 0.8; //0.526328;
     double storage_change_m = -0.000472;
     double *storage_m_ptr = &storage_m;
     double *storage_change_m_ptr = &storage_change_m;
@@ -92,18 +94,19 @@ int main(int argc, char *argv[])
     std::cout<<"soil_moisture_profile_option: "<<soil_moisture_profile_option<<"\n";
     std::cout<<"storage: "<<*var_s<<"\n";
     std::cout<<"storage change: "<<*var_sc<<"\n";
-
-    water_table_thickness_bmi = (double *)model.GetValuePtr(var_name_wt);
-
-    if (soil_moisture_profile_option == Conceptual) {
-      std::cout<<"Check: water table thickness = "<<water_table_thickness<<" | water table thickness bmi = "<<*water_table_thickness_bmi<<"\n";
-      assert (water_table_thickness == *water_table_thickness_bmi);
-    }
     
     model.Update();
+
+    water_table_thickness_bmi = (double *)model.GetValuePtr(var_name_wt);
+    
+    if (soil_moisture_profile_option == Conceptual) {
+      std::cout<<"Check: water table thickness = "<<water_table_thickness<<" | water table thickness bmi = "<<*water_table_thickness_bmi<<"\n";
+      double diff = std::fabs(water_table_thickness - *water_table_thickness_bmi);
+      assert (diff < 1e-4);
+    }
     
     // Get values
-    double *var_smc = new double[4];
+    double *var_smc = new double[shape[0]];
     
     model.GetValue(var_name_smc,&var_smc[0]);
       
