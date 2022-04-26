@@ -15,28 +15,28 @@ void BmiMapper::
 Initialize (std::string config_file)
 {
   if (config_file.compare("") != 0 )
-    this->_model = smc_mapping::SoilMoistureMapping(config_file);
+    this->_model = new smc_mapping::SoilMoistureMapping(config_file);
 }
 
 
 void BmiMapper::
 Update()
 {
-  this->_model.SoilMoistureFromBasinToGrid();
+  this->_model->SoilMoistureFromBasinToGrid();
 }
 
 
 void BmiMapper::
 UpdateUntil(double t)
 {
-  this->_model.SoilMoistureFromBasinToGrid();
+  this->_model->SoilMoistureFromBasinToGrid();
 }
 
 
 void BmiMapper::
 Finalize()
 {
-  this->_model.~SoilMoistureMapping();
+  this->_model->~SoilMoistureMapping();
 }
 
 
@@ -123,11 +123,11 @@ GetGridShape(const int grid, int *shape)
 {
   //NWM grid
   if (grid == 0) {
-    shape[0] = this->_model.shape[0];
+    shape[0] = this->_model->shape[0];
   }
   // basins, not sure if we will need this???
   if (grid == 1) {
-    shape[0] = this->_model.shape_basin[0];
+    shape[0] = this->_model->shape_basin[0];
   }
 }
 
@@ -136,7 +136,7 @@ void BmiMapper::
 GetGridSpacing (const int grid, double * spacing)
 {
   if (grid == 0) {
-    spacing[0] = this->_model.spacing[0];
+    spacing[0] = this->_model->spacing[0];
   }
 
 }
@@ -146,7 +146,7 @@ void BmiMapper::
 GetGridOrigin (const int grid, double *origin)
 {
   if (grid == 0) {
-    origin[0] = this->_model.origin[0];
+    origin[0] = this->_model->origin[0];
   }
 }
 
@@ -165,7 +165,7 @@ int BmiMapper::
 GetGridSize(const int grid)
 {
   if (grid == 0)
-    return this->_model.shape[0];
+    return this->_model->shape[0];
   else if (grid == 1)
     return 1;
   else
@@ -270,21 +270,21 @@ void *BmiMapper::
 GetValuePtr (std::string name)
 {
   if (name.compare("TWI") == 0)
-    return (void*)this->_model.TWI;
+    return (void*)this->_model->TWI;
   else if (name.compare("global_deficit") == 0)
-    return (void*)(&this->_model.cat_global_deficit);
+    return (void*)(&this->_model->cat_global_deficit);
   else  if (name.compare("porosity") == 0)
-    return (void*)(&this->_model.maxsmc);
+    return (void*)(&this->_model->maxsmc);
   else if (name.compare("depth") == 0)
-    return (void*)(&this->_model.depth);
+    return (void*)(&this->_model->depth);
   else if (name.compare("grid_gid") == 0)
-    return (void*)this->_model.grid_id;
+    return (void*)this->_model->grid_id;
   else if (name.compare("grid_gid_unique") == 0)
-    return (void*)this->_model.grid_id_unique;
+    return (void*)this->_model->grid_id_unique;
   else if (name.compare("area_fraction") == 0)
-    return (void*)this->_model.grid_area_fraction;
+    return (void*)this->_model->grid_area_fraction;
   else if (name.compare("grid_soil_moisture") == 0)
-    return (void*)this->_model.grid_soil_moisture;
+    return (void*)this->_model->grid_soil_moisture;
     else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";

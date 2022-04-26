@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
 #include "../include/soil_moisture_mapping.hxx"
 
 

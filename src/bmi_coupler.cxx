@@ -16,23 +16,23 @@ void BmiCoupler::
 Initialize (std::string config_file)
 {
   if (config_file.compare("") != 0 )
-    this->_model = smc_profile::SMCProfile(config_file);
+    this->_model = new smc_profile::SMCProfile(config_file);
 }
 
 
 void BmiCoupler::
 Update()
 {
-  //this->_model.SoilMoistureProfileVertical();
-  if (_model.soil_storage_model == "conceptual" || _model.soil_storage_model == "Conceptual") {
-    _model.SoilMoistureProfileFromConceptualReservoir();
+  //this->_model->SoilMoistureProfileVertical();
+  if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
+    _model->SoilMoistureProfileFromConceptualReservoir();
   }
-  else if (_model.soil_storage_model == "layered" || _model.soil_storage_model == "Layered") {
-    _model.SoilMoistureProfileFromLayeredReservoir();
+  else if (_model->soil_storage_model == "layered" || _model->soil_storage_model == "Layered") {
+    _model->SoilMoistureProfileFromLayeredReservoir();
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model.soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
     throw std::runtime_error(errMsg.str());
 
   }
@@ -42,26 +42,27 @@ Update()
 void BmiCoupler::
 UpdateUntil(double t)
 {
-  if (_model.soil_storage_model == "conceptual" || _model.soil_storage_model == "Conceptual") {
-    _model.SoilMoistureProfileFromConceptualReservoir();
+  if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
+    _model->SoilMoistureProfileFromConceptualReservoir();
   }
-  else if (_model.soil_storage_model == "layered" || _model.soil_storage_model == "Layered") {
-    _model.SoilMoistureProfileFromLayeredReservoir();
+  else if (_model->soil_storage_model == "layered" || _model->soil_storage_model == "Layered") {
+    _model->SoilMoistureProfileFromLayeredReservoir();
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model.soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
     throw std::runtime_error(errMsg.str());
     
   }
-  //  this->_model.SoilMoistureProfileVertical();
+  //  this->_model->SoilMoistureProfileVertical();
 }
 
 
 void BmiCoupler::
 Finalize()
 {
-  this->_model.~SMCProfile();
+  if (this->_model)
+    this->_model->~SMCProfile();
 }
 
 
@@ -147,7 +148,7 @@ void BmiCoupler::
 GetGridShape(const int grid, int *shape)
 {
   if (grid == 2) {
-    shape[0] = this->_model.shape[0];
+    shape[0] = this->_model->shape[0];
   }
 }
 
@@ -156,7 +157,7 @@ void BmiCoupler::
 GetGridSpacing (const int grid, double * spacing)
 {
   if (grid == 0) {
-    spacing[0] = this->_model.spacing[0];
+    spacing[0] = this->_model->spacing[0];
   }
 }
 
@@ -165,7 +166,7 @@ void BmiCoupler::
 GetGridOrigin (const int grid, double *origin)
 {
   if (grid == 0) {
-    origin[0] = this->_model.origin[0];
+    origin[0] = this->_model->origin[0];
   }
 }
 
@@ -186,7 +187,7 @@ GetGridSize(const int grid)
   if (grid == 0 || grid == 1)
     return 1;
   else if (grid == 2)
-    return this->_model.shape[0];
+    return this->_model->shape[0];
   else
     return -1;
 }
@@ -229,7 +230,7 @@ GetGridNodeCount(const int grid)
   throw coupler::NotImplemented();
   /*
   if (grid == 0)
-    return this->_model.shape[0];
+    return this->_model->shape[0];
   else
     return -1;
   */
@@ -295,17 +296,17 @@ void *BmiCoupler::
 GetValuePtr (std::string name)
 {
   if (name.compare("soil_storage") == 0)
-    return (void*)(&this->_model.soil_storage_m);
+    return (void*)(&this->_model->soil_storage_m);
   else if (name.compare("soil_storage_change") == 0)
-    return (void*)(&this->_model.soil_storage_change_per_timestep_m);
+    return (void*)(&this->_model->soil_storage_change_per_timestep_m);
   else  if (name.compare("soil_water_table_thickness") == 0)
-    return (void*)(&this->_model.water_table_thickness_m);
+    return (void*)(&this->_model->water_table_thickness_m);
   else if (name.compare("soil_moisture_profile") == 0)
-    return (void*)this->_model.soil_moisture_profile;
+    return (void*)this->_model->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)
-    return (void*)this->_model.soil_moisture_layered;
+    return (void*)this->_model->soil_moisture_layered;
   else if (name.compare("soil_moisture_profile_option_bmi") == 0)
-    return (void*)(&this->_model.soil_moisture_profile_option_bmi);
+    return (void*)(&this->_model->soil_moisture_profile_option_bmi);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
@@ -402,7 +403,7 @@ GetInputVarNames()
 {
   std::vector<std::string> names;
 
-  std::vector<std::string>* names_m = _model.InputVarNamesModel();
+  std::vector<std::string>* names_m = _model->InputVarNamesModel();
   
   for (int i=0; i<this->input_var_name_count; i++) {
     if (std::find(names_m->begin(), names_m->end(), this->input_var_names[i]) != names_m->end()) {

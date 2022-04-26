@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <algorithm>
 
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_mapper.hxx"
