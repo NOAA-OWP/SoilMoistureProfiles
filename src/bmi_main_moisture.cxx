@@ -4,13 +4,13 @@
 #include <cmath>
 
 #include "../bmi/bmi.hxx"
-#include "../include/bmi_coupler.hxx"
+#include "../include/bmi_soil_moisture_profile.hxx"
 #include "../include/soil_moisture_profile.hxx"
 
 #define SUCCESS 0
 int main(int argc, char *argv[])
 {
-  BmiCoupler model;
+  BmiSoilMoistureProfile model;
   
   if (argc != 2) {
     printf("Usage: run_bmifrozensoilcxx CONFIGURATION_FILE\n\n");

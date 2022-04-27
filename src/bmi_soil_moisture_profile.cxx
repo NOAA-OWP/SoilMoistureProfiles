@@ -1,5 +1,5 @@
-#ifndef BMI_COUPLER_C_INCLUDED
-#define BMI_COUPLER_C_INCLUDED
+#ifndef BMI_SMP_C_INCLUDED
+#define BMI_SMP_C_INCLUDED
 
 
 #include <stdio.h>
@@ -7,12 +7,13 @@
 #include <cstring>
 #include <cstdlib>
 #include <vector>
-#include "../bmi/bmi.hxx"
-#include "../include/bmi_coupler.hxx"
-#include "../include/soil_moisture_profile.hxx"
 #include <algorithm>
+#include "../bmi/bmi.hxx"
+#include "../include/bmi_soil_moisture_profile.hxx"
+#include "../include/soil_moisture_profile.hxx"
 
-void BmiCoupler::
+
+void BmiSoilMoistureProfile::
 Initialize (std::string config_file)
 {
   if (config_file.compare("") != 0 )
@@ -20,7 +21,7 @@ Initialize (std::string config_file)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 Update()
 {
   if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
@@ -38,7 +39,7 @@ Update()
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 UpdateUntil(double t)
 {
   if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
@@ -57,7 +58,7 @@ UpdateUntil(double t)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 Finalize()
 {
   if (this->_model)
@@ -65,7 +66,7 @@ Finalize()
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetVarGrid(std::string name)
 {
   if (name.compare("soil_moisture_profile_option_bmi") == 0)   // int
@@ -79,7 +80,7 @@ GetVarGrid(std::string name)
 }
 
 
-std::string BmiCoupler::
+std::string BmiSoilMoistureProfile::
 GetVarType(std::string name)
 {
   if (name.compare("soil_moisture_profile_option_bmi") == 0)
@@ -93,7 +94,7 @@ GetVarType(std::string name)
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetVarItemsize(std::string name)
 {
   if (name.compare("soil_moisture_profile_option_bmi") == 0)
@@ -107,7 +108,7 @@ GetVarItemsize(std::string name)
 }
 
 
-std::string BmiCoupler::
+std::string BmiSoilMoistureProfile::
 GetVarUnits(std::string name)
 {
   if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0  || name.compare("soil_water_table_thickness") == 0)
@@ -119,7 +120,7 @@ GetVarUnits(std::string name)
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetVarNbytes(std::string name)
 {
   int itemsize;
@@ -131,7 +132,7 @@ GetVarNbytes(std::string name)
 }
 
 
-std::string BmiCoupler::
+std::string BmiSoilMoistureProfile::
 GetVarLocation(std::string name)
 {
   if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table_thickness") == 0)
@@ -143,7 +144,7 @@ GetVarLocation(std::string name)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridShape(const int grid, int *shape)
 {
   if (grid == 2) {
@@ -152,7 +153,7 @@ GetGridShape(const int grid, int *shape)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridSpacing (const int grid, double * spacing)
 {
   if (grid == 0) {
@@ -161,7 +162,7 @@ GetGridSpacing (const int grid, double * spacing)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridOrigin (const int grid, double *origin)
 {
   if (grid == 0) {
@@ -170,7 +171,7 @@ GetGridOrigin (const int grid, double *origin)
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetGridRank(const int grid)
 {
   if (grid == 0 || grid == 1 || grid == 2)
@@ -180,7 +181,7 @@ GetGridRank(const int grid)
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetGridSize(const int grid)
 {
   if (grid == 0 || grid == 1)
@@ -192,7 +193,7 @@ GetGridSize(const int grid)
 }
 
 
-std::string BmiCoupler::
+std::string BmiSoilMoistureProfile::
 GetGridType(const int grid)
 {
   if (grid == 0)
@@ -202,28 +203,28 @@ GetGridType(const int grid)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridX(const int grid, double *x)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridY(const int grid, double *y)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridZ(const int grid, double *z)
 {
   throw coupler::NotImplemented();
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetGridNodeCount(const int grid)
 {
   throw coupler::NotImplemented();
@@ -236,49 +237,49 @@ GetGridNodeCount(const int grid)
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetGridEdgeCount(const int grid)
 {
   throw coupler::NotImplemented();
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetGridFaceCount(const int grid)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridEdgeNodes(const int grid, int *edge_nodes)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridFaceEdges(const int grid, int *face_edges)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridFaceNodes(const int grid, int *face_nodes)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetGridNodesPerFace(const int grid, int *nodes_per_face)
 {
   throw coupler::NotImplemented();
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetValue (std::string name, void *dest)
 {
   void * src = NULL;
@@ -291,7 +292,7 @@ GetValue (std::string name, void *dest)
 }
 
 
-void *BmiCoupler::
+void *BmiSoilMoistureProfile::
 GetValuePtr (std::string name)
 {
   if (name.compare("soil_storage") == 0)
@@ -315,7 +316,7 @@ GetValuePtr (std::string name)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 GetValueAtIndices (std::string name, void *dest, int *inds, int len)
 {
   void * src = NULL;
@@ -338,7 +339,7 @@ GetValueAtIndices (std::string name, void *dest, int *inds, int len)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 SetValue (std::string name, void *src)
 {
   void * dest = NULL;
@@ -353,7 +354,7 @@ SetValue (std::string name, void *src)
 }
 
 
-void BmiCoupler::
+void BmiSoilMoistureProfile::
 SetValueAtIndices (std::string name, int * inds, int len, void *src)
 {
   void * dest = NULL;
@@ -376,28 +377,28 @@ SetValueAtIndices (std::string name, int * inds, int len, void *src)
 }
 
 
-std::string BmiCoupler::
+std::string BmiSoilMoistureProfile::
 GetComponentName()
 {
-  return "Coupler BMI";
+  return "SoilMoistureProfile BMI";
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetInputItemCount()
 {
   return this->input_var_name_count;
 }
 
 
-int BmiCoupler::
+int BmiSoilMoistureProfile::
 GetOutputItemCount()
 {
   return this->output_var_name_count;
 }
 
 
-std::vector<std::string> BmiCoupler::
+std::vector<std::string> BmiSoilMoistureProfile::
 GetInputVarNames()
 {
   std::vector<std::string> names;
@@ -414,7 +415,7 @@ GetInputVarNames()
 }
 
 
-std::vector<std::string> BmiCoupler::
+std::vector<std::string> BmiSoilMoistureProfile::
 GetOutputVarNames()
 {
   std::vector<std::string> names;
@@ -426,31 +427,31 @@ GetOutputVarNames()
 }
 
 
-double BmiCoupler::
+double BmiSoilMoistureProfile::
 GetStartTime () {
   return 0.0;
 }
 
 
-double BmiCoupler::
+double BmiSoilMoistureProfile::
 GetEndTime () {
   return 0.0;
 }
 
 
-double BmiCoupler::
+double BmiSoilMoistureProfile::
 GetCurrentTime () {
   return 0.0;
 }
 
 
-std::string BmiCoupler::
+std::string BmiSoilMoistureProfile::
 GetTimeUnits() {
   return "s";
 }
 
 
-double BmiCoupler::
+double BmiSoilMoistureProfile::
 GetTimeStep () {
   return 0;
 }

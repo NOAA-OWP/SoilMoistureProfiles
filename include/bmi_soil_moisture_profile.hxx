@@ -1,5 +1,5 @@
-#ifndef BMI_COUPLER_H_INCLUDED
-#define BMI_COUPLER_H_INCLUDED
+#ifndef BMI_SMP_H_INCLUDED
+#define BMI_SMP_H_INCLUDED
 
 using namespace std;
 
@@ -15,9 +15,9 @@ class NotImplemented : public std::logic_error {
 };
 
 }
-class BmiCoupler : public bmixx::Bmi {
+class BmiSoilMoistureProfile : public bmixx::Bmi {
   public:
-    BmiCoupler() {
+    BmiSoilMoistureProfile() {
       this->input_var_names[0] = "soil_storage";
       this->input_var_names[1] = "soil_storage_change";
       this->input_var_names[2] = "soil_moisture_layered";
@@ -97,9 +97,9 @@ extern "C"
     *
     * @return A pointer to the newly allocated instance.
     */
-  BmiCoupler *bmi_model_create()
+  BmiSoilMoistureProfile *bmi_model_create()
   {
-    return new BmiCoupler();
+    return new BmiSoilMoistureProfile();
   }
   
     /**
@@ -107,7 +107,7 @@ extern "C"
      * 
      * @param ptr 
      */
-  void bmi_model_destroy(BmiCoupler *ptr)
+  void bmi_model_destroy(BmiSoilMoistureProfile *ptr)
   {
     delete ptr;
   }
