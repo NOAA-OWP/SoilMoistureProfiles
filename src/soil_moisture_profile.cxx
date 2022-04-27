@@ -1,5 +1,5 @@
-#ifndef SMCP_C_INCLUDED
-#define SMCP_C_INCLUDED
+#ifndef SMP_C_INCLUDED
+#define SMP_C_INCLUDED
 
 #include <cstring>
 #include <stdlib.h>
@@ -12,8 +12,8 @@
 #include "../include/soil_moisture_profile.hxx"
 
 
-smc_profile::SMCProfile::
-SMCProfile()
+soil_moisture_profile::SoilMoistureProfile::
+SoilMoistureProfile()
 {
   this->shape[0] = 1;
   this->shape[1] = 1;
@@ -28,8 +28,8 @@ SMCProfile()
   this->init_profile = true;
 }
 
-smc_profile::SMCProfile::
-SMCProfile(std::string config_file)
+soil_moisture_profile::SoilMoistureProfile::
+SoilMoistureProfile(std::string config_file)
 {
   this->InitFromConfigFile(config_file);
   this->shape[0] = this->ncells;
@@ -43,19 +43,19 @@ SMCProfile(std::string config_file)
   this->init_profile = true;
 }
 
-void smc_profile::SMCProfile::
+void soil_moisture_profile::SoilMoistureProfile::
 InitializeArrays(void)
 {
   this->soil_moisture_profile = new double[ncells];
   this->soil_moisture_layered = new double[ncells];
-  this->soil_storage_m = 0.0;
-  this->soil_storage_change_per_timestep_m = 0.0;
+  this->soil_storage = 0.0;
+  this->soil_storage_change_per_timestep = 0.0;
 }
 
 /*
 Read and initialize values from configuration file
-@input - soilZ   (1D)  :   soil discretization; array of depths from the surface [m]
-@input - layersZ  (1D) : depth of each layer from the surface [m]
+@input - soil_z   (1D)  :   soil discretization; array of depths from the surface [m]
+@input - layers_z  (1D) : depth of each layer from the surface [m]
 @input - bb  (double)  : pore size distribution [-], beta exponent on Clapp-Hornberger (1978)
 @input - satpsi  (double) : saturated capillary head (saturated moisture potential) [m]
 @input - ncells  (int) : number of cells of the discretized soil column
@@ -65,14 +65,14 @@ Read and initialize values from configuration file
 @params - input_var_names_model (1D) : dynamically sets model inputs to be used in the bmi input_var_names
 */
 
-void smc_profile::SMCProfile::
+void soil_moisture_profile::SoilMoistureProfile::
 InitFromConfigFile(std::string config_file)
 { 
   std::ifstream fp;
   fp.open(config_file);
   
-  bool is_soilZ_set = false;
-  bool is_layersZ_set = false;
+  bool is_soil_z_set = false;
+  bool is_layers_z_set = false;
   bool is_smcmax_set = false;
   bool is_bb_set = false;
   bool is_satpsi_set = false;
@@ -87,32 +87,32 @@ InitFromConfigFile(std::string config_file)
     int loc = key.find("=");
     std::string key_sub = key.substr(0,loc);
     
-    if (key_sub == "soil_params.Z") {
+    if (key_sub == "soil_z") {
       std::string tmp_key = key.substr(loc+1,key.length());
       std::vector<double> vec = ReadVectorData(tmp_key);
       
-      this->soilZ = new double[vec.size()];
+      this->soil_z = new double[vec.size()];
       
       for (unsigned int i=0; i < vec.size(); i++)
-      	this->soilZ[i] = vec[i];
+      	this->soil_z[i] = vec[i];
       
       this->ncells = vec.size();
-      this->soil_depth = this->soilZ[this->ncells-1];
-      is_soilZ_set = true;
+      this->soil_depth = this->soil_z[this->ncells-1];
+      is_soil_z_set = true;
       continue;
     }
-    else if (key_sub == "soil_params.layersZ") {
+    else if (key_sub == "soil_layers_z") {
       std::string tmp_key = key.substr(loc+1,key.length());
       std::vector<double> vec = ReadVectorData(tmp_key);
       
-      this->layersZ = new double[vec.size()];
+      this->layers_z = new double[vec.size()];
       
       for (unsigned int i=0; i < vec.size(); i++)
-	this->layersZ[i] = vec[i];
+	this->layers_z[i] = vec[i];
       
       this->nlayers = vec.size();
-      this->last_layer_depth = this->layersZ[this->nlayers-1];
-      is_layersZ_set = true;
+      this->last_layer_depth = this->layers_z[this->nlayers-1];
+      is_layers_z_set = true;
       continue;
     }
     else if (key_sub == "soil_params.smcmax") {
@@ -144,16 +144,16 @@ InitFromConfigFile(std::string config_file)
   }
   fp.close();
   
-  if (!is_soilZ_set) {
+  if (!is_soil_z_set) {
     std::stringstream errMsg;
-    errMsg << "soilZ not set in the config file "<< config_file << "\n";
+    errMsg << "soil_z not set in the config file "<< config_file << "\n";
     throw std::runtime_error(errMsg.str());
   }
 
-  if (!is_layersZ_set) {
+  if (!is_layers_z_set) {
     if (this->soil_storage_model == "layered" || this->soil_storage_model == "Layered") {
       std::stringstream errMsg;
-      errMsg << "layersZ not set in the config file "<< config_file << "\n";
+      errMsg << "layers_z not set in the config file "<< config_file << "\n";
       throw std::runtime_error(errMsg.str());
     }
   }
@@ -210,7 +210,7 @@ InitFromConfigFile(std::string config_file)
 /*
 returns dynamically allocated 1D vector of strings that contains correct input variable names based on the model (conceptual or layered) chosen
 */
-std::vector<std::string>* smc_profile::SMCProfile::
+std::vector<std::string>* soil_moisture_profile::SoilMoistureProfile::
 InputVarNamesModel()
 {
   return input_var_names_model;
@@ -221,7 +221,7 @@ Reads 1D data from the config file
 - used for reading soil discretization (1D)
 - used for reading layers depth from the surface if model `layered` is chosen
 */
-std::vector<double> smc_profile::SMCProfile::
+std::vector<double> soil_moisture_profile::SoilMoistureProfile::
 ReadVectorData(std::string key)
 {
   int pos =0;
@@ -233,7 +233,7 @@ ReadVectorData(std::string key)
     double v = stod(z1);
     if (v == 0.0) {
       std::stringstream errMsg;
-      errMsg << "soilZ (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
+      errMsg << "soil_z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
       throw std::runtime_error(errMsg.str());
     }
     
@@ -257,8 +257,9 @@ ReadVectorData(std::string key)
 }
 
 /*
-- Computes 1D soil moisture profile for conceptual reservoir using Newton-Raphson iterative method
-- local_variables:
+  Computes 1D soil moisture profile for conceptual reservoir using Newton-Raphson iterative method
+  For detailed decription of the model implemented here, please see README.md on the github repo
+  local_variables:
   @param lam  [-] : 1/bb (bb: pore size distribution)
   @param satpsi_cm [cm] : saturated moisture potential
   @param depth  [cm] : depth of the soil column
@@ -271,8 +272,10 @@ ReadVectorData(std::string key)
   @param soil_storage_current_timestepcm [cm] : soil storage at the current timestep
   @param tol [cm] : Error tolerance for finding the new root (i.e., water_table_thickness)
   @param soil_moisture_profile [-] : OUTPUT (soil moisture content vertical profile [-])
+
+  ** NOTE: the module needs to be fixed if the CFE and SFT soil depths are different
 */
-void smc_profile::SMCProfile::
+void soil_moisture_profile::SoilMoistureProfile::
 SoilMoistureProfileFromConceptualReservoir()
 {
   // converting variables to cm for numerical reasons only
@@ -284,8 +287,8 @@ SoilMoistureProfileFromConceptualReservoir()
   double zi = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
   double soil_storage_max = depth * this->smcmax;
   
-  double soil_storage_change_per_timestep_cm = soil_storage_change_per_timestep_m * 100.0;
-  double soil_storage_current_timestep_cm = 100.0 * this->soil_storage_m;  /* storage at the current timestep */
+  double soil_storage_change_per_timestep_cm = soil_storage_change_per_timestep * 100.0;
+  double soil_storage_current_timestep_cm = 100.0 * this->soil_storage;  /* storage at the current timestep */
 
   double lam = 1.0/this->bb;
   double beta = 1.0 - lam;
@@ -350,7 +353,8 @@ SoilMoistureProfileFromConceptualReservoir()
       //std::cout<<"water table: "<<count<<" "<<zi <<" "<<fis<<" "<<fib<<" "<<f<<" "<<dfis<<" "<<dfib<<" "<<df_dzi<<": "<<diff<<" "<<std::fabs(diff)<<" "<<tol<<"\n";	
     } while (std::fabs(diff) > tol);
 
-    this->water_table_thickness_m = zi/100.;
+    // water table thickness can be negative and that would be depth of the water table below the depth of the computational domain; probably a better name would be water_table_location
+    this->water_table_thickness = zi/100.;
     
     /*******************************************************************/
     /* get a high resolution moisture profile that will be mapped on the desired soil discretization */
@@ -375,9 +379,9 @@ SoilMoistureProfileFromConceptualReservoir()
     // map the high resolution soil moisture curve to the soil discretization depth that is provided in the config file
     for (int i=0; i<this->ncells; i++) {
       for (int j=0; j<z_hres; j++) {
-	if ( depth - soilZ[i]*100 <= zi + satpsi_cm)
+	if ( depth - soil_z[i]*100 <= zi + satpsi_cm)
 	  this->soil_moisture_profile[i] = smcmax;
-	else if (z_temp[j]  >= (depth - this->soilZ[i]*100) ) {
+	else if (z_temp[j]  >= (depth - this->soil_z[i]*100) ) {
 	  this->soil_moisture_profile[i] = smct_temp[j];
 	  break;
 	}
@@ -400,15 +404,17 @@ SoilMoistureProfileFromConceptualReservoir()
   @param last_layer_depth  [cm] : depth of the last layer from the surface
 */
 
-void smc_profile::SMCProfile::
+void soil_moisture_profile::SoilMoistureProfile::
 SoilMoistureProfileFromLayeredReservoir()
 {
   double lam=1.0/this->bb; // pore distribution index
-  double water_table_thickness = soil_depth - this->satpsi - this->water_table_thickness_m; // water table depth at the current timestep
+
+  //double water_table_thickness = this->soil_depth - this->satpsi - this->water_table_thickness_m; // water table depth at the current timestep -- this is not needed??
+  
   std::vector<double> z_layers_n(1,0.0);
   
   for (int i=0; i <this->nlayers; i++)
-    z_layers_n.push_back(layersZ[i]);
+    z_layers_n.push_back(layers_z[i]);
 
   std::vector<double> smc_column;
   int c = 0;
@@ -421,12 +427,12 @@ SoilMoistureProfileFromLayeredReservoir()
     // loop over all the cells in the discretized column
     for (int i=0; i < ncells; i++) {
       
-      if (soilZ[i] < layersZ[c]) {  // cell completely lie within a layer
+      if (soil_z[i] < layers_z[c]) {  // cell completely lie within a layer
 	
 	this->soil_moisture_profile[i] = soil_moisture_layered[c];
 	
       }
-      else if (soilZ[i] < this->last_layer_depth) { // cell at the interface of layers, so take the mean
+      else if (soil_z[i] < this->last_layer_depth) { // cell at the interface of layers, so take the mean
 	
 	this->soil_moisture_profile[i] = 0.5*(soil_moisture_layered[c] + soil_moisture_layered[c+1]);
 	c++;
@@ -434,7 +440,7 @@ SoilMoistureProfileFromLayeredReservoir()
       }
       else { // extend the profile below the last layer depth
 	
-	double zz = this->soil_depth - soilZ[i];
+	double zz = this->soil_depth - soil_z[i];
 	double theta = delta + std::pow((this->satpsi/zz),lam)*this->smcmax;
 	
 	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the last layer and profile below that depth of the last layer
@@ -444,11 +450,16 @@ SoilMoistureProfileFromLayeredReservoir()
 	}
 	
 	double theta1 = soil_moisture_layered[this->nlayers-1] +  theta;
-	double theta2 = std::min(this->smcmax, theta1);
-
-	this->soil_moisture_profile[i] = soilZ[i] <  water_table_thickness ? theta2 : this->smcmax;
 	/*
-	if (soilZ[i] < soil_depth - this->satpsi - this->water_table_depth_m)
+	double theta2 = std::min(this->smcmax, theta1);
+	this->soil_moisture_profile[i] = soil_z[i] <  water_table_thickness ? theta2 : this->smcmax;
+	*/
+	
+	this->soil_moisture_profile[i] = std::min(this->smcmax, theta1);
+
+
+	/*
+	if (soil_z[i] < soil_depth - this->satpsi - this->water_table_depth_m)
 	  this->soil_moisture_profile[i] = theta2;
 	else
 	this->soil_moisture_profile[i] = this->smcmax;*/
@@ -467,16 +478,16 @@ SoilMoistureProfileFromLayeredReservoir()
     for (int i=1; i < ncells; i++) {
 
       // linear interpolation between consecutive layers
-      if (soilZ[i] <= layersZ[c] && c < this->nlayers-1) {
-	t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], soil_moisture_layered[c], soil_moisture_layered[c+1], soilZ[i]);
+      if (soil_z[i] <= layers_z[c] && c < this->nlayers-1) {
+	t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], soil_moisture_layered[c], soil_moisture_layered[c+1], soil_z[i]);
 	this->soil_moisture_profile[i] = t_v;
 	
-	if (soilZ[i+1] > layersZ[c]) // the parameter c keeps track of the layer
+	if (soil_z[i+1] > layers_z[c]) // the parameter c keeps track of the layer
 	  c++;
       }
       else {
 	// extend the profile below the depth of the last layer
-	double zz = this->soil_depth - soilZ[i];
+	double zz = this->soil_depth - soil_z[i];
 	double theta = delta + std::pow((this->satpsi/zz),lam)*this->smcmax;
 	
 	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the last layer and profile below that depth of the last layer
@@ -486,9 +497,12 @@ SoilMoistureProfileFromLayeredReservoir()
 	}
 	
 	double theta1 = soil_moisture_layered[this->nlayers-1] +  theta;
+	/*
 	double theta2 = std::min(this->smcmax, theta1);
+	this->soil_moisture_profile[i] = soil_z[i] <  water_table_thickness ? theta2 : this->smcmax;
+	*/
 
-	this->soil_moisture_profile[i] = soilZ[i] <  water_table_thickness ? theta2 : this->smcmax;
+	this->soil_moisture_profile[i] = std::min(this->smcmax, theta1);
 	
       }
     }
@@ -502,19 +516,19 @@ SoilMoistureProfileFromLayeredReservoir()
 
   // for vis comparison with the python version
   for (int j=0; j< ncells; j++)
-    std::cout<<soilZ[j] <<" "<<this->soil_moisture_profile[j]<<"\n";
-  
+    std::cout<<soil_z[j] <<" "<<this->soil_moisture_profile[j]<<"\n";
+  /*
   // find and update water table location
   for (int j=0; j< ncells; j++) {
     if (this->soil_moisture_profile[j] == this->smcmax) {
-      this->water_table_thickness_m = soil_depth - soilZ[j] - this->satpsi; // check with Fred??
+      this->water_table_thickness = soil_depth - soil_z[j] - this->satpsi; // check with Fred?? do we actually care about the location, all we need is the mass of water to be consistent
       break;
     }
   }
-  
+  */
 }
 
-double smc_profile::SMCProfile::
+double soil_moisture_profile::SoilMoistureProfile::
 LinearInterpolation(double z1, double z2, double t1, double t2, double z)
 {
 
@@ -523,8 +537,8 @@ LinearInterpolation(double z1, double z2, double t1, double t2, double z)
 
 }
 
-smc_profile::SMCProfile::
-~SMCProfile()
+soil_moisture_profile::SoilMoistureProfile::
+~SoilMoistureProfile()
 {}
 
 #endif

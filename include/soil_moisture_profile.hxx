@@ -1,5 +1,5 @@
-#ifndef SMCP_H_INCLUDED
-#define SMCP_H_INCLUDED
+#ifndef SMP_H_INCLUDED
+#define SMP_H_INCLUDED
 /*
   Author: Ahmad Jan (ahmad.jan@noaa.gov)
 
@@ -9,27 +9,26 @@
   
   NOTE: For detailed model description please see README.md on github page
   
-  @param soil_storage_m // soil storage [m]
-  @param soil_storage_change_per_timestep_m // change in the soil storage per timestep [m]
-  @param water_table_thickness_m // thickness of the water table from the bottom of the computational domain [m]
-  @param soil_moisture_profile; // soil moisture content vertical profile [-] (output) 
-  @param soil_moisture_layered; // layered-soil moisture content [-], input
+  @param soil_storage              [m] : soil storage (input through bmi)
+  @param water_table_thickness     [m] : thickness of the water table from the bottom of the computational domain
+  @param soil_moisture_profile     [-] : soil moisture content (1D vertical profile)
+  @param soil_moisture_layered     [-] : layered-soil moisture content (input through bmi for layered models)
+  @param smcmax                    [-] : maximum soil moisture content (porosity)
+  @param bb                        [-] : pore size distribution, beta exponent in Clapp-Hornberger (1978) function
+  @param satpsi                    [m] : saturated capillary head (saturated moisture potential)
+  @param ncells                    [-] : number of cells of the discretized soil column
+  @param nlayers                   [-] : number of soil moisture layers (typically different than the ncells)
+  @param soil_depth                [m] : depth of the computational domain
+  @param last_layer_depth          [m] : depth of the last layer (for non-conceptual reservior, e.g, LGAR)
+  @param soil_z                    [m] : soil discretization; 1D array of depths from the surface
+  @param layers_z                  [m] : depth of layers from the surface
+  @param soil_storage_model        [-] : optional models : conceptual or layered 
 
-  @param smcmax; //maximum soil moisture content (porosity)
-  @param bb;  // pore size distribution [-], beta exponent in Clapp-Hornberger (1978)
-  @param satpsi; // saturated capillary head (saturated moisture potential) [m]
-  @param ncells; // number of cells of the discretized soil column
-  @param nlayers; // numer of soil moisture layers
-  @param soil_depth; //depth of the column/domain
-  @param last_layer_depth; // depth of the last layer (for non-conceptual reservior; LGAR)
-  @param soilZ; // soil discretization; 1D array of depths from the surface
-  @param layersZ; // depth of each layer from the surface
-  @param soil_storage_model; // models : conceptual or layered 
-  @param soil_moisture_profile_option; // valid for layered model only; linear or constant
-  @param soil_moisture_profile_option_bmi; // option provided as an output if needed by other models that which model was used to compute the proifle.. do we need it? not sure, but it let's keep it for now 
-  @param input_var_names_model; // we have different models and their inputs are different; this is to ensure that bmi inputs are consistent with the model inputs; need for ngen framework
-
-    bool init_profile; //flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
+  @param input_var_names_model     [-] : we have different models and their inputs are different; this is to ensure that bmi inputs are consistent with the model inputs, need for ngen framework
+  @param init_profile              [-] : flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
+  @param soil_storage_change_per_timestep  [m] : change in the soil storage per timestep
+  @param soil_moisture_profile_option      [-] : valid for layered model only; linear or constant
+  @param soil_moisture_profile_option_bmi  [-] : option provided as an output if needed by other models that which model was used to compute the proifle.. do we need it? not sure, but it let's keep it for now 
  */
 
 #include <vector>
@@ -41,9 +40,9 @@
 
 using namespace std;
 
-namespace smc_profile {
+namespace soil_moisture_profile {
   
-  class SMCProfile{
+  class SoilMoistureProfile{
   private:
     void InitializeArrays(void);
     
@@ -52,36 +51,31 @@ namespace smc_profile {
     double spacing[8];
     double origin[3];
 
-    // Model input/output variables
-    double soil_storage_m; // soil storage [m]
-    double soil_storage_change_per_timestep_m; // change in the soil storage per timestep [m]
-    //double water_table_depth_m; // depth to water table from the surface [m]
-    double water_table_thickness_m; // thickness of the water table from the bottom of the computational domain [m]
-    double *soil_moisture_profile; // soil moisture content vertical profile [-] (output) 
-    double *soil_moisture_layered; // layered-soil moisture content [-], input
+    double soil_storage;
+    double soil_storage_change_per_timestep;
+    double water_table_thickness;
+    double *soil_moisture_profile;
+    double *soil_moisture_layered;
 
-    // model static parameters from config file
-    double smcmax; //maximum soil moisture content (porosity)
-    double bb;  // pore size distribution [-], beta exponent in Clapp-Hornberger (1978)
-    double satpsi; // saturated capillary head (saturated moisture potential) [m]
-    int ncells; // number of cells of the discretized soil column
-    int nlayers; // numer of soil moisture layers
-    
-    double soil_depth; //depth of the column/domain
-    double last_layer_depth; // depth of the last layer (for non-conceptual reservior; LGAR)
-    double *soilZ; // soil discretization; 1D array of depths from the surface
-    double *layersZ; // depth of each layer from the surface
+    double smcmax;
+    double bb;
+    double satpsi;
+    int ncells;
+    int nlayers;
+    double soil_depth;
+    double last_layer_depth;
+    double *soil_z;
+    double *layers_z;
    
-    std::string soil_storage_model; // models : conceptual or layered 
-    std::string soil_moisture_profile_option; // valid for layered model only; linear or constant
-    int soil_moisture_profile_option_bmi; // option provided as an output if needed by other models that which model was used to compute the proifle.. do we need it? not sure, but it let's keep it for now 
+    std::string soil_storage_model;
+    std::string soil_moisture_profile_option;
+    int soil_moisture_profile_option_bmi;
 
-    std::vector<std::string>* input_var_names_model; // we have different models and their inputs are different; this is to ensure that bmi inputs are consistent with the model inputs; need for ngen framework
-
-    bool init_profile; //flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
+    std::vector<std::string>* input_var_names_model;
+    bool init_profile; 
     
-    SMCProfile();
-    SMCProfile(std::string config_file);
+    SoilMoistureProfile();
+    SoilMoistureProfile(std::string config_file);
 
     // initialize
     void InitFromConfigFile(std::string config_file);
@@ -101,7 +95,7 @@ namespace smc_profile {
     // input variable names for soil reservoir model
     std::vector<std::string>* InputVarNamesModel();
     
-    ~SMCProfile();
+    ~SoilMoistureProfile();
     
   };
 

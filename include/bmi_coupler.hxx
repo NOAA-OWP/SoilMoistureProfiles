@@ -79,7 +79,7 @@ class BmiCoupler : public bmixx::Bmi {
     void GetGridFaceNodes(const int grid, int *face_nodes);
     void GetGridNodesPerFace(const int grid, int *nodes_per_face);
   private:
-    smc_profile::SMCProfile* _model;
+    soil_moisture_profile::SoilMoistureProfile* _model;
     static const int input_var_name_count = 3;
     static const int output_var_name_count = 2;
 

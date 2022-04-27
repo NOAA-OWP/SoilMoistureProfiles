@@ -16,14 +16,13 @@ void BmiCoupler::
 Initialize (std::string config_file)
 {
   if (config_file.compare("") != 0 )
-    this->_model = new smc_profile::SMCProfile(config_file);
+    this->_model = new soil_moisture_profile::SoilMoistureProfile(config_file);
 }
 
 
 void BmiCoupler::
 Update()
 {
-  //this->_model->SoilMoistureProfileVertical();
   if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
     _model->SoilMoistureProfileFromConceptualReservoir();
   }
@@ -62,7 +61,7 @@ void BmiCoupler::
 Finalize()
 {
   if (this->_model)
-    this->_model->~SMCProfile();
+    this->_model->~SoilMoistureProfile();
 }
 
 
@@ -296,11 +295,11 @@ void *BmiCoupler::
 GetValuePtr (std::string name)
 {
   if (name.compare("soil_storage") == 0)
-    return (void*)(&this->_model->soil_storage_m);
+    return (void*)(&this->_model->soil_storage);
   else if (name.compare("soil_storage_change") == 0)
-    return (void*)(&this->_model->soil_storage_change_per_timestep_m);
+    return (void*)(&this->_model->soil_storage_change_per_timestep);
   else  if (name.compare("soil_water_table_thickness") == 0)
-    return (void*)(&this->_model->water_table_thickness_m);
+    return (void*)(&this->_model->water_table_thickness);
   else if (name.compare("soil_moisture_profile") == 0)
     return (void*)this->_model->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)
