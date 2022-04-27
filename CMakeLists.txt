@@ -22,16 +22,16 @@ set(SMP_LIB_DESC_CMAKE "OWP SMP BMI Module Shared Library")
 add_compile_definitions(BMI_ACTIVE)
 
 if(WIN32)
-    add_library(smpbmi src/bmi_coupler.cxx src/soil_moisture_profile.cxx)
+    add_library(smpbmi src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
 else()
-    add_library(smpbmi SHARED src/bmi_coupler.cxx src/soil_moisture_profile.cxx)
+    add_library(smpbmi SHARED src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
 endif()
 
 target_include_directories(smpbmi PRIVATE include)
 
 set_target_properties(smpbmi PROPERTIES VERSION ${PROJECT_VERSION})
 
-set_target_properties(smpbmi PROPERTIES PUBLIC_HEADER ./include/bmi_coupler.hxx)
+set_target_properties(smpbmi PROPERTIES PUBLIC_HEADER ./include/bmi_soil_moisture_profile.hxx)
 
 # Code requires minimum of C99 standard to compile
 set_target_properties(smpbmi PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON)
