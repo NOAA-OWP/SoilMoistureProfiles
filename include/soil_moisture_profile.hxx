@@ -7,6 +7,29 @@
   inputs: soil_storage, soil_storage_change_per_timestep, and soil moisture per layer when layered model is used
   output: vertical soil moisture profile for the given vertical discretization in the config file
   
+  NOTE: For detailed model description please see README.md on github page
+  
+  @param soil_storage_m // soil storage [m]
+  @param soil_storage_change_per_timestep_m // change in the soil storage per timestep [m]
+  @param water_table_thickness_m // thickness of the water table from the bottom of the computational domain [m]
+  @param soil_moisture_profile; // soil moisture content vertical profile [-] (output) 
+  @param soil_moisture_layered; // layered-soil moisture content [-], input
+
+  @param smcmax; //maximum soil moisture content (porosity)
+  @param bb;  // pore size distribution [-], beta exponent in Clapp-Hornberger (1978)
+  @param satpsi; // saturated capillary head (saturated moisture potential) [m]
+  @param ncells; // number of cells of the discretized soil column
+  @param nlayers; // numer of soil moisture layers
+  @param soil_depth; //depth of the column/domain
+  @param last_layer_depth; // depth of the last layer (for non-conceptual reservior; LGAR)
+  @param soilZ; // soil discretization; 1D array of depths from the surface
+  @param layersZ; // depth of each layer from the surface
+  @param soil_storage_model; // models : conceptual or layered 
+  @param soil_moisture_profile_option; // valid for layered model only; linear or constant
+  @param soil_moisture_profile_option_bmi; // option provided as an output if needed by other models that which model was used to compute the proifle.. do we need it? not sure, but it let's keep it for now 
+  @param input_var_names_model; // we have different models and their inputs are different; this is to ensure that bmi inputs are consistent with the model inputs; need for ngen framework
+
+    bool init_profile; //flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
  */
 
 #include <vector>
