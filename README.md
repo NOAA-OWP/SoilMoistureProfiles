@@ -8,22 +8,25 @@
    
   ![smp_schematic](https://user-images.githubusercontent.com/15165757/164322224-479477d7-2275-4ce3-a00b-9270cc0d3201.png)
   
- ### Layered soil reservior
+  ### Layered soil reservior
  For layered soil reserviors, the two options include 
   * constant by layer, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
   * linearly interpolated profile between consecutive layers, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
-  
-### Standalone run:
- * run [make_bmi_coupler.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_bmi_coupler.sh) to get the executable (e.g., run_bmi_coupler)
- * run `./run_bmi_coupler config/config_conceptual.txt`
+ 
+ #### Standalone run:
+  * run [make_bmi_smp.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_bmi_smp.sh) to get the executable (e.g., run_bmi_smp)
+  * run `./run_bmi_smp config/config_<conceptual/layered>.txt`
 
-### Coupled mode (ngen and pseudo frameworks):
- * Coupling SoilMoistureProfiles to any module (for instance, CFE or SFT) **must** follow these [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw) for building and running. **Note separate instructions are provided for building/running in the ngen framework on the SoilFreezeThaw repo.**
- * Follow this example: [couple SMP with SFT](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/src/main_cfe_aorc_pet_ftm.cxx)
+ #### Coupled mode (ngen and pseudo frameworks):
+  * Coupling SoilMoistureProfiles to any module (for instance, CFE or SFT) **must** follow these [instructions](https://github.com/NOAA- OWP/SoilFreezeThaw) for building and running. **Note separate instructions are provided for building/running in the ngen framework on the  SoilFreezeThaw repo.**
+  * Follow this example: [couple SMP with SFT](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/src/main_cfe_aorc_pet_ftm.cxx)
+
+ 
+ 
 
 ## Parameters in the config file
 * `smcmax` (porosity; maximum moisture content), `b`, `satpsi` (saturated matric potential) are needed for the soil moisture characteristic function
-* `Z` is the soil layer thickness (for instance, if SMP is coupled with SFT then this `Z` is the vertical resolution of the SFT model)
+* `soil_z` is the soil layer thickness (for instance, if SMP is coupled with SFT then this `soil_z` is the vertical resolution of the SFT model)
 * `soil_storage_model` = `conceptual` if conceptual model(e.g., CFE) or `layered` if layered based soil moisture model is used (e.g., LGAR)
 * if `soil_storage_model` = `layered`, then set `soil_moisture_profile_option` = `constant` for layered-constant profile or `linear`  for linearly interpolated profile between layers
 
