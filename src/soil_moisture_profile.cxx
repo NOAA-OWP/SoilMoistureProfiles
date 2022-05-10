@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include "../include/soil_moisture_profile.hxx"
 
+enum {Conceptual=1, Layered=2};
 
 soil_moisture_profile::SoilMoistureProfile::
 SoilMoistureProfile()
@@ -23,7 +24,7 @@ SoilMoistureProfile()
   this->origin[0] = 0.;
   this->origin[1] = 0.;
   this->soil_depth =0.0;
-  this->soil_storage_model= "";
+  this->soil_storage_model= 1;
   this->ncells=0;
   this->init_profile = true;
 }
@@ -77,19 +78,30 @@ InitFromConfigFile(std::string config_file)
   bool is_bb_set = false;
   bool is_satpsi_set = false;
   bool is_soil_storage_model_set = false;
-  bool is_soil_moisture_profile_option_set = false; // option for linear or piece-wise constant layered profile
+  bool is_soil_moisture_layered_option_set = false; // option for linear or piece-wise constant layered profile
   
   while (fp) {
 
-    std::string key;
-    std::getline(fp, key);
+    std::string line;
+    std::string param_key, param_value, param_unit;
     
-    int loc = key.find("=");
-    std::string key_sub = key.substr(0,loc);
+    std::getline(fp, line);
+   
+    int loc_eq = line.find("=") + 1;
+    int loc_u = line.find("[");
+    param_key = line.substr(0,line.find("="));
+
+    bool is_unit = line.find("[") != std::string::npos;
+
+    if (is_unit)
+      param_unit = line.substr(loc_u,line.find("]")+1);
+    else
+      param_unit = "";
+
+    param_value = line.substr(loc_eq,loc_u - loc_eq);
     
-    if (key_sub == "soil_z") {
-      std::string tmp_key = key.substr(loc+1,key.length());
-      std::vector<double> vec = ReadVectorData(tmp_key);
+    if (param_key == "soil_z") {
+      std::vector<double> vec = ReadVectorData(param_value);
       
       this->soil_z = new double[vec.size()];
       
@@ -101,10 +113,8 @@ InitFromConfigFile(std::string config_file)
       is_soil_z_set = true;
       continue;
     }
-    else if (key_sub == "soil_layers_z") {
-      std::string tmp_key = key.substr(loc+1,key.length());
-      std::vector<double> vec = ReadVectorData(tmp_key);
-      
+    else if (param_key == "soil_layers_z") {
+      std::vector<double> vec = ReadVectorData(param_value);
       this->layers_z = new double[vec.size()];
       
       for (unsigned int i=0; i < vec.size(); i++)
@@ -115,33 +125,38 @@ InitFromConfigFile(std::string config_file)
       is_layers_z_set = true;
       continue;
     }
-    else if (key_sub == "soil_params.smcmax") {
-      this->smcmax = std::stod(key.substr(loc+1,key.length()));
+    else if (param_key == "soil_params.smcmax") {
+      this->smcmax = std::stod(param_value);
       is_smcmax_set = true;
       continue;
     }
-    else if (key_sub == "soil_params.b") {
-      this->bb = std::stod(key.substr(loc+1,key.length()));
+    else if (param_key == "soil_params.b") {
+      this->bb = std::stod(param_value);
       assert (this->bb > 0);
       is_bb_set = true;
       continue;
     }
-    else if (key_sub == "soil_params.satpsi") {
-      this->satpsi = std::stod(key.substr(loc+1,key.length()));
+    else if (param_key == "soil_params.satpsi") {
+      this->satpsi = std::stod(param_value);
       is_satpsi_set = true;
       continue;
     }
-    else if (key_sub == "soil_storage_model") {
-      this->soil_storage_model = key.substr(loc+1,key.length());
+    else if (param_key == "soil_storage_model") {
+      if ( param_value == "Conceptual" || param_value == "conceptual")
+	this->soil_storage_model = Conceptual;
+      else if (param_value == "layered" || param_value == "Layered") 
+	this->soil_storage_model = Layered;
+
       is_soil_storage_model_set = true;
       continue;
     }
-    else if (key_sub == "soil_moisture_profile_option") {  //Soil moisture profile option
-      this->soil_moisture_profile_option = key.substr(loc+1,key.length());
-      is_soil_moisture_profile_option_set = true;
+    else if (param_key == "soil_moisture_layered_option") {  //Soil moisture profile option
+      this->soil_moisture_layered_option = stod(param_value);
+      is_soil_moisture_layered_option_set = true;
       continue;
     }
   }
+  
   fp.close();
   
   if (!is_soil_z_set) {
@@ -151,7 +166,7 @@ InitFromConfigFile(std::string config_file)
   }
 
   if (!is_layers_z_set) {
-    if (this->soil_storage_model == "layered" || this->soil_storage_model == "Layered") {
+    if (this->soil_storage_model == Layered) {
       std::stringstream errMsg;
       errMsg << "layers_z not set in the config file "<< config_file << "\n";
       throw std::runtime_error(errMsg.str());
@@ -178,15 +193,13 @@ InitFromConfigFile(std::string config_file)
   
   if(is_soil_storage_model_set) {
     
-    if (this->soil_storage_model == "conceptual" || this->soil_storage_model == "Conceptual") {
+    if (this->soil_storage_model == Conceptual) {
       input_var_names_model = new std::vector<std::string>;
       input_var_names_model->push_back("soil_storage");
       input_var_names_model->push_back("soil_storage_change");
-      this->soil_moisture_profile_option_bmi = 1;
-
     }
-    else if (this->soil_storage_model == "layered" || this->soil_storage_model == "Layered") {
-      if (!is_soil_moisture_profile_option_set) {
+    else if (this->soil_storage_model == Layered) {
+      if (!is_soil_moisture_layered_option_set) {
 	std::stringstream errMsg;
 	errMsg << "soil moisture profile option not set in the config file "<< config_file << "\n";
 	throw std::runtime_error(errMsg.str());
@@ -196,9 +209,6 @@ InitFromConfigFile(std::string config_file)
       input_var_names_model->push_back("soil_storage");
       input_var_names_model->push_back("soil_storage_change");
       input_var_names_model->push_back("soil_moisture_layered");
-
-      this->soil_moisture_profile_option_bmi = 2;
-      
     }
   }
   
@@ -256,6 +266,23 @@ ReadVectorData(std::string key)
   return value;
 }
 
+
+void soil_moisture_profile::SoilMoistureProfile::
+SoilMoistureProfileUpdate()
+{
+  if (this->soil_storage_model == Conceptual) {
+    this->SoilMoistureProfileFromConceptualReservoir();
+  }
+  else if (this->soil_storage_model == Layered) {
+    this->SoilMoistureProfileFromLayeredReservoir();
+  }
+  else {
+    std::stringstream errMsg;
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << this->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    throw std::runtime_error(errMsg.str());
+  }
+
+}
 /*
   Computes 1D soil moisture profile for conceptual reservoir using Newton-Raphson iterative method
   For detailed decription of the model implemented here, please see README.md on the github repo
@@ -421,7 +448,7 @@ SoilMoistureProfileFromLayeredReservoir()
   double delta = 0.0;
 
   // piece-wise constant (vertically)
-  if (this->soil_moisture_profile_option == "constant" || this->soil_moisture_profile_option == "Constant") {
+  if (this->soil_moisture_layered_option == "constant" || this->soil_moisture_layered_option == "Constant") {
     bool layers_flag=true;
     
     // loop over all the cells in the discretized column
@@ -468,7 +495,7 @@ SoilMoistureProfileFromLayeredReservoir()
     }
     
   }
-  else if (this->soil_moisture_profile_option == "linear" || this->soil_moisture_profile_option == "Linear") {
+  else if (this->soil_moisture_layered_option == "linear" || this->soil_moisture_layered_option == "Linear") {
     
     bool layers_flag=true;
     double t_v=0.0;

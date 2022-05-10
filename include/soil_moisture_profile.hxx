@@ -27,8 +27,7 @@
   @param input_var_names_model     [-] : we have different models and their inputs are different; this is to ensure that bmi inputs are consistent with the model inputs, need for ngen framework
   @param init_profile              [-] : flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
   @param soil_storage_change_per_timestep  [m] : change in the soil storage per timestep
-  @param soil_moisture_profile_option      [-] : valid for layered model only; linear or constant
-  @param soil_moisture_profile_option_bmi  [-] : option provided as an output if needed by other models that which model was used to compute the proifle.. do we need it? not sure, but it let's keep it for now 
+  @param soil_moisture_layered_option      [-] : valid for layered model only; linear or constant
  */
 
 #include <vector>
@@ -67,9 +66,8 @@ namespace soil_moisture_profile {
     double *soil_z;
     double *layers_z;
    
-    std::string soil_storage_model;
-    std::string soil_moisture_profile_option;
-    int soil_moisture_profile_option_bmi;
+    int soil_storage_model;
+    std::string soil_moisture_layered_option;
 
     std::vector<std::string>* input_var_names_model;
     bool init_profile; 
@@ -92,6 +90,9 @@ namespace soil_moisture_profile {
     // computes linearly interpolated values for layered-reservoir with option = linear
     double LinearInterpolation(double z1, double z2, double t1, double t2, double z);
 
+    // update the profile for the current timestep
+    void SoilMoistureProfileUpdate();
+    
     // input variable names for soil reservoir model
     std::vector<std::string>* InputVarNamesModel();
     

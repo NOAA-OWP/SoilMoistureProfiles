@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     std::string var_name_wt = "soil_water_table";
     std::string var_name_smc = "soil_moisture_profile";
     std::string var_name_smcl = "soil_moisture_layered";
-    std::string var_name_smc_bmi = "soil_moisture_profile_option_bmi";
+    std::string var_name_smc_bmi = "soil_storage_model";
     
     int grid, rank, *shape;
     double *var_s = NULL;
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
     double water_table_thickness = 0.490438; // in meters
     enum option { Conceptual = 1, Layered = 2};
     /****************************************************************************/
-    
     // Set values
     double storage_m = 0.8; //0.526328;
     double storage_change_m = -0.000472;
@@ -77,11 +76,10 @@ int main(int argc, char *argv[])
     double *storage_change_m_ptr = &storage_change_m;
     double smc_layers[] = {0.25, 0.15, 0.1, 0.12};
 
-    
     int soil_moisture_profile_option;
 
     model.GetValue(var_name_smc_bmi,&soil_moisture_profile_option);
-	
+
     model.SetValue(var_name_s,storage_m_ptr);
 
     model.SetValue(var_name_sc,storage_change_m_ptr);
@@ -91,7 +89,7 @@ int main(int argc, char *argv[])
     var_s = (double *)model.GetValuePtr(var_name_s);
     var_sc = (double *)model.GetValuePtr(var_name_sc);
 
-    std::cout<<"soil_moisture_profile_option: "<<soil_moisture_profile_option<<"\n";
+    std::cout<<"soil_storage_model: "<<soil_moisture_profile_option<<"\n";
     std::cout<<"storage: "<<*var_s<<"\n";
     std::cout<<"storage change: "<<*var_sc<<"\n";
     

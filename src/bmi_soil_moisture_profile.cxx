@@ -24,24 +24,15 @@ Initialize (std::string config_file)
 void BmiSoilMoistureProfile::
 Update()
 {
-  if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
-    _model->SoilMoistureProfileFromConceptualReservoir();
-  }
-  else if (_model->soil_storage_model == "layered" || _model->soil_storage_model == "Layered") {
-    _model->SoilMoistureProfileFromLayeredReservoir();
-  }
-  else {
-    std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
-    throw std::runtime_error(errMsg.str());
-
-  }
+  _model->SoilMoistureProfileUpdate();
 }
 
 
 void BmiSoilMoistureProfile::
 UpdateUntil(double t)
 {
+  _model->SoilMoistureProfileUpdate();
+  /*
   if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
     _model->SoilMoistureProfileFromConceptualReservoir();
   }
@@ -53,7 +44,7 @@ UpdateUntil(double t)
     errMsg << "Soil moisture profile OPTION provided in the config file is " << _model->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
     throw std::runtime_error(errMsg.str());
     
-  }
+    }*/
   //  this->_model->SoilMoistureProfileVertical();
 }
 
@@ -69,7 +60,7 @@ Finalize()
 int BmiSoilMoistureProfile::
 GetVarGrid(std::string name)
 {
-  if (name.compare("soil_moisture_profile_option_bmi") == 0)   // int
+  if (name.compare("soil_storage_model") == 0)   // int
     return 0;
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
     return 1; 
@@ -83,7 +74,7 @@ GetVarGrid(std::string name)
 std::string BmiSoilMoistureProfile::
 GetVarType(std::string name)
 {
-  if (name.compare("soil_moisture_profile_option_bmi") == 0)
+  if (name.compare("soil_storage_model") == 0)
     return "int";
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return "double";
@@ -97,7 +88,7 @@ GetVarType(std::string name)
 int BmiSoilMoistureProfile::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("soil_moisture_profile_option_bmi") == 0)
+  if (name.compare("soil_storage_model") == 0)
     return sizeof(int);
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return sizeof(double);
@@ -304,8 +295,8 @@ GetValuePtr (std::string name)
     return (void*)this->_model->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)
     return (void*)this->_model->soil_moisture_layered;
-  else if (name.compare("soil_moisture_profile_option_bmi") == 0)
-    return (void*)(&this->_model->soil_moisture_profile_option_bmi);
+  else if (name.compare("soil_storage_model") == 0)
+    return (void*)(&this->_model->soil_storage_model);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
