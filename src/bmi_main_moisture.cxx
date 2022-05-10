@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   {
     std::string var_name_s = "soil_storage";
     std::string var_name_sc = "soil_storage_change";
-    std::string var_name_wt = "soil_water_table_thickness";
+    std::string var_name_wt = "soil_water_table";
     std::string var_name_smc = "soil_moisture_profile";
     std::string var_name_smcl = "soil_moisture_layered";
     std::string var_name_smc_bmi = "soil_moisture_profile_option_bmi";
