@@ -28,6 +28,7 @@
   @param init_profile              [-] : flag for setting up initial soil moisture profile, as initially change in soil_storage is zero so we want to make sure the profile is computed at time t=0
   @param soil_storage_change_per_timestep  [m] : change in the soil storage per timestep
   @param soil_moisture_layered_option      [-] : valid for layered model only; linear or constant
+  @param soil_storage_model_depth          [m] : depth of the soil storage reservoir
  */
 
 #include <vector>
@@ -67,6 +68,7 @@ namespace soil_moisture_profile {
     double *layers_z;
    
     int soil_storage_model;
+    double soil_storage_model_depth;
     std::string soil_moisture_layered_option;
 
     std::vector<std::string>* input_var_names_model;
