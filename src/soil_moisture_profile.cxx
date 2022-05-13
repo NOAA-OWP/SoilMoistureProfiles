@@ -392,7 +392,13 @@ SoilMoistureProfileFromConceptualReservoir()
 
       z0 = zi >= 0.0 ? zb : zi - satpsi_cm;
       
-      //std::cout<<"water table: "<<count<<" "<<zi <<" "<<fis<<" "<<fib<<" "<<f<<" "<<dfis<<" "<<dfib<<" "<<df_dzi<<": "<<diff<<" "<<std::fabs(diff)<<" "<<tol<<"\n";	
+      //std::cout<<"water table: "<<count<<" "<<zi <<" "<<fis<<" "<<fib<<" "<<f<<" "<<dfis<<" "<<dfib<<" "<<df_dzi<<": "<<diff<<" "<<std::fabs(diff)<<" "<<tol<<"\n";
+
+      double zi_m = zi/100.; // zi in meters
+      // if the water gets below 1000 m, that would mean the soil is super dry and the algorithm may fail to converge in reasonable number of timesteps
+      if (zi_m < -1000)
+	break;
+      
     } while (fabs(diff) > tol);
 
     // water table thickness can be negative and that would be depth of the water table below the depth of the computational domain; probably a better name would be water_table_location
