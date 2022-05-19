@@ -329,7 +329,7 @@ SoilMoistureProfileFromConceptualReservoir()
   double zi = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
   double soil_storage_max = model_depth * this->smcmax;
   
-  double soil_storage_change_per_timestep_cm = soil_storage_change_per_timestep * 100.0;
+  double soil_storage_change_per_timestep_cm = fabs(soil_storage_change_per_timestep * 100.0);
   double soil_storage_current_timestep_cm = 100.0 * this->soil_storage;  /* storage at the current timestep */
 
   double lam = 1.0/this->bb;
