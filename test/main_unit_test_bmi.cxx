@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   std::cout<<"\n**************** TEST VALUES ************************************\n";
   int nz = 4;
   bool test_status = true;
-  int num_input_vars = 2;
+  int num_input_vars = 3;
   int num_output_vars = 2;
   int nbytes_input[] = {sizeof(double), sizeof(double), int(nz * sizeof(double))};
   int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double)};
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     if (VERBOSITY)
       std::cout<<" nbytes: "<< nbytes <<"\n";
 
-    if (var_name == "soil_storage" || var_name == "soil_storage_change") {
+    if (var_name == "soil_storage" || var_name == "soil_storage_change" || var_name == "soil_moisture_layered") {
       if (nbytes == nbytes_input[i])
 	test_status &= true;
       else {
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
     }
     else {
       std::stringstream errMsg;
-      errMsg << "Variable name"<< var_name<<" should be: soil_moisture_profile or ground_temperature \n";
+      errMsg << "Input variable name"<< var_name<<" should be: soil_storage or soil_storage_change or soil_moisture_layered \n";
       throw std::runtime_error(errMsg.str());
 
     }

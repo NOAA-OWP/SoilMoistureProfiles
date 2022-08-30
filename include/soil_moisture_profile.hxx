@@ -41,7 +41,55 @@
 using namespace std;
 
 namespace soil_moisture_profile {
+
+  typedef struct {
+    int shape[3];
+    double spacing[8];
+    double origin[3];
+
+    double soil_storage;
+    double soil_storage_change_per_timestep;
+    double water_table_thickness;
+    double *soil_moisture_profile;
+    double *soil_moisture_layered;
+
+    double smcmax;
+    double bb;
+    double satpsi;
+    int ncells;
+    int nlayers;
+    double soil_depth;
+    double last_layer_depth;
+    double *soil_z;
+    double *layers_z;
+   
+    int soil_storage_model;
+    double soil_storage_model_depth;
+    std::string soil_moisture_layered_option;
+
+    //std::vector<std::string>* input_var_names_model;
+    bool init_profile; 
+  }smp_parameters;
+
+
+  void SoilMoistureProfile(std::string config_file, smp_parameters* parameters);
+
+  void InitializeArrays(smp_parameters* parameters);
+  void InitFromConfigFile(std::string config_file, smp_parameters* parameters);
+
+  // reading 1D array from the config file
+  std::vector<double> ReadVectorData(std::string key);
+
+  // computes soil moisture profile for conceptual reservoir
+  //void SoilMoistureProfileFromConceptualReservoir();
+
+  // update the profile for the current timestep
+  void SoilMoistureProfileUpdate(smp_parameters* parameters);
+
+  // computes soil moisture profile for conceptual reservoir
+  void SoilMoistureProfileFromConceptualReservoir(smp_parameters* parameters);
   
+  /* 
   class SoilMoistureProfile{
   private:
     void InitializeArrays(void);
@@ -101,7 +149,7 @@ namespace soil_moisture_profile {
     ~SoilMoistureProfile();
     
   };
-
+*/
 };
 
 #endif
