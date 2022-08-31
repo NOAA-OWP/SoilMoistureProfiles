@@ -12,23 +12,8 @@
 enum {Conceptual=1, Layered=2};
 enum {Constant=1, Linear=2};
 
-/*
-soil_moisture_profile::SoilMoistureProfile::
-SoilMoistureProfile()
-{
-  this->shape[0] = 1;
-  this->shape[1] = 1;
-  this->shape[2] = 1;
-  this->spacing[0] = 1.;
-  this->spacing[1] = 1.;
-  this->origin[0] = 0.;
-  this->origin[1] = 0.;
-  this->soil_depth =0.0;
-  this->soil_storage_model= 1;
-  this->ncells=0;
-  this->init_profile = true;
-}
-*/
+// soil_moisture_profile is the namespacing
+
 void soil_moisture_profile::
 SoilMoistureProfile(string config_file, smp_parameters* parameters)
 {
@@ -209,82 +194,9 @@ InitFromConfigFile(string config_file, smp_parameters* parameters)
     throw runtime_error(errMsg.str());
   }
 
-  /*
-  if(is_soil_storage_model_set) {
-    
-    if (this->soil_storage_model == Conceptual) {
-      input_var_names_model = new vector<string>;
-      input_var_names_model->push_back("soil_storage");
-      input_var_names_model->push_back("soil_storage_change");
-    }
-    else if (this->soil_storage_model == Layered) {
-      if (!is_soil_moisture_layered_option_set) {
-	stringstream errMsg;
-	errMsg << "soil moisture profile option not set in the config file "<< config_file << "\n";
-	throw runtime_error(errMsg.str());
-      }
-      
-      input_var_names_model = new vector<string>;
-      input_var_names_model->push_back("soil_storage");
-      input_var_names_model->push_back("soil_storage_change");
-      input_var_names_model->push_back("soil_moisture_layered");
-    }
-  }
-  */
   // check if the size of the input data is consistent
   assert (parameters->ncells > 0);
   
-}
-
-/*
-returns dynamically allocated 1D vector of strings that contains correct input variable names based on the model (conceptual or layered) chosen
-*/
-/*
-vector<string>* soil_moisture_profile::SoilMoistureProfile::
-InputVarNamesModel()
-{
-  return input_var_names_model;
-}
-*/
-/*
-Reads 1D data from the config file
-- used for reading soil discretization (1D)
-- used for reading layers depth from the surface if model `layered` is chosen
-*/
-
-vector<double> soil_moisture_profile::
-ReadVectorData(string key)
-{
-  int pos =0;
-  string delimiter = ",";
-  vector<double> value(0.0);
-  string z1 = key;
-  
-  if (z1.find(delimiter) == string::npos) {
-    double v = stod(z1);
-    if (v == 0.0) {
-      stringstream errMsg;
-      errMsg << "soil_z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
-      throw runtime_error(errMsg.str());
-    }
-    
-    value.push_back(v);
-    
-  }
-  else {
-    while (z1.find(delimiter) != string::npos) {
-      pos = z1.find(delimiter);
-      string z_v = z1.substr(0, pos);
-
-      value.push_back(stod(z_v.c_str()));
-      
-      z1.erase(0, pos + delimiter.length());
-      if (z1.find(delimiter) == string::npos)
-	value.push_back(stod(z1));
-    }
-  }
-  
-  return value;
 }
 
 
@@ -295,7 +207,7 @@ SoilMoistureProfileUpdate(smp_parameters* parameters)
     SoilMoistureProfileFromConceptualReservoir(parameters);
   }
   else if (parameters->soil_storage_model == Layered) {
-    //SoilMoistureProfileFromLayeredReservoir();
+    SoilMoistureProfileFromLayeredReservoir();
   }
   else {
     stringstream errMsg;
@@ -467,8 +379,6 @@ void soil_moisture_profile::
 SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
 {
   double lam=1.0/parameters->bb; // pore distribution index
-
-  //double water_table_thickness = this->soil_depth - this->satpsi - this->water_table_thickness_m; // water table depth at the current timestep -- this is not needed??
   
   vector<double> z_layers_n(1,0.0);
   
@@ -509,19 +419,10 @@ SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
 	}
 	
 	double theta1 = parameters->soil_moisture_layered[parameters->nlayers-1] +  theta;
-	/*
-	double theta2 = min(parameters->smcmax, theta1);
-	this->soil_moisture_profile[i] = soil_z[i] <  water_table_thickness ? theta2 : parameters->smcmax;
-	*/
 	
 	parameters->soil_moisture_profile[i] = fmin(parameters->smcmax, theta1);
 
 
-	/*
-	if (soil_z[i] < soil_depth - this->satpsi - this->water_table_depth_m)
-	  this->soil_moisture_profile[i] = theta2;
-	else
-	this->soil_moisture_profile[i] = this->smcmax; */
       }
       
     }
@@ -555,11 +456,7 @@ SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
 	  layers_flag = false;
 	}
 	
-	double theta1 = parameters->soil_moisture_layered[parameters->nlayers-1] +  theta;
-	/*
-	double theta2 = min(this->smcmax, theta1);
-	parameters->soil_moisture_profile[i] = parameters->soil_z[i] <  water_table_thickness ? theta2 : parameters->smcmax;
-	*/
+	double theta1 = parameters->soil_moisture_layered[parameters->nlayers-1] + theta;
 
 	parameters->soil_moisture_profile[i] = fmin(parameters->smcmax, theta1);
 	
@@ -591,11 +488,66 @@ SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
 double soil_moisture_profile::
 LinearInterpolation(double z1, double z2, double t1, double t2, double z)
 {
-
   double m = (t2 - t1) / (z2 - z1);
   return t1 + m * (z - z1);
-
 }
+
+
+/*
+Reads 1D data from the config file
+- used for reading soil discretization (1D)
+- used for reading layers depth from the surface if model `layered` is chosen
+*/
+
+vector<double> soil_moisture_profile::
+ReadVectorData(string key)
+{
+  int pos =0;
+  string delimiter = ",";
+  vector<double> value(0.0);
+  string z1 = key;
+  
+  if (z1.find(delimiter) == string::npos) {
+    double v = stod(z1);
+    if (v == 0.0) {
+      stringstream errMsg;
+      errMsg << "soil_z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
+      throw runtime_error(errMsg.str());
+    }
+    
+    value.push_back(v);
+    
+  }
+  else {
+    while (z1.find(delimiter) != string::npos) {
+      pos = z1.find(delimiter);
+      string z_v = z1.substr(0, pos);
+
+      value.push_back(stod(z_v.c_str()));
+      
+      z1.erase(0, pos + delimiter.length());
+      if (z1.find(delimiter) == string::npos)
+	value.push_back(stod(z1));
+    }
+  }
+  
+  return value;
+}
+
+
+
+/*
+returns dynamically allocated 1D vector of strings that contains correct input variable names based on the model (conceptual or layered) chosen
+*/
+/*
+vector<string>* soil_moisture_profile::SoilMoistureProfile::
+InputVarNamesModel()
+{
+  return input_var_names_model;
+}
+*/
+
+
 /*
 soil_moisture_profile::SoilMoistureProfile::
 ~SoilMoistureProfile()
