@@ -16,44 +16,47 @@
 void BmiSoilMoistureProfile::
 Initialize (std::string config_file)
 {
-  if (config_file.compare("") != 0 )
-    this->_model = new soil_moisture_profile::SoilMoistureProfile(config_file);
+  if (config_file.compare("") != 0 ) {
+    this->model = new soil_moisture_profile::smp_parameters;
+    soil_moisture_profile::SoilMoistureProfile(config_file, model);
+  }
 }
 
 
 void BmiSoilMoistureProfile::
 Update()
 {
-  _model->SoilMoistureProfileUpdate();
+  //  model->SoilMoistureProfileUpdate();
+  SoilMoistureProfileUpdate(model);
 }
 
 
 void BmiSoilMoistureProfile::
 UpdateUntil(double t)
 {
-  _model->SoilMoistureProfileUpdate();
+  //model->SoilMoistureProfileUpdate();
   /*
-  if (_model->soil_storage_model == "conceptual" || _model->soil_storage_model == "Conceptual") {
-    _model->SoilMoistureProfileFromConceptualReservoir();
+  if (model->soil_storage_model == "conceptual" || model->soil_storage_model == "Conceptual") {
+    model->SoilMoistureProfileFromConceptualReservoir();
   }
-  else if (_model->soil_storage_model == "layered" || _model->soil_storage_model == "Layered") {
-    _model->SoilMoistureProfileFromLayeredReservoir();
+  else if (model->soil_storage_model == "layered" || model->soil_storage_model == "Layered") {
+    model->SoilMoistureProfileFromLayeredReservoir();
   }
   else {
     std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file is " << _model->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << model->soil_storagemodel<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
     throw std::runtime_error(errMsg.str());
     
     }*/
-  //  this->_model->SoilMoistureProfileVertical();
+  //  this->model->SoilMoistureProfileVertical();
 }
 
 
 void BmiSoilMoistureProfile::
 Finalize()
 {
-  if (this->_model)
-    this->_model->~SoilMoistureProfile();
+  // if (this->model)
+  //  this->model->~SoilMoistureProfile();
 }
 
 
@@ -139,7 +142,7 @@ void BmiSoilMoistureProfile::
 GetGridShape(const int grid, int *shape)
 {
   if (grid == 2) {
-    shape[0] = this->_model->shape[0];
+    shape[0] = this->model->shape[0];
   }
 }
 
@@ -148,7 +151,7 @@ void BmiSoilMoistureProfile::
 GetGridSpacing (const int grid, double * spacing)
 {
   if (grid == 0) {
-    spacing[0] = this->_model->spacing[0];
+    spacing[0] = this->model->spacing[0];
   }
 }
 
@@ -157,7 +160,7 @@ void BmiSoilMoistureProfile::
 GetGridOrigin (const int grid, double *origin)
 {
   if (grid == 0) {
-    origin[0] = this->_model->origin[0];
+    origin[0] = this->model->origin[0];
   }
 }
 
@@ -178,7 +181,7 @@ GetGridSize(const int grid)
   if (grid == 0 || grid == 1)
     return 1;
   else if (grid == 2)
-    return this->_model->shape[0];
+    return this->model->shape[0];
   else
     return -1;
 }
@@ -221,7 +224,7 @@ GetGridNodeCount(const int grid)
   throw coupler::NotImplemented();
   /*
   if (grid == 0)
-    return this->_model->shape[0];
+    return this->model->shape[0];
   else
     return -1;
   */
@@ -286,17 +289,17 @@ void *BmiSoilMoistureProfile::
 GetValuePtr (std::string name)
 {
   if (name.compare("soil_storage") == 0)
-    return (void*)(&this->_model->soil_storage);
+    return (void*)(&this->model->soil_storage);
   else if (name.compare("soil_storage_change") == 0)
-    return (void*)(&this->_model->soil_storage_change_per_timestep);
+    return (void*)(&this->model->soil_storage_change_per_timestep);
   else  if (name.compare("soil_water_table") == 0)
-    return (void*)(&this->_model->water_table_thickness);
+    return (void*)(&this->model->water_table_thickness);
   else if (name.compare("soil_moisture_profile") == 0)
-    return (void*)this->_model->soil_moisture_profile;
+    return (void*)this->model->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)
-    return (void*)this->_model->soil_moisture_layered;
+    return (void*)this->model->soil_moisture_layered;
   else if (name.compare("soil_storage_model") == 0)
-    return (void*)(&this->_model->soil_storage_model);
+    return (void*)(&this->model->soil_storage_model);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
@@ -377,12 +380,15 @@ GetComponentName()
 int BmiSoilMoistureProfile::
 GetInputItemCount()
 {
-  std::vector<std::string>* names_m = _model->InputVarNamesModel();
+  return this->input_var_name_count;
+
+  /* // this is for dynamically setting input vars
+  std::vector<std::string>* names_m = model->InputVarNamesModel();
   int input_var_name_count_m = names_m->size();
   
-  //return this->input_var_name_count;
   assert (this->input_var_name_count >= input_var_name_count_m);
   return input_var_name_count_m;
+ */
 }
 
 
@@ -397,16 +403,21 @@ std::vector<std::string> BmiSoilMoistureProfile::
 GetInputVarNames()
 {
   std::vector<std::string> names;
+  
+  for (int i=0; i<this->input_var_name_count; i++)
+    names.push_back(this->input_var_names[i]);
+  
+  return names;
 
-  std::vector<std::string>* names_m = _model->InputVarNamesModel();
+  /* // this is for dynamically setting input vars
+  std::vector<std::string>* names_m = model->InputVarNamesModel();
   
   for (int i=0; i<this->input_var_name_count; i++) {
     if (std::find(names_m->begin(), names_m->end(), this->input_var_names[i]) != names_m->end()) {
       names.push_back(this->input_var_names[i]);
     }
   }
-  
-  return names;
+  */
 }
 
 

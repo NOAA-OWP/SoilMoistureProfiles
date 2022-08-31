@@ -37,6 +37,7 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <stdexcept>
 
 using namespace std;
 
@@ -88,6 +89,12 @@ namespace soil_moisture_profile {
 
   // computes soil moisture profile for conceptual reservoir
   void SoilMoistureProfileFromConceptualReservoir(smp_parameters* parameters);
+
+  // computes soil moisture profile for layered-reservoir
+  void SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters);
+
+  // computes linearly interpolated values for layered-reservoir with option = linear
+  double LinearInterpolation(double z1, double z2, double t1, double t2, double z);
   
   /* 
   class SoilMoistureProfile{
