@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     
     model.GetValue(var_name_smc,&var_smc[0]);
       
-    if (soil_moisture_profile_option == Conceptual)
+    if (soil_moisture_profile_option == Conceptual) {
       std::cout<<"Referance value | Simulated value | Difference \n";
       for (int i=0; i < shape[0]; i++) {
 	std::cout<< left << setw(18) << var_smc[i]
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "%6.4e", var_smc[i]);
 	fprintf(fp, "\n");
       }
-    
+    }
   }
   
   fprintf(fp, "Finalizing... ");

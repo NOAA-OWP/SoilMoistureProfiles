@@ -66,7 +66,8 @@ namespace soil_moisture_profile {
    
     int soil_storage_model;
     double soil_storage_model_depth;
-    std::string soil_moisture_layered_option;
+    //std::string soil_moisture_layered_option;
+    int soil_moisture_layered_option;
 
     //std::vector<std::string>* input_var_names_model;
     bool init_profile; 

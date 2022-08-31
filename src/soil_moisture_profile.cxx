@@ -10,6 +10,8 @@
 #include "../include/soil_moisture_profile.hxx"
 
 enum {Conceptual=1, Layered=2};
+enum {Constant=1, Linear=2};
+
 /*
 soil_moisture_profile::SoilMoistureProfile::
 SoilMoistureProfile()
@@ -152,7 +154,10 @@ InitFromConfigFile(string config_file, smp_parameters* parameters)
       continue;
     }
     else if (param_key == "soil_moisture_layered_option") {  //Soil moisture profile option
-      parameters->soil_moisture_layered_option = stod(param_value);
+      if (param_value == "Constant" || param_value == "constant")
+	parameters->soil_moisture_layered_option = Constant;
+      else if (param_value == "Linear" || param_value == "linear")
+	parameters->soil_moisture_layered_option = Linear;
       is_soil_moisture_layered_option_set = true;
       continue;
     }
@@ -198,8 +203,7 @@ InitFromConfigFile(string config_file, smp_parameters* parameters)
     throw runtime_error(errMsg.str());
   }
 
-  if (!is_soil_storage_model_depth_set) {
-    abort();
+  if (!is_soil_storage_model_depth_set && parameters->soil_storage_model == Conceptual) {
     stringstream errMsg;
     errMsg << "soil_storage_model_depth not set in the config file "<< config_file << "\n";
     throw runtime_error(errMsg.str());
@@ -476,7 +480,7 @@ SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
   double delta = 0.0;
 
   // piece-wise constant (vertically)
-  if (parameters->soil_moisture_layered_option == "constant" || parameters->soil_moisture_layered_option == "Constant") {
+  if (parameters->soil_moisture_layered_option == Constant) {
     bool layers_flag=true;
     
     // loop over all the cells in the discretized column
@@ -523,7 +527,7 @@ SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
     }
     
   }
-  else if (parameters->soil_moisture_layered_option == "linear" || parameters->soil_moisture_layered_option == "Linear") {
+  else if (parameters->soil_moisture_layered_option == Linear ) {
     
     bool layers_flag=true;
     double t_v=0.0;
