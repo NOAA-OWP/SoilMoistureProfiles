@@ -207,7 +207,7 @@ SoilMoistureProfileUpdate(smp_parameters* parameters)
     SoilMoistureProfileFromConceptualReservoir(parameters);
   }
   else if (parameters->soil_storage_model == Layered) {
-    SoilMoistureProfileFromLayeredReservoir();
+    SoilMoistureProfileFromLayeredReservoir(parameters);
   }
   else {
     stringstream errMsg;
