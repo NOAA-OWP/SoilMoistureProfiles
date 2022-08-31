@@ -109,8 +109,11 @@ int main(int argc, char *argv[])
     model.GetValue(var_name_smc,&var_smc[0]);
       
     if (soil_moisture_profile_option == Conceptual)
+      std::cout<<"Referance value | Simulated value | Difference \n";
       for (int i=0; i < shape[0]; i++) {
-	std::cout<<"Main: "<<var_smc[i]<<" "<<SMCT[i]<<" "<<abs(var_smc[i] - SMCT[i])<<"\n";
+	std::cout<< left << setw(18) << var_smc[i]
+		 << setw(18) << SMCT[i]
+		 << setw(1) << abs(var_smc[i] - SMCT[i])<<"\n";
 	assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
 	fprintf(fp, "%6.4e", var_smc[i]);
 	fprintf(fp, "\n");
