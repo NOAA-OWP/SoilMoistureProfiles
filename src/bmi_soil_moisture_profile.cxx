@@ -17,7 +17,7 @@ void BmiSoilMoistureProfile::
 Initialize (std::string config_file)
 {
   if (config_file.compare("") != 0 ) {
-    this->model = new soil_moisture_profile::smp_parameters;
+    this->model = new soil_moisture_profile::soil_profile_parameters;
     soil_moisture_profile::SoilMoistureProfile(config_file, model);
   }
 }
@@ -26,7 +26,6 @@ Initialize (std::string config_file)
 void BmiSoilMoistureProfile::
 Update()
 {
-  //  model->SoilMoistureProfileUpdate();
   SoilMoistureProfileUpdate(model);
 }
 
@@ -34,21 +33,7 @@ Update()
 void BmiSoilMoistureProfile::
 UpdateUntil(double t)
 {
-  //model->SoilMoistureProfileUpdate();
-  /*
-  if (model->soil_storage_model == "conceptual" || model->soil_storage_model == "Conceptual") {
-    model->SoilMoistureProfileFromConceptualReservoir();
-  }
-  else if (model->soil_storage_model == "layered" || model->soil_storage_model == "Layered") {
-    model->SoilMoistureProfileFromLayeredReservoir();
-  }
-  else {
-    std::stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file is " << model->soil_storagemodel<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
-    throw std::runtime_error(errMsg.str());
-    
-    }*/
-  //  this->model->SoilMoistureProfileVertical();
+  SoilMoistureProfileUpdate(model);
 }
 
 
@@ -381,14 +366,6 @@ int BmiSoilMoistureProfile::
 GetInputItemCount()
 {
   return this->input_var_name_count;
-
-  /* // this is for dynamically setting input vars
-  std::vector<std::string>* names_m = model->InputVarNamesModel();
-  int input_var_name_count_m = names_m->size();
-  
-  assert (this->input_var_name_count >= input_var_name_count_m);
-  return input_var_name_count_m;
- */
 }
 
 
@@ -408,16 +385,6 @@ GetInputVarNames()
     names.push_back(this->input_var_names[i]);
   
   return names;
-
-  /* // this is for dynamically setting input vars
-  std::vector<std::string>* names_m = model->InputVarNamesModel();
-  
-  for (int i=0; i<this->input_var_name_count; i++) {
-    if (std::find(names_m->begin(), names_m->end(), this->input_var_names[i]) != names_m->end()) {
-      names.push_back(this->input_var_names[i]);
-    }
-  }
-  */
 }
 
 

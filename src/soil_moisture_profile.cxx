@@ -15,7 +15,7 @@ enum {Constant=1, Linear=2};
 // soil_moisture_profile is the namespacing
 
 void soil_moisture_profile::
-SoilMoistureProfile(string config_file, smp_parameters* parameters)
+SoilMoistureProfile(string config_file, struct soil_profile_parameters* parameters)
 {
   
   InitFromConfigFile(config_file, parameters);
@@ -31,7 +31,7 @@ SoilMoistureProfile(string config_file, smp_parameters* parameters)
 }
 
 void soil_moisture_profile::
-InitializeArrays(smp_parameters* parameters)
+InitializeArrays(struct soil_profile_parameters* parameters)
 {
   parameters->soil_moisture_profile = new double[parameters->ncells];
   parameters->soil_moisture_layered = new double[parameters->ncells];
@@ -54,7 +54,7 @@ Read and initialize values from configuration file
 
 
 void soil_moisture_profile::
-InitFromConfigFile(string config_file, smp_parameters* parameters)
+InitFromConfigFile(string config_file, struct soil_profile_parameters* parameters)
 { 
   ifstream fp;
   fp.open(config_file);
@@ -201,7 +201,7 @@ InitFromConfigFile(string config_file, smp_parameters* parameters)
 
 
 void soil_moisture_profile::
-SoilMoistureProfileUpdate(smp_parameters* parameters)
+SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
 {
   if (parameters->soil_storage_model == Conceptual) {
     SoilMoistureProfileFromConceptualReservoir(parameters);
@@ -223,7 +223,6 @@ SoilMoistureProfileUpdate(smp_parameters* parameters)
   local_variables:
   @param lam  [-] : 1/bb (bb: pore size distribution)
   @param satpsi_cm [cm] : saturated moisture potential
-  @param soil_depth_cm  [cm] : depth of the soil column (note this depth can be different than the depth of the soil_storage_model (e.g., CFE)
   @param soil_storage_model_depth [m] : depth of the soil reservoir model (e.g., CFE)
   @param zb  [cm] : bottom of the computational domain
   @param z0  [cm] : bottom of the fictitious domain (to track fictitious water table location)
@@ -238,11 +237,10 @@ SoilMoistureProfileUpdate(smp_parameters* parameters)
 */
 
 void soil_moisture_profile::
-SoilMoistureProfileFromConceptualReservoir(smp_parameters* parameters)
+SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* parameters)
 {
   // converting variables to cm for numerical reasons only
   double satpsi_cm = parameters->satpsi * 100.;
-  //double soil_depth_cm = parameters->soil_depth * 100.; // soil profile depth
   double model_depth = parameters->soil_storage_model_depth * 100.;
   double zb=0; // bottom of the computational domain
   double z0=0; // bottom of the fictitious domain (to track fictitious water table location)
@@ -312,8 +310,6 @@ SoilMoistureProfileFromConceptualReservoir(smp_parameters* parameters)
       zi=zi_new;     // update the previous root
 
       z0 = zi >= 0.0 ? zb : zi - satpsi_cm;
-      
-      //cout<<"water table: "<<count<<" "<<zi <<" "<<fis<<" "<<fib<<" "<<f<<" "<<dfis<<" "<<dfib<<" "<<df_dzi<<": "<<diff<<" "<<fabs(diff)<<" "<<tol<<"\n";
 
       double zi_m = zi/100.; // zi in meters
       // if the water gets below 1000 m, that would mean the soil is super dry and the algorithm may fail to converge in reasonable number of timesteps
@@ -376,7 +372,7 @@ SoilMoistureProfileFromConceptualReservoir(smp_parameters* parameters)
 */
 
 void soil_moisture_profile::
-SoilMoistureProfileFromLayeredReservoir(smp_parameters* parameters)
+SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* parameters)
 {
   double lam=1.0/parameters->bb; // pore distribution index
   
@@ -533,19 +529,6 @@ ReadVectorData(string key)
   
   return value;
 }
-
-
-
-/*
-returns dynamically allocated 1D vector of strings that contains correct input variable names based on the model (conceptual or layered) chosen
-*/
-/*
-vector<string>* soil_moisture_profile::SoilMoistureProfile::
-InputVarNamesModel()
-{
-  return input_var_names_model;
-}
-*/
 
 
 /*
