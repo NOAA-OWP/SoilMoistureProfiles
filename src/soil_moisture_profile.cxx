@@ -242,15 +242,17 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   // converting variables to cm for numerical reasons only
   double satpsi_cm = parameters->satpsi * 100.;
   double model_depth = parameters->soil_storage_model_depth * 100.;
-  double zb=0; // bottom of the computational domain
-  double z0=0; // bottom of the fictitious domain (to track fictitious water table location)
+  double zb = 0.0; // bottom of the computational domain
+  double z0 = 0.0; // bottom of the fictitious domain (to track fictitious water table location)
   
   double zi = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
   double soil_storage_max = model_depth * parameters->smcmax;
   
   double soil_storage_change_per_timestep_cm = fabs(parameters->soil_storage_change_per_timestep * 100.0);
-  double soil_storage_current_timestep_cm = 100.0 * parameters->soil_storage;  // storage at the current timestep 
-
+  double soil_storage_current_timestep_cm = 100.0 * parameters->soil_storage;  // storage at the current timestep
+  
+  assert(parameters->soil_storage >= 0.0); // to ensure that soil storage is non-negative due to unexpected bugs in cfe (or any other conceptual models)
+  
   double lam = 1.0/parameters->bb;
   double beta = 1.0 - lam;
   double alpha = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
