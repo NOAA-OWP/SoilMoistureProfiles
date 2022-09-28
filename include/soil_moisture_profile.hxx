@@ -37,11 +37,63 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <stdexcept>
 
 using namespace std;
 
 namespace soil_moisture_profile {
+
+  struct soil_profile_parameters {
+    int shape[3];
+    double spacing[8];
+    double origin[3];
+
+    double soil_storage;
+    double soil_storage_change_per_timestep;
+    double water_table_thickness;
+    double *soil_moisture_profile;
+    double *soil_moisture_layered;
+
+    double smcmax;
+    double bb;
+    double satpsi;
+    int ncells;
+    int nlayers;
+    double soil_depth;
+    double last_layer_depth;
+    double *soil_z;
+    double *layers_z;
+   
+    int soil_storage_model;
+    double soil_storage_model_depth;
+    int soil_moisture_layered_option;
+
+    bool init_profile; 
+  };
+
+
+  void SoilMoistureProfile(std::string config_file, struct soil_profile_parameters* parameters);
+
+  void InitializeArrays(struct soil_profile_parameters* parameters);
+  void InitFromConfigFile(std::string config_file, struct soil_profile_parameters* parameters);
+
+  // reading 1D array from the config file
+  std::vector<double> ReadVectorData(std::string key);
+
+
+  // update the profile for the current timestep
+  void SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters);
+
+  // computes soil moisture profile for conceptual reservoir
+  void SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* parameters);
+
+  // computes soil moisture profile for layered-reservoir
+  void SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* parameters);
+
+  // computes linearly interpolated values for layered-reservoir with option = linear
+  double LinearInterpolation(double z1, double z2, double t1, double t2, double z);
   
+  /* 
   class SoilMoistureProfile{
   private:
     void InitializeArrays(void);
@@ -101,7 +153,7 @@ namespace soil_moisture_profile {
     ~SoilMoistureProfile();
     
   };
-
+*/
 };
 
 #endif
