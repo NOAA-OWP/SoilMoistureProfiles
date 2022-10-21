@@ -52,9 +52,11 @@ GetVarGrid(std::string name)
     return 0;
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
     return 1; 
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0) // array of doubles 
-    return 2; 
-  else 
+  else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
+    return 2;
+  else if (name.compare("soil_moisture_layered") == 0) // array of doubles (layered model)
+    return 3; 
+  else
     return -1;
 }
 
@@ -129,6 +131,9 @@ GetGridShape(const int grid, int *shape)
   if (grid == 2) {
     shape[0] = this->model->shape[0];
   }
+  else if (grid == 3) {
+    shape[0] = this->model->shape[1];
+  }
 }
 
 
@@ -167,6 +172,8 @@ GetGridSize(const int grid)
     return 1;
   else if (grid == 2)
     return this->model->shape[0];
+  else if (grid == 3)
+    return this->model->shape[1];
   else
     return -1;
 }

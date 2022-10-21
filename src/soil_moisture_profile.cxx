@@ -19,24 +19,34 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
 {
   
   InitFromConfigFile(config_file, parameters);
-  parameters->shape[0] = parameters->ncells;
-  parameters->shape[1] = 1;
+  
+  if (parameters->soil_storage_model == Conceptual) {
+    parameters->shape[0] = parameters->ncells;
+    parameters->shape[1] = 1;
+  }
+  else if (parameters->soil_storage_model == Layered) {
+    parameters->shape[0] = 1;
+    parameters->shape[1] = parameters->ncells; 
+  }
+  
+  parameters->soil_moisture_profile = new double[parameters->shape[0]];
+  parameters->soil_moisture_layered = new double[parameters->shape[1]];
+						 
   parameters->shape[2] = 1;
   parameters->spacing[0] = 1.;
   parameters->spacing[1] = 1.;
   parameters->origin[0] = 0.;
   parameters->origin[1] = 0.;
-  InitializeArrays(parameters);
+  //  InitializeArrays(parameters);
+  parameters->soil_storage = 0.0;
+  parameters->soil_storage_change_per_timestep = 0.0;
   parameters->init_profile = true;
 }
 
 void soil_moisture_profile::
 InitializeArrays(struct soil_profile_parameters* parameters)
 {
-  parameters->soil_moisture_profile = new double[parameters->ncells];
-  parameters->soil_moisture_layered = new double[parameters->ncells];
-  parameters->soil_storage = 0.0;
-  parameters->soil_storage_change_per_timestep = 0.0;
+  // delete this later...
 }
 
 /*
