@@ -287,7 +287,7 @@ GetValuePtr (std::string name)
   else if (name.compare("soil_storage_change") == 0)
     return (void*)(&this->model->soil_storage_change_per_timestep);
   else  if (name.compare("soil_water_table") == 0)
-    return (void*)(&this->model->water_table_thickness);
+    return (void*)(&this->model->water_table_depth);
   else if (name.compare("soil_moisture_profile") == 0)
     return (void*)this->model->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)

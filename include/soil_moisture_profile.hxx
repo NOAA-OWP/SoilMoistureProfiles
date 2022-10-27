@@ -10,7 +10,7 @@
   NOTE: For detailed model description please see README.md on github page
   
   @param soil_storage              [m] : soil storage (input through bmi)
-  @param water_table_thickness     [m] : thickness of the water table from the bottom of the computational domain
+  @param water_table_depth         [m] : depth from the surface to the water table location
   @param soil_moisture_profile     [-] : soil moisture content (1D vertical profile)
   @param soil_moisture_layered     [-] : soil moisture content of wetting fronts (bmi input to layered the model)
   @param soil_depths_layered       [m] : absolute depth of the wetting fronts (bmi input to layered the model)
@@ -53,7 +53,6 @@ namespace soil_moisture_profile {
 
     double soil_storage;
     double soil_storage_change_per_timestep;
-    double water_table_thickness; // delete this
     double water_table_depth; 
     double *soil_moisture_profile;
     

@@ -74,7 +74,6 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
   
   bool is_soil_z_set = false;
   bool is_soil_depths_layered_set = false;
-  //  bool is_layers_z_set = false;
   bool is_smcmax_set = false;
   bool is_bb_set = false;
   bool is_satpsi_set = false;
@@ -241,7 +240,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     }
 
     if (!is_water_table_depth_set) {
-      parameters->water_table_depth = 10.0;
+      parameters->water_table_depth = 6.0;
     }
     
     assert (parameters->max_ncells_layered > 0);
@@ -284,8 +283,8 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   @param soil_storage_max [cm] : maximum soil storage
   @param soil_storage_previous_timestepcm [cm] : soil storage at the previous timestep computed locally from the watertable location at the previous timestep
   @param soil_storage_current_timestepcm [cm] : soil storage at the current timestep
-  @param tol [cm] : Error tolerance for finding the new root (i.e., water_table_thickness)
-  @param soil_moisture_profile [-] : OUTPUT (soil moisture content vertical profile [-])
+  @param tolerance             [cm] : Error tolerance for finding the new root (i.e., water_table_depth)
+  @param soil_moisture_profile [-]  : OUTPUT (soil moisture content vertical profile [-])
   ** NOTE: the module needs to be fixed if the CFE and SFT soil depths are different
 */
 
@@ -309,7 +308,7 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   double lam = 1.0/parameters->bb;
   double beta = 1.0 - lam;
   double alpha = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
-  double tol = 0.000001;
+  double tolerance = 0.000001;
 
   int count = 0;
 
@@ -371,10 +370,10 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
       if (zi_m < -1000)
 	break;
       
-    } while (fabs(diff) > tol);
+    } while (fabs(diff) > tolerance);
 
     // water table thickness can be negative and that would be depth of the water table below the depth of the computational domain; probably a better name would be water_table_location
-    parameters->water_table_thickness = zi/100.;
+    parameters->water_table_depth = (model_depth - zi)/100.;
     
     /*******************************************************************/
     // get a high resolution moisture profile that will be mapped on the desired soil discretization
