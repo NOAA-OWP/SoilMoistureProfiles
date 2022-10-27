@@ -12,12 +12,14 @@
   @param soil_storage              [m] : soil storage (input through bmi)
   @param water_table_thickness     [m] : thickness of the water table from the bottom of the computational domain
   @param soil_moisture_profile     [-] : soil moisture content (1D vertical profile)
-  @param soil_moisture_layered     [-] : layered-soil moisture content (input through bmi for layered models)
+  @param soil_moisture_layered     [-] : soil moisture content of wetting fronts (bmi input to layered the model)
+  @param soil_depths_layered       [m] : absolute depth of the wetting fronts (bmi input to layered the model)
   @param smcmax                    [-] : maximum soil moisture content (porosity)
   @param bb                        [-] : pore size distribution, beta exponent in Clapp-Hornberger (1978) function
   @param satpsi                    [m] : saturated capillary head (saturated moisture potential)
   @param ncells                    [-] : number of cells of the discretized soil column
-  @param nlayers                   [-] : number of soil moisture layers (typically different than the ncells)
+  @param nlayers                   [-] : number of soil moisture layers, typically different than the ncells
+  @param ncells_layered            [-] : number of soil wetting front, typically different than the ncells and nlayers
   @param soil_depth                [m] : depth of the computational domain
   @param last_layer_depth          [m] : depth of the last layer (for non-conceptual reservior, e.g, LGAR)
   @param soil_z                    [m] : soil discretization; 1D array of depths from the surface
@@ -29,6 +31,7 @@
   @param soil_storage_change_per_timestep  [m] : change in the soil storage per timestep
   @param soil_moisture_layered_option      [-] : valid for layered model only; linear or constant
   @param soil_storage_model_depth          [m] : depth of the soil storage reservoir
+  @param soil_moisture_layered_bmi         [-] : if true, soil moisture content of wetting fronts is set by the bmi
  */
 
 #include <vector>
@@ -50,36 +53,40 @@ namespace soil_moisture_profile {
 
     double soil_storage;
     double soil_storage_change_per_timestep;
-    double water_table_thickness;
+    double water_table_thickness; // delete this
+    double water_table_depth; 
     double *soil_moisture_profile;
-    double *soil_moisture_layered;
-
+    
     double smcmax;
     double bb;
     double satpsi;
     int ncells;
-    int nlayers;
     double soil_depth;
     double last_layer_depth;
     double *soil_z;
-    double *layers_z;
+    //double *layers_z;
    
     int soil_storage_model;
     double soil_storage_model_depth;
     int soil_moisture_layered_option;
 
-    bool init_profile; 
+    bool init_profile;
+
+    // layered model
+    double *soil_moisture_layered;
+    double *soil_depths_layered;
+    int ncells_layered;
+    int max_ncells_layered;
+    bool soil_depths_layered_bmi;
   };
 
 
   void SoilMoistureProfile(std::string config_file, struct soil_profile_parameters* parameters);
 
-  void InitializeArrays(struct soil_profile_parameters* parameters);
   void InitFromConfigFile(std::string config_file, struct soil_profile_parameters* parameters);
 
   // reading 1D array from the config file
   std::vector<double> ReadVectorData(std::string key);
-
 
   // update the profile for the current timestep
   void SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters);

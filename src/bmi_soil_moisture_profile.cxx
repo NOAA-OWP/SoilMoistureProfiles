@@ -40,21 +40,21 @@ UpdateUntil(double t)
 void BmiSoilMoistureProfile::
 Finalize()
 {
-  // if (this->model)
-  //  this->model->~SoilMoistureProfile();
+  if (this->model)
+    delete model;
 }
 
 
 int BmiSoilMoistureProfile::
 GetVarGrid(std::string name)
 {
-  if (name.compare("soil_storage_model") == 0)   // int
+  if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)   // int
     return 0;
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
     return 1; 
   else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
     return 2;
-  else if (name.compare("soil_moisture_layered") == 0) // array of doubles (layered model)
+  else if (name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0) // array of doubles (layered model)
     return 3; 
   else
     return -1;
@@ -64,11 +64,11 @@ GetVarGrid(std::string name)
 std::string BmiSoilMoistureProfile::
 GetVarType(std::string name)
 {
-  if (name.compare("soil_storage_model") == 0)
+  if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)
     return "int";
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return "double";
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0)
     return "double";
   else
     return "";
@@ -78,11 +78,11 @@ GetVarType(std::string name)
 int BmiSoilMoistureProfile::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("soil_storage_model") == 0)
+  if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)
     return sizeof(int);
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return sizeof(double);
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0)
     return sizeof(double);
   else
     return 0;
@@ -96,6 +96,8 @@ GetVarUnits(std::string name)
     return "m";
   else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
     return "none";
+  else if (name.compare("soil_depths_layered") == 0)
+    return "m";
   else
     return "none";
 }
@@ -118,7 +120,7 @@ GetVarLocation(std::string name)
 {
   if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
     return "node";
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0 || name.compare("num_cells_layered") == 0)
     return "node";
   else
     return "none";
@@ -290,8 +292,12 @@ GetValuePtr (std::string name)
     return (void*)this->model->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)
     return (void*)this->model->soil_moisture_layered;
+  else if (name.compare("soil_depths_layered") == 0)
+    return (void*)this->model->soil_depths_layered;
   else if (name.compare("soil_storage_model") == 0)
     return (void*)(&this->model->soil_storage_model);
+  else if (name.compare("num_cells_layered") == 0)
+    return (void*)(&this->model->ncells_layered);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";

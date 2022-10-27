@@ -14,39 +14,40 @@ enum {Constant=1, Linear=2};
 
 // soil_moisture_profile is the namespacing
 
+
 void soil_moisture_profile::
 SoilMoistureProfile(string config_file, struct soil_profile_parameters* parameters)
 {
   
   InitFromConfigFile(config_file, parameters);
-  
+
   if (parameters->soil_storage_model == Conceptual) {
     parameters->shape[0] = parameters->ncells;
     parameters->shape[1] = 1;
   }
   else if (parameters->soil_storage_model == Layered) {
     parameters->shape[0] = 1;
-    parameters->shape[1] = parameters->ncells; 
+    parameters->shape[1] = parameters->max_ncells_layered; // note this will be set dynamically at each timestep
+    
+  }
+
+  parameters->soil_moisture_profile = new double[parameters->ncells];
+  
+  // the following two will be reallocated at each time step, if coupled
+  if (parameters->soil_depths_layered_bmi) {
+    parameters->soil_moisture_layered = new double[parameters->shape[1]];
+    parameters->soil_depths_layered = new double[parameters->shape[1]];
   }
   
-  parameters->soil_moisture_profile = new double[parameters->shape[0]];
-  parameters->soil_moisture_layered = new double[parameters->shape[1]];
-						 
   parameters->shape[2] = 1;
   parameters->spacing[0] = 1.;
   parameters->spacing[1] = 1.;
   parameters->origin[0] = 0.;
   parameters->origin[1] = 0.;
-  //  InitializeArrays(parameters);
   parameters->soil_storage = 0.0;
   parameters->soil_storage_change_per_timestep = 0.0;
   parameters->init_profile = true;
-}
-
-void soil_moisture_profile::
-InitializeArrays(struct soil_profile_parameters* parameters)
-{
-  // delete this later...
+  parameters->ncells_layered = 1;
 }
 
 /*
@@ -56,10 +57,12 @@ Read and initialize values from configuration file
 @input - bb  (double)  : pore size distribution [-], beta exponent on Clapp-Hornberger (1978)
 @input - satpsi  (double) : saturated capillary head (saturated moisture potential) [m]
 @input - ncells  (int) : number of cells of the discretized soil column
-@input - nlayers (int) : numer of soil moisture layers
+@input - ncells_layered : number of layers (wetting fronts) for the layered model
+@input - max_ncells_layered : maximum number of layers (wetting fronts)
 @input - soil_storage_model (string) : Conceptual or Layered soil reservoir models
 @input - soil_moisture_profile_option (string) : valid only when layered soil reservoir model is chosen; option include `constant` or `linear`. The option `constant` assigns a constant value to discretized cells within each layer, `linear` option linearly interpolate values between layers and interpolated values are assigned to the soil discretization
 @params - input_var_names_model (1D) : dynamically sets model inputs to be used in the bmi input_var_names
+@input water_table_depth (double)    : water table depth, default is 6 m for layered model, conceptual model computes its own
 */
 
 
@@ -70,13 +73,16 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
   fp.open(config_file);
   
   bool is_soil_z_set = false;
-  bool is_layers_z_set = false;
+  bool is_soil_depths_layered_set = false;
+  //  bool is_layers_z_set = false;
   bool is_smcmax_set = false;
   bool is_bb_set = false;
   bool is_satpsi_set = false;
   bool is_soil_storage_model_set = false;
   bool is_soil_moisture_layered_option_set = false; // option for linear or piece-wise constant layered profile
   bool is_soil_storage_model_depth_set = false;
+  bool is_max_ncells_layered_set = false;
+  bool is_water_table_depth_set = false;
   
   while (fp) {
 
@@ -111,16 +117,22 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       is_soil_z_set = true;
       continue;
     }
-    else if (param_key == "soil_layers_z") {
-      vector<double> vec = ReadVectorData(param_value);
-      parameters->layers_z = new double[vec.size()];
-      
-      for (unsigned int i=0; i < vec.size(); i++)
-	parameters->layers_z[i] = vec[i];
-      
-      parameters->nlayers = vec.size();
-      parameters->last_layer_depth = parameters->layers_z[parameters->nlayers-1];
-      is_layers_z_set = true;
+    else if (param_key == "soil_depths_layered") {
+      if (param_value == "bmi" || param_value == "BMI") {
+	parameters->soil_depths_layered_bmi = true;
+      }
+      else {
+	vector<double> vec = ReadVectorData(param_value);
+	parameters->soil_depths_layered = new double[vec.size()];
+	
+	for (unsigned int i=0; i < vec.size(); i++)
+	  parameters->soil_depths_layered[i] = vec[i];
+	
+	parameters->ncells_layered = vec.size();
+	parameters->last_layer_depth = parameters->soil_depths_layered[parameters->ncells_layered-1];
+	is_soil_depths_layered_set = true;
+	parameters->soil_depths_layered_bmi = false;
+      }
       continue;
     }
     else if (param_key == "soil_params.smcmax") {
@@ -162,6 +174,17 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       is_soil_storage_model_depth_set = true;
       continue;
     }
+    else if (param_key == "max_num_cells_layered") {
+      parameters->max_ncells_layered =  stod(param_value);
+      assert (parameters->max_ncells_layered > 0);
+      is_max_ncells_layered_set = true;
+      continue;
+    }
+    else if (param_key == "water_table_depth") {
+      parameters->water_table_depth = stod(param_value);
+      is_water_table_depth_set = true;
+      continue;
+    }
   }
   
   fp.close();
@@ -172,14 +195,15 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     throw runtime_error(errMsg.str());
   }
 
-  if (!is_layers_z_set) {
+  
+  if (!is_soil_depths_layered_set && !parameters->soil_depths_layered_bmi) {
     if (parameters->soil_storage_model == Layered) {
       stringstream errMsg;
-      errMsg << "layers_z not set in the config file "<< config_file << "\n";
+      errMsg << "soil_depths_layered not set in the config file "<< config_file << "\n";
       throw runtime_error(errMsg.str());
     }
   }
-  
+
   if (!is_smcmax_set) {
     stringstream errMsg;
     errMsg << "smcmax not set in the config file "<< config_file << "\n";
@@ -196,17 +220,36 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     stringstream errMsg;
     errMsg << "satpsi not set in the config file "<< config_file << "\n";
     throw runtime_error(errMsg.str());
-  }
-
+    }
+  
   if (!is_soil_storage_model_depth_set && parameters->soil_storage_model == Conceptual) {
     stringstream errMsg;
     errMsg << "soil_storage_model_depth not set in the config file "<< config_file << "\n";
     throw runtime_error(errMsg.str());
   }
 
-  // check if the size of the input data is consistent
-  assert (parameters->ncells > 0);
   
+  if (parameters->soil_storage_model == Layered) {
+    if (!is_soil_moisture_layered_option_set) {
+      stringstream errMsg;
+      errMsg << "soil_moisture_layered_option_set key is not set in the config file "<< config_file << ", options = constant or linear \n";
+      throw runtime_error(errMsg.str());
+    }
+    
+    if (!is_max_ncells_layered_set) {
+      parameters->max_ncells_layered = 30;
+    }
+
+    if (!is_water_table_depth_set) {
+      parameters->water_table_depth = 10.0;
+    }
+    
+    assert (parameters->max_ncells_layered > 0);
+    assert (parameters->water_table_depth >= 0);
+  }
+
+  assert (parameters->ncells > 0);
+
 }
 
 
@@ -381,17 +424,25 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   @param lam  [-]               : 1/bb (bb: pore size distribution)
   @param soil_depth  [cm]       : depth of the soil column
   @param last_layer_depth  [cm] : depth of the last layer from the surface
+  @param tolerance         [-]  : tolerance to find location of the water table
 */
 
 void soil_moisture_profile::
 SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* parameters)
 {
-  double lam=1.0/parameters->bb; // pore distribution index
+  int ncells_layered = parameters->ncells_layered; //number of wetting fronts
+  double tolerance = 1.0e-4;
+  
+  //parameters->soil_moisture_layered[2] = 0.38;
+  parameters->last_layer_depth = parameters->soil_depths_layered[ncells_layered-1];
+  
+  double lam = 1.0/parameters->bb; // pore distribution index
   
   vector<double> z_layers_n(1,0.0);
+
   
-  for (int i=0; i <parameters->nlayers; i++)
-    z_layers_n.push_back(parameters->layers_z[i]);
+  for (int i=0; i < ncells_layered; i++)
+    z_layers_n.push_back(parameters->soil_depths_layered[i]);
 
   vector<double> smc_column;
   int c = 0;
@@ -403,21 +454,28 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
     
     // loop over all the cells in the discretized column
     for (int i=0; i < parameters->ncells; i++) {
-      
-      if (parameters->soil_z[i] < parameters->layers_z[c]) {  // cell completely lie within a layer
-	
+
+      if (parameters->soil_z[i] <= parameters->soil_depths_layered[c]) {  // cell completely lie within a layer
+
 	parameters->soil_moisture_profile[i] = parameters->soil_moisture_layered[c];
 	
       }
-      else if (parameters->soil_z[i] < parameters->last_layer_depth) { // cell at the interface of layers, so take the mean
+      else if (parameters->soil_z[i] <= parameters->last_layer_depth) { // cell at the interface of layers, so take the mean
 	
-	parameters->soil_moisture_profile[i] = 0.5*(parameters->soil_moisture_layered[c] + parameters->soil_moisture_layered[c+1]);
+	if (parameters->soil_z[i-1] == parameters->soil_depths_layered[c] && parameters->soil_z[i] <= parameters->soil_depths_layered[c+1]) {
+
+	  parameters->soil_moisture_profile[i] = parameters->soil_moisture_layered[c+1];
+	}
+	else {
+	  parameters->soil_moisture_profile[i] = 0.5*(parameters->soil_moisture_layered[c] + parameters->soil_moisture_layered[c+1]);
+	}
 	c++;
 	
       }
       else { // extend the profile below the last layer depth
 	
-	double zz = parameters->soil_depth - parameters->soil_z[i];
+	//double zz = fmax(parameters->soil_depth - parameters->soil_z[i], 1.0e-4);
+	double zz = fmax(parameters->water_table_depth - parameters->soil_z[i], 1.0e-4);
 	double theta = delta + pow((parameters->satpsi/zz),lam) * parameters->smcmax;
 	
 	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the last layer and profile below that depth of the last layer
@@ -425,15 +483,17 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 	  theta = theta + delta;
 	  layers_flag=false;
 	}
-	
-	double theta1 = parameters->soil_moisture_layered[parameters->nlayers-1] +  theta;
+
+	double theta1 = parameters->soil_moisture_layered[ncells_layered-1] +  theta;
 	
 	parameters->soil_moisture_profile[i] = fmin(parameters->smcmax, theta1);
-
 
       }
       
     }
+
+    //for (int j=0; j< parameters->ncells; j++)
+    //  cerr<<"profile = "<<parameters->soil_z[j] <<" "<<parameters->soil_moisture_profile[j]<<"\n";
     
   }
   else if (parameters->soil_moisture_layered_option == Linear ) {
@@ -446,16 +506,17 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
     for (int i=1; i < parameters->ncells; i++) {
 
       // linear interpolation between consecutive layers
-      if (parameters->soil_z[i] <= parameters->layers_z[c] && c < parameters->nlayers-1) {
+      if (parameters->soil_z[i] <= parameters->soil_depths_layered[c] && c < ncells_layered-1) {
 	t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], parameters->soil_moisture_layered[c], parameters->soil_moisture_layered[c+1], parameters->soil_z[i]);
 	parameters->soil_moisture_profile[i] = t_v;
 	
-	if (parameters->soil_z[i+1] > parameters->layers_z[c]) // the parameter c keeps track of the layer
+	if (parameters->soil_z[i+1] > parameters->soil_depths_layered[c]) // the parameter c keeps track of the layer
 	  c++;
       }
       else {
 	// extend the profile below the depth of the last layer
-	double zz = parameters->soil_depth - parameters->soil_z[i];
+	//double zz = parameters->soil_depth - parameters->soil_z[i];
+	double zz = fmax(parameters->water_table_depth - parameters->soil_z[i], 1.0e-4);
 	double theta = delta + pow((parameters->satpsi/zz),lam)*parameters->smcmax;
 	
 	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the last layer and profile below that depth of the last layer
@@ -464,12 +525,16 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 	  layers_flag = false;
 	}
 	
-	double theta1 = parameters->soil_moisture_layered[parameters->nlayers-1] + theta;
+	double theta1 = parameters->soil_moisture_layered[ncells_layered-1] + theta;
 
 	parameters->soil_moisture_profile[i] = fmin(parameters->smcmax, theta1);
 	
       }
     }
+
+    //for (int j=0; j< parameters->ncells; j++)
+    //  cerr<<"profile = "<<parameters->soil_z[j] <<" "<<parameters->soil_moisture_profile[j]<<"\n";
+    
 
   }
   else {
@@ -479,17 +544,17 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
   }
 
   // for vis comparison with the python version
-  for (int j=0; j< parameters->ncells; j++)
-    cout<<parameters->soil_z[j] <<" "<<parameters->soil_moisture_profile[j]<<"\n";
-  /*
+  //  for (int j=0; j< parameters->ncells; j++)
+  //  cout<<parameters->soil_z[j] <<" "<<parameters->soil_moisture_profile[j]<<"\n";
+  
   // find and update water table location
   for (int j=0; j< parameters->ncells; j++) {
-    if (parameters->soil_moisture_profile[j] == parameters->smcmax) {
-      parameters->water_table_thickness = soil_depth - parameters->soil_z[j] - parameters->satpsi; // check with Fred?? do we actually care about the location, all we need is the mass of water to be consistent
+    if ( fabs(parameters->soil_moisture_profile[j] - parameters->smcmax) < tolerance) {
+      parameters->water_table_depth = parameters->soil_z[j];
       break;
     }
   }
-  */
+  
 }
 
 

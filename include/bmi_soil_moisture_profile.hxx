@@ -21,6 +21,8 @@ class BmiSoilMoistureProfile : public bmixx::Bmi {
       this->input_var_names[0] = "soil_storage";
       this->input_var_names[1] = "soil_storage_change";
       this->input_var_names[2] = "soil_moisture_layered";
+      this->input_var_names[3] = "soil_depths_layered";
+      this->input_var_names[4] = "num_cells_layered";
       
       this->output_var_names[0] = "soil_moisture_profile";
       this->output_var_names[1] = "soil_water_table";
@@ -80,10 +82,10 @@ class BmiSoilMoistureProfile : public bmixx::Bmi {
     void GetGridNodesPerFace(const int grid, int *nodes_per_face);
   private:
     soil_moisture_profile::soil_profile_parameters* model;
-    static const int input_var_name_count = 3;
+    static const int input_var_name_count = 5;
     static const int output_var_name_count = 2;
 
-    std::string input_var_names[3];
+    std::string input_var_names[5];
     std::string output_var_names[2];
 };
 
