@@ -27,17 +27,22 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   }
   else if (parameters->soil_storage_model == Layered) {
     parameters->shape[0] = 1;
-    parameters->shape[1] = parameters->max_ncells_layered; // note this will be set dynamically at each timestep
-    
+    parameters->shape[1] = parameters->soil_depths_layered_bmi == true ? parameters->max_ncells_layered : parameters->ncells_layered;
+    // note this will be set dynamically at each timestep if soil_depths_layered_bmi flag is true
   }
 
   parameters->soil_moisture_profile = new double[parameters->ncells];
-  
+
+  parameters->soil_moisture_layered = new double[parameters->shape[1]];
+  parameters->soil_depths_layered = new double[parameters->shape[1]];
+
+  /*
   // the following two will be reallocated at each time step, if coupled
   if (parameters->soil_depths_layered_bmi) {
     parameters->soil_moisture_layered = new double[parameters->shape[1]];
     parameters->soil_depths_layered = new double[parameters->shape[1]];
   }
+  */
   
   parameters->shape[2] = 1;
   parameters->spacing[0] = 1.;
@@ -568,7 +573,12 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
       break;
     }
   }
-  
+
+
+  if (verbosity.compare("high") == 0) {
+      for (int j=0; j< parameters->ncells; j++)
+	cerr<<"X-SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
+    }
 }
 
 
