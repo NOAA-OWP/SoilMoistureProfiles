@@ -184,6 +184,10 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       is_water_table_depth_set = true;
       continue;
     }
+    else if (param_key == "verbosity") {
+      verbosity = param_value;
+      continue;
+    }
   }
   
   fp.close();
@@ -431,8 +435,13 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 {
   int ncells_layered = parameters->ncells_layered; //number of wetting fronts
   double tolerance = 1.0e-4;
-  
-  //parameters->soil_moisture_layered[2] = 0.38;
+
+  if (verbosity.compare("high") == 0) {
+    std::cerr<<"SoilMoistureProfile: number of wetting fronts = "<<ncells_layered<<"\n";
+    for (int i =0; i <ncells_layered; i++)
+      std::cerr<<"SoilMoistureProfile (input): (depth, water_content) = "<<parameters->soil_depths_layered[i]<<", "<<parameters->soil_moisture_layered[i]<<"\n";
+  }
+
   parameters->last_layer_depth = parameters->soil_depths_layered[ncells_layered-1];
   
   double lam = 1.0/parameters->bb; // pore distribution index
@@ -454,22 +463,27 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
     // loop over all the cells in the discretized column
     for (int i=0; i < parameters->ncells; i++) {
 
-      if (parameters->soil_z[i] <= parameters->soil_depths_layered[c]) {  // cell completely lie within a layer
+      if (parameters->soil_z[i] <= parameters->last_layer_depth) {
 
-	parameters->soil_moisture_profile[i] = parameters->soil_moisture_layered[c];
-	
-      }
-      else if (parameters->soil_z[i] <= parameters->last_layer_depth) { // cell at the interface of layers, so take the mean
-	
-	if (parameters->soil_z[i-1] == parameters->soil_depths_layered[c] && parameters->soil_z[i] <= parameters->soil_depths_layered[c+1]) {
-
-	  parameters->soil_moisture_profile[i] = parameters->soil_moisture_layered[c+1];
-	}
-	else {
+	if (i == 0 && parameters->soil_z[i] > parameters->soil_depths_layered[c]) {
 	  parameters->soil_moisture_profile[i] = 0.5*(parameters->soil_moisture_layered[c] + parameters->soil_moisture_layered[c+1]);
+	  c++;
 	}
-	c++;
-	
+	else if (parameters->soil_z[i] <= parameters->soil_depths_layered[c]) {  // cell completely lie within a layer
+	  parameters->soil_moisture_profile[i] = parameters->soil_moisture_layered[c];
+	}
+	else { // cell at the interface of layers, so take the mean
+	  
+	  if (parameters->soil_z[i-1] == parameters->soil_depths_layered[c] && parameters->soil_z[i] <= parameters->soil_depths_layered[c+1]) {
+	    
+	  parameters->soil_moisture_profile[i] = parameters->soil_moisture_layered[c+1];
+	  }
+	  else {
+	    parameters->soil_moisture_profile[i] = 0.5*(parameters->soil_moisture_layered[c] + parameters->soil_moisture_layered[c+1]);
+	  }
+	  c++;
+	  
+	}
       }
       else { // extend the profile below the last layer depth
 	
@@ -491,9 +505,10 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
       
     }
 
-    //for (int j=0; j< parameters->ncells; j++)
-    //  cerr<<"profile = "<<parameters->soil_z[j] <<" "<<parameters->soil_moisture_profile[j]<<"\n";
-    
+    if (verbosity.compare("high") == 0) {
+      for (int j=0; j< parameters->ncells; j++)
+	cerr<<"SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
+    }
   }
   else if (parameters->soil_moisture_layered_option == Linear ) {
     
@@ -514,7 +529,6 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
       }
       else {
 	// extend the profile below the depth of the last layer
-	//double zz = parameters->soil_depth - parameters->soil_z[i];
 	double zz = fmax(parameters->water_table_depth - parameters->soil_z[i], 1.0e-4);
 	double theta = delta + pow((parameters->satpsi/zz),lam)*parameters->smcmax;
 	
@@ -531,10 +545,11 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
       }
     }
 
-    //for (int j=0; j< parameters->ncells; j++)
-    //  cerr<<"profile = "<<parameters->soil_z[j] <<" "<<parameters->soil_moisture_profile[j]<<"\n";
+    if (verbosity.compare("high") == 0) {
+      for (int j=0; j< parameters->ncells; j++)
+	cerr<<"SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
+    }
     
-
   }
   else {
     stringstream errMsg;

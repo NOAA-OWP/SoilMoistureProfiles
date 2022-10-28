@@ -44,6 +44,8 @@
 
 using namespace std;
 
+extern string verbosity;
+
 namespace soil_moisture_profile {
 
   struct soil_profile_parameters {
