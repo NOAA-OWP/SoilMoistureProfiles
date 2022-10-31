@@ -21,15 +21,12 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   
   InitFromConfigFile(config_file, parameters);
 
-  if (parameters->soil_storage_model == Conceptual) {
-    parameters->shape[0] = parameters->ncells;
+  parameters->shape[0] = parameters->ncells; // this is used for the size of soil_moisture_profile (bmi output)
+  
+  if (parameters->soil_storage_model == Conceptual)
     parameters->shape[1] = 1;
-  }
-  else if (parameters->soil_storage_model == Layered) {
-    parameters->shape[0] = 1;
-    parameters->shape[1] = parameters->soil_depths_layered_bmi == true ? parameters->max_ncells_layered : parameters->ncells_layered;
-    // note this will be set dynamically at each timestep if soil_depths_layered_bmi flag is true
-  }
+  else if (parameters->soil_storage_model == Layered)
+    parameters->shape[1] = parameters->soil_depths_layered_bmi == true ? parameters->max_ncells_layered : parameters->ncells_layered;  // note this will be set dynamically at each timestep if soil_depths_layered_bmi flag is true
 
   parameters->soil_moisture_profile = new double[parameters->ncells];
 
@@ -510,10 +507,6 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
       
     }
 
-    if (verbosity.compare("high") == 0) {
-      for (int j=0; j< parameters->ncells; j++)
-	cerr<<"SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
-    }
   }
   else if (parameters->soil_moisture_layered_option == Linear ) {
     
@@ -549,11 +542,6 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 	
       }
     }
-
-    if (verbosity.compare("high") == 0) {
-      for (int j=0; j< parameters->ncells; j++)
-	cerr<<"SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
-    }
     
   }
   else {
@@ -577,8 +565,9 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 
   if (verbosity.compare("high") == 0) {
       for (int j=0; j< parameters->ncells; j++)
-	cerr<<"X-SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
+	cerr<<"SoilMoistureProfile (output): (depth, water_content) = "<<parameters->soil_z[j] <<", "<<parameters->soil_moisture_profile[j]<<"\n";
     }
+  
 }
 
 
