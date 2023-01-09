@@ -26,8 +26,8 @@
 _________________________________________________________________
 ## Description of the parameters in the config file
 
-| Variable | Datatype |  Limits  | Units | Role |  Description |
-| -------- | -------- | ------ | ----- | ---- |  ----------- |
+| Variable _____________________ | Datatype ___________ |  Limits ___________ | Units ____ | Role ___ |  Description _____________________________________________________________________|
+| :-------- | :-------- | :------ | :----- | :---- |  :----------------------- |
 | smcmax | double   | - | - | - | the maximum moisture content (i.e., porosity) |
 | b | double | - | - | - | the pore size distribution, beta exponent in Clapp-Hornberger function |
 | satpsi | double | - | - | - | saturated capillary head (saturated moisture potential) |
