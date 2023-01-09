@@ -1,0 +1,2 @@
+grid_cat_ids_map_file=./data/synthetic/grid_mapping_syn2x2_case3.csv
+model_type=soil_moisture_based

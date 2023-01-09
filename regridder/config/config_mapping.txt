@@ -1,6 +1,11 @@
-spatial_map_file=./test/grid_mapping.csv
-TWI_file=./test/twi_data.csv
-global_deficit=0.315843
-porosity=0.5
-depth=1.0
-szm=0.032
+#spatial_map_file=./data/grid_mapping.csv
+#TWI_file=./data/twi_data.csv
+#global_deficit=0.315843
+#porosity=0.5
+#depth=1.0
+#szm=0.032
+spatial_map_file=./data/grid_mapping_nextgen_01_ext.dat
+#TWI_file=./data/twi-nextgen_01_ext.dat
+#cat_params_file=./data/cat_params.dat
+#model_type=soil_deficit_based
+model_type=soil_moisture_based
