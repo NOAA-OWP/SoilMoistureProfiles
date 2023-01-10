@@ -66,12 +66,11 @@ GetVarGrid(std::string name)
 std::string BmiSoilMoistureProfile::
 GetVarType(std::string name)
 {
-  //GetVarGrid(std::string name);
-  if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)
+  int var_grid = GetVarGrid(name);
+
+  if (var_grid == 0)
     return "int";
-  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
-    return "double";
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0)
+  else if (var_grid == 1 || var_grid == 2 || var_grid == 3)
     return "double";
   else
     return "";
@@ -81,11 +80,11 @@ GetVarType(std::string name)
 int BmiSoilMoistureProfile::
 GetVarItemsize(std::string name)
 {
-  if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)
+  std::string var_type = GetVarType(name);
+
+  if (var_type.compare("int") == 0)
     return sizeof(int);
-  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
-    return sizeof(double);
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0)
+  else if (var_type.compare("double") == 0)
     return sizeof(double);
   else
     return 0;
@@ -121,9 +120,9 @@ GetVarNbytes(std::string name)
 std::string BmiSoilMoistureProfile::
 GetVarLocation(std::string name)
 {
-  if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)
-    return "node";
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0 || name.compare("num_cells_layered") == 0)
+  int var_grid = GetVarGrid(name);
+
+  if (var_grid <= 3)
     return "node";
   else
     return "none";
@@ -163,7 +162,7 @@ GetGridOrigin (const int grid, double *origin)
 int BmiSoilMoistureProfile::
 GetGridRank(const int grid)
 {
-  if (grid == 0 || grid == 1 || grid == 2)
+  if (grid <= 3)
     return 1;
   else
     return -1;
