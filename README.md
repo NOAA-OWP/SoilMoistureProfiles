@@ -23,18 +23,21 @@
 
  
  
+_________________________________________________________________
+## Description of the parameters in the config file
 
-## Parameters in the config file
-* `smcmax` is the maximum moisture content (i.e., porosity)
-* `b` is the pore size distribution, beta exponent on Clapp-Hornberger function
-* `satpsi` saturated capillary head (saturated moisture potential)
-* `soil_z` an array of depths from the surface (for instance, if SMP is coupled with SFT then this `soil_z` is the vertical resolution of the SFT model)
-* `soil_storage_model_depth` is depth of the soil reservoir model (e.g., CFE) (Note. this depth can be different from the depth of the soil moisture profile which is based on `soil_z`. For example, depth of the soil column for SFT is deeper than the depth of conceptual models such as CFE)
-* `soil_storage_model` = `conceptual` if conceptual model(e.g., CFE) or `layered` if layered based soil moisture model is used (e.g., LGAR)
-* if `soil_storage_model` = `layered`, then set `soil_moisture_profile_option` = `constant` for layered-constant profile or `linear`  for linearly interpolated profile between layers
+| Variable _____________________ | Datatype ___________ |  Limits ___________ | Units ____ | Role ___ |  Description _____________________________________________________________________|
+| :-------- | :-------- | :------ | :----- | :---- |  :----------------------- |
+| smcmax | double   | - | - | - | the maximum moisture content (i.e., porosity) |
+| b | double | - | - | - | the pore size distribution, beta exponent in Clapp-Hornberger function |
+| satpsi | double | - | - | - | saturated capillary head (saturated moisture potential) |
+| soil_z | double (1D array) | - | m | - | vertical resolution of the soil moisture profile (depths from the surface) |
+| soil_storage_model_depth | double | - | m | - | depth of the soil reservoir model (e.g., CFE). Note: this depth can be different from the depth of the soil moisture profile which is based on `soil_z` |
+| soil_storage_model | string | conceptual or layered | - | - | if `conceptual`, conceptual models are used for computing the soil moisture profile (e.g., CFE). If `layered`, layered-based soil moisture models are used (e.g., LGAR)
+| soil_moisture_profile_option | string | constant or linear | - | - | Only needed if `soil_storage_model = layered`. `constant` for layered-constant profile. `linear`  for linearly interpolated values between two consecutive layers
 
 _________________________________________________________________
-_________________________________________________________________
+
 
 # SoilMoistureMapping
 SMCMapping BMI computes and maps local (subcatchment) soil moisture from catchment to NWM (National Water Model) grid (1x1 km). The idea of computing local soil moisture is based on the concept of [TopModel](https://github.com/NOAA-OWP/topmodel), where given the global (mean) watershed soil moisture deficit and TWI (Topographic Wetness Index), the local soil moisture deficit is computed. Here, we use the watershed maximum storage capacity and TWI to compute local soil moisture content which is then mapped onto the NWM 1x1 km grid using the spatial mapping information provided in the hydrofabric.
