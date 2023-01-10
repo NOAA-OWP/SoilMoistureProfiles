@@ -66,6 +66,7 @@ GetVarGrid(std::string name)
 std::string BmiSoilMoistureProfile::
 GetVarType(std::string name)
 {
+  //GetVarGrid(std::string name);
   if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)
     return "int";
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0)

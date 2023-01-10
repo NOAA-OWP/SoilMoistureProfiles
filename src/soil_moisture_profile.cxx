@@ -233,7 +233,13 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     throw runtime_error(errMsg.str());
   }
 
-  
+  if (!is_soil_storage_model_set) {
+    stringstream errMsg;
+    errMsg << "soil_storage_model not set in the config file "<< config_file << ". Options 'conceptual or layered' \n";
+    throw runtime_error(errMsg.str());
+  }
+
+    
   if (parameters->soil_storage_model == Layered) {
     if (!is_soil_moisture_layered_option_set) {
       stringstream errMsg;

@@ -40,9 +40,11 @@ int main(int argc, char *argv[])
   std::cout<<"\n**************** TEST VALUES ************************************\n";
   int nz = 4;
   bool test_status = true;
-  int num_input_vars = 3;
+  int num_input_vars = 5;
   int num_output_vars = 2;
-  int nbytes_input[] = {sizeof(double), sizeof(double), int(nz * sizeof(double))};
+  
+  std::vector<string> input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_layered", "soil_depths_layered", "num_cells_layered"};
+  int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(double), sizeof(double), sizeof(int)};
   int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double)};
   //double soil_moisture_profile[] = {0.389,0.396,0.397,0.397}; // total_moisture_content
   
@@ -191,7 +193,7 @@ int main(int argc, char *argv[])
     if (VERBOSITY)
       std::cout<<" nbytes: "<< nbytes <<"\n";
 
-    if (var_name == "soil_storage" || var_name == "soil_storage_change" || var_name == "soil_moisture_layered") {
+    if (var_name == input_vars[i]) {//"soil_storage" || var_name == "soil_storage_change" || var_name == "soil_moisture_layered") {
       if (nbytes == nbytes_input[i])
 	test_status &= true;
       else {
@@ -199,13 +201,13 @@ int main(int argc, char *argv[])
 	std::string passed = test_status == true ? "Yes" : "No";
 	std::cout<<"Test passed: "<<passed<<"\n";
 	std::stringstream errMsg;
-	errMsg << "Number of bytes for input var"<<var_name<< " should be "<<nbytes_input[i]<<"\n";
+	errMsg << "Number of bytes for input var "<<var_name<< " should be "<<nbytes_input[i]<<" but bmi returned "<<nbytes<<"\n";
 	throw std::runtime_error(errMsg.str());
       }
     }
     else {
       std::stringstream errMsg;
-      errMsg << "Input variable name"<< var_name<<" should be: soil_storage or soil_storage_change or soil_moisture_layered \n";
+      errMsg << "Input variable name "<< var_name<<" should be: soil_storage or soil_storage_change or soil_moisture_layered \n";
       throw std::runtime_error(errMsg.str());
 
     }
@@ -354,7 +356,8 @@ int main(int argc, char *argv[])
   
   std::cout<<"********** Input variables ***************** \n";
   // Loop through both input and output variables and call get/set_value_*()
-  for (int i=0; i<count_in; i++) {
+  
+  for (int i=0; i<count_in-1; i++) { // count_in-1 excludes the last variable which is int
     std::string var_name = names_in[i];
     std::cout<<"Variable name: "<< var_name <<"\n";
     
@@ -416,7 +419,8 @@ int main(int argc, char *argv[])
   
   std::cout<<"************* Output variables ***************** \n";
   model.Update();
-  double water_table_test_value = 0.490438; // in meters
+  
+  double water_table_test_value = 1.50956; // depth from the surface in meters
   double water_table_computed = 0.0;
   for (int i=0; i<count_out; i++) {
     
@@ -453,7 +457,7 @@ int main(int argc, char *argv[])
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<"| All BMI Tests passed: "<<passed<<"\n";
-  std::cout<<"| Water table location: (benchmark vs computed)\n| \t \t \t"<<water_table_test_value<<" vs "<<water_table_computed<<"\n";
+  std::cout<<"| Water table (depth from surface (m)): \n| benchmark vs computed | "<<water_table_test_value<<" vs "<<water_table_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
   

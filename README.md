@@ -1,7 +1,7 @@
 ## SoilMoistureProfiles
  Two models are provided here to compute vertical soil moisture profiles.
- * Model for conceptual **(e.g., CFE)** soil reserviors 
- * Model for layered **(e.g., LGAR)** soil reservoirs
+ * Model for conceptual soil reserviors **(e.g., CFE)** 
+ * Model for layered soil reservoirs **(e.g., LGAR)**
  
  ### Conceptual soil reservior
  For conceptual reservoirs, see the following schematic and algorithm. We use the Clap-Hornberger soil moisture characteristic function here, and  **soil moisture storage** is the main input passed through a BMI.
