@@ -4,8 +4,8 @@
 #include <algorithm>
 
 #include "../bmi/bmi.hxx"
-#include "../include/bmi_mapper.hxx"
-#include "../include/soil_moisture_mapping.hxx"
+#include "../include/bmi_regridder.hxx"
+#include "../include/soil_moisture_regridding.hxx"
 
 #define SUCCESS 0
 int main(int argc, char *argv[])
@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
   fprintf(fp, "Initializing... ");
   
   model.Initialize(argv[1]);
+
+  exit(0);
   
   fprintf(fp, "done\n");
 

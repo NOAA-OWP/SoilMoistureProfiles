@@ -7,7 +7,7 @@
 
 #include <string.h>
 #include "../bmi/bmi.hxx"
-#include "soil_moisture_mapping.hxx"
+#include "soil_moisture_regridding.hxx"
 
 using namespace std;
 

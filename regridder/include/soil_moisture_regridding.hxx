@@ -4,7 +4,11 @@
 /*
   @author: Ahmad Jan (ahmad.jan@noaa.gov)
   Soil moisture mapping module maps topographic wetness index (TWI) based soil moisture to National Water Model (NWM) 1x1 km grid
-  IDEA: Module computes and maps local (subcatchment) soil moisture from catchment to NWM grid (1x1 km). The idea of computing local soil moisture is based on the concept of TopModel, where given the global (mean) watershed soil moisture deficit and TWI, local soil moisture deficit is computed. Here, we use the watershed maximum storage capacity and TWI to compute local soil moisture content which is then mapped onto NWM 1x1 km grid using the spatial mapping information provided in the hydrofabric.
+  IDEA: Module computes and maps local (subcatchment) soil moisture from catchment to NWM grid (1x1 km).
+  The idea of computing local soil moisture is based on the concept of TopModel, where given the global (mean)
+  watershed soil moisture deficit and TWI, local soil moisture deficit is computed. Here, we use the watershed
+  maximum storage capacity and TWI to compute local soil moisture content which is then mapped onto NWM 1x1 km
+  grid using the spatial mapping information provided in the hydrofabric.
 
 
   Inputs:
@@ -68,9 +72,11 @@ namespace smc_mapping {
     int *grid_id;                
     int *cat_grid_id;            //this is the cat ID in the spatial data file (corresponds to each grid id
     int *cat_id;                 // this is the ID in the attribute data file
-    int *grid_id_unique;         
-    int *grid_id_unique_index;   
-    int *cat_id_index; 
+    int *grid_id_unique;
+    int *grid_id_unique_index;
+    int *cat_id_unique;
+    int *cat_id_unique_index;
+    int *cat_id_index; // check if this is needed
     double *grid_area_fraction; 
     double *TWI; 
     double *dist_area_TWI; 
@@ -78,9 +84,22 @@ namespace smc_mapping {
     double *grid_total_area; 
     /******************************/
 
-    
+    /*** 2D arrays ***************/
+
+    double **TWI_V1;
+    double **dist_area_TWI_V1;
+    double *areal_avg_TWI_V1; // area weighted average TWI
+    int num_twi_per_cat;
+    double *maxsmc_V1; // maximum soil moisture (porosity)
+    double *cat_global_deficit_V1; // sbar [m]
+    double *depth_V1; // soil depth/thickness [m]
+    double *szm_V1; // famous m parameter
+    std::string model_type;
+    /******************************/
+
     int ngrids;
-    int ngrids_unique; // u: unique
+    int length; // total number of data points given in the file
+    //    int ngrids_unique; // u: unique
     int ncats;
 
     double cat_storage_max;
@@ -95,9 +114,10 @@ namespace smc_mapping {
     void InitFromConfigFile(std::string config_file);
     void ReadSpatialData(std::string spatial_file);
     void ReadTWIData(std::string spatial_file);
+    void ReadCatchmentParamsData(std::string spatial_file);
     void AreaWeightedAverageTWI();
     void ComputeLocalSoilMoisture();
-    void ComputeGridedSoilMoisture();
+    void ComputeGriddedSoilMoisture();
 
     ~SoilMoistureMapping();
   };

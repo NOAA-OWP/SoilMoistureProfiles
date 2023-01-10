@@ -8,8 +8,8 @@
 #include <cstdlib>
 #include <vector>
 #include "../bmi/bmi.hxx"
-#include "../include/bmi_mapper.hxx"
-#include "../include/soil_moisture_mapping.hxx"
+#include "../include/bmi_regridder.hxx"
+#include "../include/soil_moisture_regridding.hxx"
 
 void BmiMapper::
 Initialize (std::string config_file)
