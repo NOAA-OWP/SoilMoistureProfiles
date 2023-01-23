@@ -13,5 +13,9 @@ the Newton-Raphson algorithm.
 #### Run:
   - run `./build/model_c configs/config_file.txt` (for c-based models)
   - run `./build/model_cxx configs/config_file.txt` (for cxx-based models)
+  
+### Additional notes
+  - the BMI implementation for C and CXX models is not sigficantly different. 
+  - Main differences are in the Initialize and Update method, and notes (numbered as note #1, note #2, ...) inside the code are provided to highlight the places where changes are needed/done
 
   
