@@ -387,6 +387,7 @@ int main(int argc, char *argv[])
     
     if (var_name == "soil_storage")
       dest_new[0] = 0.8;
+    
     double *dest_new_up = new double[1];
     
     //      int indices[] = {0,1,2,3}; 
@@ -447,8 +448,10 @@ int main(int argc, char *argv[])
       /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
       // Test get_value_ptr()
       double *var_ptr = new double[nz];
-      var_ptr= (double*) model.GetValuePtr(var_name);
-      std::cout<<" Get value ptr: "<<*var_ptr<<"\n";
+      //var_ptr = (double*) model.GetValuePtr(var_name);
+      model.GetValue(var_name, var_ptr);
+      for (int i=0; i<nz; i++)
+	std::cout<<" Get value: "<<var_ptr[i]<<"\n";
 
     }
   }
@@ -456,7 +459,7 @@ int main(int argc, char *argv[])
   passed = test_status > 0 ? "Yes" : "No";
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
-  std::cout<<"| All BMI Tests passed: "<<passed<<"\n";
+  std::cout<<"| All BMI Tests passed: "<< RED<< passed<<RESET<<GREEN<<"\n";
   std::cout<<"| Water table (depth from surface (m)): \n| benchmark vs computed | "<<water_table_test_value<<" vs "<<water_table_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";

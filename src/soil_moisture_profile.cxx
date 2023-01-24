@@ -306,21 +306,22 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   // converting variables to cm for numerical reasons only
   double satpsi_cm = parameters->satpsi * 100.;
   double model_depth = parameters->soil_storage_model_depth * 100.;
-  double zb = 0.0; // bottom of the computational domain
-  double z0 = 0.0; // bottom of the fictitious domain (to track fictitious water table location)
-  
+  double zb = 0.0;  // bottom of the computational domain
+  double z0 = 0.0;  // bottom of the fictitious domain (to track fictitious water table location)
   double zi = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
+
+  double lam       = 1.0/parameters->bb;
+  double beta      = 1.0 - lam;
+  double alpha     = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
+  double tolerance = 1.0E-6;
+
   double soil_storage_max = model_depth * parameters->smcmax;
   
   double soil_storage_change_per_timestep_cm = fabs(parameters->soil_storage_change_per_timestep * 100.0);
-  double soil_storage_current_timestep_cm = 100.0 * parameters->soil_storage;  // storage at the current timestep
+  double soil_storage_current_timestep_cm    = 100.0 * parameters->soil_storage;  // storage at the current timestep
   
   assert(parameters->soil_storage >= 0.0); // to ensure that soil storage is non-negative due to unexpected bugs in cfe (or any other conceptual models)
   
-  double lam = 1.0/parameters->bb;
-  double beta = 1.0 - lam;
-  double alpha = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
-  double tolerance = 0.000001;
 
   int count = 0;
 
@@ -335,19 +336,28 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
     if(soil_storage_current_timestep_cm >= soil_storage_max) {
       for(int j=0;j<parameters->ncells;j++)
 	parameters->soil_moisture_profile[j] = parameters->smcmax;
+
+      parameters->water_table_depth = 0.0;
+      return;
+    }
+
+    // this won't happen, hopefully, if it does then assign a small non-zero number to the soil moisture profile
+    if(soil_storage_current_timestep_cm == 0.0) {
+      for(int j=0;j<parameters->ncells;j++)
+	parameters->soil_moisture_profile[j] = 1.0E-5;
+
+      parameters->water_table_depth = 1000.0; // fictitious water table
       return;
     }
     
+      
     double diff=1000.0; // guess for the initial differnce between the roots
   
     double f, zi_new, df_dzi;
-    
+
+    // note for stability reasons, the loop is terminated when the water-table depth exceeds 1000m, that means the soil is super dry
     do {
       count++;
-      
-      if(count>10000) {
-	throw runtime_error("No convergence loop count: after 10000 iterations!");
-      }
       
       // function representing the total amount of soil moisture. 2nd term is the integral of the Clap-Hornberger function (area under the soil moisture curve)
 
@@ -421,6 +431,13 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
     
   }
 
+  if (verbosity.compare("high") == 0) {
+    std::cout<<"Number of iterations  = "<< count <<"\nWater table depth (m) = "<< parameters->water_table_depth <<"\n";
+
+    for (int i=0; i<parameters->ncells; i++)
+      std::cout<<"soil_moisture (cell, value) = "<< i <<" , "<<parameters->soil_moisture_profile[i]<<"\n";
+  }
+    
 }
 
 
