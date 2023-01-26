@@ -294,18 +294,14 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   double thickness = 0.0;
   double soil_moisture_fraction_depth = parameters->soil_moisture_fraction_depth;
 
-  std::cout<<"depth = "<<soil_moisture_fraction_depth<<"\n";
   for (int i=0; i<parameters->ncells; i++) {
     
-    if (parameters->soil_z[i] <= soil_moisture_fraction_depth && i == 0) {
-      
+    if (parameters->soil_z[i] <= soil_moisture_fraction_depth && i == 0) {      
       parameters->soil_moisture_fraction += parameters->soil_moisture_profile[i] * parameters->soil_z[i];
-      std::cout<<"z = "<<i<<" "<<parameters->soil_z[i]<<" "<<parameters->soil_moisture_fraction<<"\n";
     }
     else if (parameters->soil_z[i] <= soil_moisture_fraction_depth) {
       thickness = parameters->soil_z[i] - parameters->soil_z[i-1];
       parameters->soil_moisture_fraction += parameters->soil_moisture_profile[i] * thickness;
-      std::cout<<"z = "<<i<<" "<<parameters->soil_z[i]<<" "<<parameters->soil_moisture_fraction<<"\n";
     }
     else {
       parameters->soil_moisture_fraction /= parameters->soil_storage;

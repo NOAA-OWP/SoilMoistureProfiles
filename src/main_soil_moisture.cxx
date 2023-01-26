@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
   BmiSoilMoistureProfile model;
   
   if (argc != 2) {
-    printf("Usage: ./run_bmi_smp CONFIGURATION_FILE\n\n");
+    printf("Usage: ./make_run_standalone.sh \n\n");
     printf("Run soil moisture profile model through its BMI with a configuration file.\n");
     printf("Output is written to the file `bmi_file.out`.\n");
     return SUCCESS;
@@ -64,13 +64,12 @@ int main(int argc, char *argv[])
 
     /****************************************************************************/
     // unit test data for conceptual soil reservoir
-    //double SMCT[] ={0.32207, 0.333438, 0.367336, 0.439}; // soil_moisture_profile
     double SMCT[] = {0.3375634,0.34234789,0.34752731,0.35330897,0.35974973,0.3669139,0.37517657,0.38464055,0.39596964,0.40977129,0.42703622,0.439,0.439,0.439,0.439,0.439,0.439,0.439,0.439,0.439};
     double water_table_thickness = 1.50956; // in meters
     enum option { Conceptual = 1, Layered = 2};
     /****************************************************************************/
     // Set values
-    double storage_m = 0.8; //0.526328;
+    double storage_m = 0.8;
     double storage_change_m = -0.000472;
     double *storage_m_ptr = &storage_m;
     double *storage_change_m_ptr = &storage_change_m;
