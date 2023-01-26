@@ -32,8 +32,8 @@
   @param soil_moisture_layered_option      [-] : valid for layered model only; linear or constant
   @param soil_storage_model_depth          [m] : depth of the soil storage reservoir
   @param soil_moisture_layered_bmi         [-] : if true, soil moisture content of wetting fronts is set by the bmi
-  @param soil_moisture_fraction             [-] : fraction of soil moisture ()
-  @param soil_moisture_fraction_depth       [-] : user specified depth for the fraction of soil moisture (default is 40 cm)
+  @param soil_moisture_fraction            [-] : fraction of soil moisture ()
+  @param soil_moisture_fraction_depth      [m] : user specified depth for the fraction of soil moisture (default is 40 cm)
  */
 
 #include <vector>
