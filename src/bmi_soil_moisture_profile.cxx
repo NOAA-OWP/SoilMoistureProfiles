@@ -52,7 +52,8 @@ GetVarGrid(std::string name)
 {
   if (name.compare("soil_storage_model") == 0 || name.compare("num_cells_layered") == 0)   // int
     return 0;
-  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 || name.compare("soil_water_table") == 0) // double
+  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0
+	   || name.compare("soil_water_table") == 0 || name.compare("soil_moisture_fraction") == 0) // double
     return 1; 
   else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
     return 2;
@@ -94,9 +95,11 @@ GetVarItemsize(std::string name)
 std::string BmiSoilMoistureProfile::
 GetVarUnits(std::string name)
 {
-  if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0  || name.compare("soil_water_table") == 0)
+  if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 ||
+      name.compare("soil_water_table") == 0)
     return "m";
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0)
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 ||
+	   name.compare("soil_moisture_fraction") == 0)
     return "none";
   else if (name.compare("soil_depths_layered") == 0)
     return "m";
@@ -290,6 +293,8 @@ GetValuePtr (std::string name)
     return (void*)(&this->state->soil_storage_change_per_timestep);
   else  if (name.compare("soil_water_table") == 0)
     return (void*)(&this->state->water_table_depth);
+  else  if (name.compare("soil_moisture_fraction") == 0)
+    return (void*)(&this->state->soil_moisture_fraction);
   else if (name.compare("soil_moisture_profile") == 0)
     return (void*)this->state->soil_moisture_profile;
   else if (name.compare("soil_moisture_layered") == 0)

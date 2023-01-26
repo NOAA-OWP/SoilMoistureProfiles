@@ -84,6 +84,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
   bool is_soil_storage_model_depth_set = false;
   bool is_max_ncells_layered_set = false;
   bool is_water_table_depth_set = false;
+  bool is_soil_moisture_fraction_depth_set = false;
   
   while (fp) {
 
@@ -186,6 +187,11 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       is_water_table_depth_set = true;
       continue;
     }
+    else if (param_key == "soil_moisture_fraction_depth") {
+      parameters->soil_moisture_fraction_depth = stod(param_value);
+      is_soil_moisture_fraction_depth_set = true;
+      continue;
+    }
     else if (param_key == "verbosity") {
       verbosity = param_value;
       continue;
@@ -225,7 +231,11 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     stringstream errMsg;
     errMsg << "satpsi not set in the config file "<< config_file << "\n";
     throw runtime_error(errMsg.str());
-    }
+  }
+
+  if (!is_soil_moisture_fraction_depth_set) {
+    parameters->soil_moisture_fraction_depth = 0.4; // in meters
+  }
   
   if (!is_soil_storage_model_depth_set && parameters->soil_storage_model == Conceptual) {
     stringstream errMsg;
@@ -239,7 +249,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     throw runtime_error(errMsg.str());
   }
 
-    
+  
   if (parameters->soil_storage_model == Layered) {
     if (!is_soil_moisture_layered_option_set) {
       stringstream errMsg;
@@ -279,6 +289,30 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
     throw runtime_error(errMsg.str());
   }
 
+
+  // update soil moisture fraction
+  double thickness = 0.0;
+  double soil_moisture_fraction_depth = parameters->soil_moisture_fraction_depth;
+
+  std::cout<<"depth = "<<soil_moisture_fraction_depth<<"\n";
+  for (int i=0; i<parameters->ncells; i++) {
+    
+    if (parameters->soil_z[i] <= soil_moisture_fraction_depth && i == 0) {
+      
+      parameters->soil_moisture_fraction += parameters->soil_moisture_profile[i] * parameters->soil_z[i];
+      std::cout<<"z = "<<i<<" "<<parameters->soil_z[i]<<" "<<parameters->soil_moisture_fraction<<"\n";
+    }
+    else if (parameters->soil_z[i] <= soil_moisture_fraction_depth) {
+      thickness = parameters->soil_z[i] - parameters->soil_z[i-1];
+      parameters->soil_moisture_fraction += parameters->soil_moisture_profile[i] * thickness;
+      std::cout<<"z = "<<i<<" "<<parameters->soil_z[i]<<" "<<parameters->soil_moisture_fraction<<"\n";
+    }
+    else {
+      parameters->soil_moisture_fraction /= parameters->soil_storage;
+      break;
+    }
+    
+  }
 }
 
 /*

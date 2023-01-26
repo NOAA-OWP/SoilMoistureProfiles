@@ -11,7 +11,7 @@ using namespace std;
 namespace coupler {
   class NotImplemented : public std::logic_error {
   public:
-    NotImplemented() : std::logic_error("Not Implemented Function in SMP") { };
+    NotImplemented() : std::logic_error("Not Implemented Function in SoilMoistureProfile") { };
   };
 
 }
@@ -25,8 +25,9 @@ public:
     this->input_var_names[3] = "soil_depths_layered";
     this->input_var_names[4] = "num_cells_layered";
     
-    this->output_var_names[0] = "soil_moisture_profile";
-    this->output_var_names[1] = "soil_water_table";
+    this->output_var_names[0] = "soil_moisture_profile";  // entire profile of the soil column (1D array)
+    this->output_var_names[1] = "soil_water_table";       // depth of the water table from the surface in meters
+    this->output_var_names[2] = "soil_moisture_fraction"; // fraction of soil moisture, top 0.4 m (or user specified depth)
   };
   
   void Initialize(std::string config_file);
@@ -84,7 +85,7 @@ public:
 private:
   soil_moisture_profile::soil_profile_parameters* state;
   static const int input_var_name_count = 5;
-  static const int output_var_name_count = 2;
+  static const int output_var_name_count = 3;
   
   std::string input_var_names[input_var_name_count];
   std::string output_var_names[output_var_name_count];

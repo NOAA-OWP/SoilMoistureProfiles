@@ -27,8 +27,8 @@ int main(int argc, char *argv[])
   BmiSoilMoistureProfile model,model_cyc;
 
   if (argc != 2) {
-    printf("Usage: run_bmifrozensoilcxx CONFIGURATION_FILE\n\n");
-    printf("Run the frozensoilcxx model through its BMI with a configuration file.\n");
+    printf("Usage: ./run_unittest.sh CONFIGURATION_FILE\n\n");
+    printf("Runs soil moisture profile model through its BMI with a configuration file.\n");
     return FAILURE;
   }
 
@@ -41,11 +41,13 @@ int main(int argc, char *argv[])
   int nz = 4;
   bool test_status = true;
   int num_input_vars = 5;
-  int num_output_vars = 2;
+  int num_output_vars = 3;
   
-  std::vector<string> input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_layered", "soil_depths_layered", "num_cells_layered"};
+  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_layered", "soil_depths_layered", "num_cells_layered"};
+  std::vector<string> bmi_output_vars = {"soil_moisture_profile", "soil_water_table","soil_moisture_fraction"};
+  
   int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(double), sizeof(double), sizeof(int)};
-  int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double)};
+  int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double), sizeof(double)};
   //double soil_moisture_profile[] = {0.389,0.396,0.397,0.397}; // total_moisture_content
   
   std::cout<<"Num cells:           "<<nz<<"\n";
@@ -193,7 +195,7 @@ int main(int argc, char *argv[])
     if (VERBOSITY)
       std::cout<<" nbytes: "<< nbytes <<"\n";
 
-    if (var_name == input_vars[i]) {//"soil_storage" || var_name == "soil_storage_change" || var_name == "soil_moisture_layered") {
+    if (var_name == bmi_input_vars[i]) {
       if (nbytes == nbytes_input[i])
 	test_status &= true;
       else {
@@ -207,7 +209,7 @@ int main(int argc, char *argv[])
     }
     else {
       std::stringstream errMsg;
-      errMsg << "Input variable name "<< var_name<<" should be: soil_storage or soil_storage_change or soil_moisture_layered \n";
+      errMsg << "Input variable name "<< var_name <<" not in the bmi_input_vars list. \n";
       throw std::runtime_error(errMsg.str());
 
     }
@@ -278,7 +280,7 @@ int main(int argc, char *argv[])
     if (VERBOSITY)
       std::cout<<" nbytes: "<< nbytes<<"\n";
 
-    if (var_name == "soil_moisture_profile" || var_name == "soil_water_table") {
+    if (var_name == bmi_output_vars[i]) {
       if (nbytes == nbytes_output[i])
 	test_status &= true;
       else {
@@ -292,7 +294,7 @@ int main(int argc, char *argv[])
     }
     else {
       std::stringstream errMsg;
-      errMsg << "Variable name "<< var_name<<" should be: soil_moisture_profile or soil_water_table \n";
+      errMsg << "Variable name "<< var_name <<" not in the bmi output vars list. \n";
       throw std::runtime_error(errMsg.str());
 
     }
@@ -422,45 +424,57 @@ int main(int argc, char *argv[])
   model.Update();
   
   double water_table_test_value = 1.50956; // depth from the surface in meters
+  double soil_moisture_fraction_test_value = 0.174686; // soil moisture fraction in m
   double water_table_computed = 0.0;
+  double soil_moisture_fraction_computed = 0.0;
+    
   for (int i=0; i<count_out; i++) {
     
     std::string var_name = names_out[i];
     std::cout<<"variable name: "<< var_name <<" "<<test_status<<"\n";
-    
-    if (var_name.compare("soil_water_table") == 0) {
+
+    if (var_name.compare("soil_moisture_profile") == 0) {
+      double *var_ptr = new double[nz];
+      //var_ptr = (double*) model.GetValuePtr(var_name);
+      model.GetValue(var_name, var_ptr);
+      
+      for (int i=0; i<nz; i++)
+	std::cout<<" Get value: "<<var_ptr[i]<<"\n";
+
+    }
+    else {
       
       double val;
       
       model.GetValue(var_name, &val);
       std::cout<<" Get value: "<< val <<"\n";
-
-      water_table_computed = val;
-	
-      if (fabs(val - water_table_test_value) < 0.01)
-	test_status &= true;
-      else
-	test_status &= false;
+      
+      if (var_name.compare("soil_water_table") == 0) {
+	water_table_computed = val;
+	if (fabs(water_table_computed - water_table_test_value) < 0.01)
+	  test_status &= true;
+	else
+	  test_status &= false;
+      }
+      else if (var_name.compare("soil_moisture_fraction") == 0) {
+	soil_moisture_fraction_computed = val;
+	if (fabs(soil_moisture_fraction_computed - soil_moisture_fraction_test_value) < 0.01)
+	  test_status &= true;
+	else
+	  test_status &= false;
+      }
       
     }
-    else {
+    
       
-      /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-      // Test get_value_ptr()
-      double *var_ptr = new double[nz];
-      //var_ptr = (double*) model.GetValuePtr(var_name);
-      model.GetValue(var_name, var_ptr);
-      for (int i=0; i<nz; i++)
-	std::cout<<" Get value: "<<var_ptr[i]<<"\n";
-
-    }
   }
   
   passed = test_status > 0 ? "Yes" : "No";
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<"| All BMI Tests passed: "<< RED<< passed<<RESET<<GREEN<<"\n";
-  std::cout<<"| Water table (depth from surface (m)): \n| benchmark vs computed | "<<water_table_test_value<<" vs "<<water_table_computed<<"\n";
+  std::cout<<"| Water table depth (from surface) [m]: \n| benchmark vs computed | "<<water_table_test_value<<" vs "<<water_table_computed<<"\n";
+  std::cout<<"| Soil moisture fraction [-]: \n| benchmark vs computed | "<<soil_moisture_fraction_test_value<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
   

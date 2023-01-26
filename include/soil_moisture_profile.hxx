@@ -32,6 +32,8 @@
   @param soil_moisture_layered_option      [-] : valid for layered model only; linear or constant
   @param soil_storage_model_depth          [m] : depth of the soil storage reservoir
   @param soil_moisture_layered_bmi         [-] : if true, soil moisture content of wetting fronts is set by the bmi
+  @param soil_moisture_fraction             [-] : fraction of soil moisture ()
+  @param soil_moisture_fraction_depth       [-] : user specified depth for the fraction of soil moisture (default is 40 cm)
  */
 
 #include <vector>
@@ -55,7 +57,7 @@ namespace soil_moisture_profile {
 
     double soil_storage;
     double soil_storage_change_per_timestep;
-    double water_table_depth; 
+    double water_table_depth;
     double *soil_moisture_profile;
     
     double smcmax;
@@ -65,8 +67,10 @@ namespace soil_moisture_profile {
     double soil_depth;
     double last_layer_depth;
     double *soil_z;
-    //double *layers_z;
-   
+
+    double soil_moisture_fraction;
+    double soil_moisture_fraction_depth;
+    
     int soil_storage_model;
     double soil_storage_model_depth;
     int soil_moisture_layered_option;
