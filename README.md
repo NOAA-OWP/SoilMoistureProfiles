@@ -14,8 +14,7 @@
   * linearly interpolated profile between consecutive layers, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
  
  #### Standalone run:
-  * run [make_bmi_smp.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_bmi_smp.sh) to get the executable (e.g., run_bmi_smp)
-  * run `./run_bmi_smp config/config_<conceptual/layered>.txt`
+  * run [make_run_standalone.sh](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/main/make_run_standalone.sh)
 
  #### Coupled mode (ngen and pseudo frameworks):
   * Coupling SoilMoistureProfiles to any module (for instance, CFE or SFT) **must** follow these [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw) for building and running. **Note separate instructions are provided for building/running in the ngen framework on the  SoilFreezeThaw repo.**
@@ -26,7 +25,7 @@
 _________________________________________________________________
 ## Description of the parameters in the config file
 
-| Variable _____________________ | Datatype ___________ |  Limits ___________ | Units ____ | Role ___ |  Description _____________________________________________________________________|
+| Variable _____________________ | Datatype ___________ |  Limits _________________ | Units ____ | Role ___ |  Description _____________________________________________________________________|
 | :-------- | :-------- | :------ | :----- | :---- |  :----------------------- |
 | smcmax | double   | - | - | - | the maximum moisture content (i.e., porosity) |
 | b | double | - | - | - | the pore size distribution, beta exponent in Clapp-Hornberger function |
@@ -35,6 +34,7 @@ _________________________________________________________________
 | soil_storage_model_depth | double | - | m | - | depth of the soil reservoir model (e.g., CFE). Note: this depth can be different from the depth of the soil moisture profile which is based on `soil_z` |
 | soil_storage_model | string | conceptual or layered | - | - | if `conceptual`, conceptual models are used for computing the soil moisture profile (e.g., CFE). If `layered`, layered-based soil moisture models are used (e.g., LGAR)
 | soil_moisture_profile_option | string | constant or linear | - | - | Only needed if `soil_storage_model = layered`. `constant` for layered-constant profile. `linear`  for linearly interpolated values between two consecutive layers
+| soil_moisture_fraction_depth | double | (0, domain_depth] | m | - | user specified depth for the soil moisture fraction (default is 40 cm)
 
 _________________________________________________________________
 
