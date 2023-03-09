@@ -24,6 +24,10 @@ public:
     this->input_var_names[2] = "soil_moisture_layered";
     this->input_var_names[3] = "soil_depths_layered";
     this->input_var_names[4] = "num_cells_layered";
+    this->input_var_names[5] = "Qb_topmodel";        // baseflow in the topmodel
+    this->input_var_names[6] = "Qv_topmodel";        // recharge rate to the saturated zone to the un saturated zone
+                                                     // in the topmodel
+    this->input_var_names[7] = "global_deficit";     // global soil deficit in the topmodel
     
     this->output_var_names[0] = "soil_moisture_profile";  // entire profile of the soil column (1D array)
     this->output_var_names[1] = "soil_water_table";       // depth of the water table from the surface in meters
@@ -35,6 +39,7 @@ public:
   void Update();
   void UpdateUntil(double time);
   void Finalize();
+  void PrintSoilMoistureProfile();
   
   std::string GetComponentName();
   int GetInputItemCount();
@@ -84,7 +89,7 @@ public:
   void GetGridNodesPerFace(const int grid, int *nodes_per_face);
 private:
   soil_moisture_profile::soil_profile_parameters* state;
-  static const int input_var_name_count = 5;
+  static const int input_var_name_count  = 8;
   static const int output_var_name_count = 3;
   
   std::string input_var_names[input_var_name_count];

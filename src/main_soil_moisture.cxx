@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
+#include <iomanip>
 
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_soil_moisture_profile.hxx"

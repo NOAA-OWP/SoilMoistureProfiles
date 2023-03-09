@@ -28,14 +28,14 @@ Initialize (std::string config_file)
 void BmiSoilMoistureProfile::
 Update()
 {
-  SoilMoistureProfileUpdate(state);
+  soil_moisture_profile::SoilMoistureProfileUpdate(state);
 }
 
 
 void BmiSoilMoistureProfile::
 UpdateUntil(double t)
 {
-  SoilMoistureProfileUpdate(state);
+  soil_moisture_profile::SoilMoistureProfileUpdate(state);
 }
 
 
@@ -46,6 +46,11 @@ Finalize()
     delete state;
 }
 
+void BmiSoilMoistureProfile::
+PrintSoilMoistureProfile()
+{
+  soil_moisture_profile::PrintSoilMoistureProfile(this->state);
+}
 
 int BmiSoilMoistureProfile::
 GetVarGrid(std::string name)
@@ -54,7 +59,9 @@ GetVarGrid(std::string name)
     return 0;
   else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0
 	   || name.compare("soil_water_table") == 0 || name.compare("soil_moisture_fraction") == 0) // double
-    return 1; 
+    return 1;
+  else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0 || name.compare("global_deficit") == 0)
+    return 1;
   else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
     return 2;
   else if (name.compare("soil_moisture_layered") == 0 || name.compare("soil_depths_layered") == 0) // array of doubles (layered model)
@@ -101,6 +108,10 @@ GetVarUnits(std::string name)
   else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_layered") == 0 ||
 	   name.compare("soil_moisture_fraction") == 0)
     return "none";
+  else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0)
+    return "m h^-1";
+  else if (name.compare("global_deficit") == 0)
+    return "m";
   else if (name.compare("soil_depths_layered") == 0)
     return "m";
   else
@@ -305,6 +316,12 @@ GetValuePtr (std::string name)
     return (void*)(&this->state->soil_storage_model);
   else if (name.compare("num_cells_layered") == 0)
     return (void*)(&this->state->ncells_layered);
+  else if (name.compare("Qb_topmodel") == 0)
+    return (void*)(&this->state->Qb_topmodel);
+  else if (name.compare("Qv_topmodel") == 0)
+    return (void*)(&this->state->Qv_topmodel);
+  else if (name.compare("global_deficit") == 0)
+    return (void*)(&this->state->global_deficit);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";

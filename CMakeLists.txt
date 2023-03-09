@@ -1,17 +1,34 @@
 cmake_minimum_required(VERSION 3.12)
 
+string(ASCII 27 Esc)
+set(ColourReset "${Esc}[m")
+set(Red         "${Esc}[31m")
+
 # Uncomment this and rebuild artifacts to enable debugging
 set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_C_COMPILER $ENV{CC})
+set(CMAKE_CXX_COMPILER $ENV{CXX})
+
 project(smpbmi VERSION 1.0.0 DESCRIPTION "OWP SMP BMI Module Shared Library")
 
 option(NGEN "NGEN" OFF)
+option(STANDALONE "STANDALONE" OFF)	
+option(WITHTOPMODEL "WITHTOPMODEL" OFF)
 
 if(NGEN)
    add_definitions(-DNGEN)
+endif()
+
+if(STANDALONE)
+message("${Red} Standalone Soil moisture profile (using conceptual reservoir)! ${ColourReset}")
+set(exe_name "smp_standalone")
+elseif(WITHTOPMODEL)
+message("${Red} Soil moisture profile for topmodel (watertable-based)! ${ColourReset}")
+set(exe_name "smp_topmodel")
 endif()
 
 # SMP
@@ -21,6 +38,23 @@ set(SMP_LIB_DESC_CMAKE "OWP SMP BMI Module Shared Library")
 # Make sure these are compiled with this directive
 add_compile_definitions(BMI_ACTIVE)
 
+# add the executable
+if(STANDALONE)
+add_executable(${exe_name} ./src/main_soil_moisture.cxx ./src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
+elseif(WITHTOPMODEL)
+add_executable(${exe_name} ./src/main_smp_topmodel.cxx ./topmodel/src/topmodel.c ./topmodel/src/bmi_topmodel.c)
+
+add_library(smplib ./src/bmi_soil_moisture_profile.cxx ./src/soil_moisture_profile.cxx ./include/bmi_soil_moisture_profile.hxx ./include/soil_moisture_profile.hxx)
+
+endif()
+
+
+if(WITHTOPMODEL)
+target_link_libraries(${exe_name} LINK_PUBLIC smplib)
+endif()
+target_link_libraries(${exe_name} PRIVATE m)
+
+## for NGEN BUILD
 if(WIN32)
     add_library(smpbmi src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
 else()
@@ -45,3 +79,6 @@ install(TARGETS smpbmi
 configure_file(smpbmi.pc.in smpbmi.pc @ONLY)
 
 install(FILES ${CMAKE_BINARY_DIR}/smpbmi.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+
+unset(STANDALONE CACHE)
+unset(WITHTOPMODEL CACHE)
