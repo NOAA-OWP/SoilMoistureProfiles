@@ -46,6 +46,7 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   parameters->soil_storage_change_per_timestep = 0.0;
   parameters->init_profile = true;
   parameters->ncells_layered = 1;
+  parameters->soil_depth_NWM = 2.0;
 }
 
 /*
@@ -208,7 +209,6 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       else if (param_value == "iterative")
 	parameters->water_table_based_method = Iterative;
       is_water_table_based_method_set = true;
-      printf("value = %d %s %s\n", parameters->water_table_based_method, param_key.c_str(), param_value.c_str());
       continue;
     }
     else if (param_key == "verbosity") {
@@ -315,6 +315,11 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
 void soil_moisture_profile::
 SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
 {
+  // update soil moisture fraction
+  double thickness = 0.0;
+  double soil_moisture_fraction_depth = parameters->soil_moisture_fraction_depth;
+  parameters->soil_moisture_fraction = 0.0; // reset to 0 at each timestep
+  
   if (parameters->soil_storage_model == Conceptual) {
     SoilMoistureProfileFromConceptualReservoir(parameters);
   }
@@ -323,20 +328,35 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   }
   else if (parameters->soil_storage_model == Topmodel) {
     SoilMoistureProfileFromWaterTableDepth(parameters);
+
+    // update the soil storage for the top 2 m to be consistent with NWM; needed only when coupled to Topmodel
+    double storage_temp = 0.0;  // temporary storage
+    for (int i=0; i<parameters->ncells; i++) {
+      if (parameters->soil_z[i] <= parameters->soil_depth_NWM && i == 0) {      
+	storage_temp = parameters->soil_moisture_profile[i] * parameters->soil_z[i];
+      }
+      else if (parameters->soil_z[i] <= parameters->soil_depth_NWM) {
+	thickness = parameters->soil_z[i] - parameters->soil_z[i-1];
+	storage_temp += parameters->soil_moisture_profile[i] * thickness;
+      }
+      else {
+	break;
+      }
+      
+    }
+    parameters->soil_storage = storage_temp;
+    
   }
   else {
     stringstream errMsg;
-    errMsg << "Soil moisture profile OPTION provided in the config file is " << parameters->soil_storage_model<< ", which should be either \'concepttual\' or \'layered\' " <<"\n";
+    errMsg << "Soil moisture profile OPTION provided in the config file is " << parameters->soil_storage_model
+	   << ", valid options are concepttual, layered, and topmodel " <<"\n";
     throw runtime_error(errMsg.str());
   }
 
 
-  // update soil moisture fraction
-  double thickness = 0.0;
-  double soil_moisture_fraction_depth = parameters->soil_moisture_fraction_depth;
-
+  // compute soil moisture fraction, moisture in the top 40 cm over soil storage in 2 m 
   for (int i=0; i<parameters->ncells; i++) {
-    
     if (parameters->soil_z[i] <= soil_moisture_fraction_depth && i == 0) {      
       parameters->soil_moisture_fraction += parameters->soil_moisture_profile[i] * parameters->soil_z[i];
     }
@@ -345,11 +365,13 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
       parameters->soil_moisture_fraction += parameters->soil_moisture_profile[i] * thickness;
     }
     else {
-      parameters->soil_moisture_fraction /= parameters->soil_storage;
       break;
     }
     
   }
+  
+  assert (parameters->soil_storage >0);
+  parameters->soil_moisture_fraction /= parameters->soil_storage;
 }
 
 /*
@@ -364,7 +386,8 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   @param z1  [cm] : depth of the water table at the previous timestep (known)
   @param z2  [cm] : depth of the water table at the current timestep (unknown, will use the Newton-Raphson method to find it)
   @param soil_storage_max [cm] : maximum soil storage
-  @param soil_storage_previous_timestepcm [cm] : soil storage at the previous timestep computed locally from the watertable location at the previous timestep
+  @param soil_storage_previous_timestepcm [cm] : soil storage at the previous timestep computed
+                                                 locally from the watertable location at the previous timestep
   @param soil_storage_current_timestepcm [cm] : soil storage at the current timestep
   @param tolerance             [cm] : Error tolerance for finding the new root (i.e., water_table_depth)
   @param soil_moisture_profile [-]  : OUTPUT (soil moisture content vertical profile [-])
@@ -391,12 +414,14 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   double soil_storage_change_per_timestep_cm = fabs(parameters->soil_storage_change_per_timestep * 100.0);
   double soil_storage_current_timestep_cm    = 100.0 * parameters->soil_storage;  // storage at the current timestep
   
-  assert(parameters->soil_storage >= 0.0); // to ensure that soil storage is non-negative due to unexpected bugs in cfe (or any other conceptual models)
+  assert(parameters->soil_storage >= 0.0); /* to ensure that soil storage is non-negative due to unexpected
+					      bugs in cfe (or any other conceptual models) */
   
 
   int count = 0;
 
-  // compute a new profile only if sufficient amount of water is added at this timestep. 1.0E-4 corresponds to 0.001 mm of water
+  /* compute a new profile only if sufficient amount of water is added at this timestep.
+     1.0E-4 corresponds to 0.001 mm of water */
   
   if (soil_storage_change_per_timestep_cm > 0.0001 || parameters->init_profile) {
     
@@ -426,16 +451,22 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   
     double f, zi_new, df_dzi;
 
-    // note for stability reasons, the loop is terminated when the water-table depth exceeds 1000m, that means the soil is super dry
+    // note for stability reasons, the loop is terminated when the water-table depth exceeds 1000m,
+    // that means the soil is super dry
     do {
       count++;
       
-      // function representing the total amount of soil moisture. 2nd term is the integral of the Clap-Hornberger function (area under the soil moisture curve)
+      // function representing the total amount of soil moisture. 2nd term is the integral of
+      // the Clap-Hornberger function (area under the soil moisture curve)
 
-      // fis is integrates the function from z0 to the surface: 1st part: saturated soil between zi and z0; 2nd part: capillary fringe; 3rd: enclosed area between satpis and the surface
-      // fib is non-zero for zi <0, zero otherwise. this is the volume of water that needs to be subtracted from "fis" to get the water storage in the computational domain (say top 2 m if soil column has depth 2m)
-      double fis = parameters->smcmax * (zi - z0) + parameters->smcmax * satpsi_cm + alpha * parameters->smcmax * ( pow((model_depth-zi),beta) - pow(satpsi_cm,beta) );
-      double fib = parameters->smcmax * (zi - z0) + parameters->smcmax * satpsi_cm + alpha * parameters->smcmax * ( pow(abs(zb-zi),beta) - pow(satpsi_cm,beta) );
+      // fis is integrates the function from z0 to the surface: 1st part: saturated soil between
+      // zi and z0; 2nd part: capillary fringe; 3rd: enclosed area between satpis and the surface
+      // fib is non-zero for zi <0, zero otherwise. this is the volume of water that needs to be
+      // subtracted from "fis" to get the water storage in the computational domain (say top 2 m if soil column has depth 2m)
+      double fis = parameters->smcmax * (zi - z0) + parameters->smcmax * satpsi_cm
+	           + alpha * parameters->smcmax * ( pow((model_depth-zi),beta) - pow(satpsi_cm,beta) );
+      double fib = parameters->smcmax * (zi - z0) + parameters->smcmax * satpsi_cm
+	           + alpha * parameters->smcmax * ( pow(abs(zb-zi),beta) - pow(satpsi_cm,beta) );
 	
 
       fib = zi >= 0.0 ? 0.0 : fib;
@@ -459,13 +490,15 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
       z0 = zi >= 0.0 ? zb : zi - satpsi_cm;
 
       double zi_m = zi/100.; // zi in meters
-      // if the water gets below 1000 m, that would mean the soil is super dry and the algorithm may fail to converge in reasonable number of timesteps
+      // if the water gets below 1000 m, that would mean the soil is super dry and the algorithm
+      // may fail to converge in reasonable number of timesteps
       if (zi_m < -1000)
 	break;
       
     } while (fabs(diff) > tolerance);
 
-    // water table thickness can be negative and that would be depth of the water table below the depth of the computational domain; probably a better name would be water_table_location
+    // water table thickness can be negative and that would be depth of the water table below the
+    // depth of the computational domain; probably a better name would be water_table_location
     parameters->water_table_depth = (model_depth - zi)/100.;
 
     /*******************************************************************/
@@ -520,12 +553,17 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
 
 
 /*
-- Computes 1D soil moisture profile for layered/calculated reservoir. That is, take layered reservior soil moisture and distribute it vertically to the desired soil discretization
-- Two strategies are implemented
-  - Constant strategy: A simple technique to map layered values to grids in the soil discretization. That is, all grid cells in the discretization has a constant value within a layer. Note cells at the interface take average value of the layers 
-  - Linear strategy: A linear interpolation tehcnique is used to map layered values to grids in the soil discretization. That is, grid cells in the discretization take linearly interpolated value between consecutive layers.
- - Note: the water table location is the thickness of the water table plus saturated capillary head (satpsi)
-- local_variables:
+  - Computes 1D soil moisture profile for layered/calculated reservoir. That is, take layered reservior
+    soil moisture and distribute it vertically to the desired soil discretization
+  - Two strategies are implemented
+  - Constant strategy: A simple technique to map layered values to grids in the soil discretization.
+                       That is, all grid cells in the discretization has a constant value within a layer.
+		       Note cells at the interface take average value of the layers 
+  - Linear strategy: A linear interpolation tehcnique is used to map layered values to grids in the
+                     soil discretization. That is, grid cells in the discretization take linearly interpolated
+		     value between consecutive layers.
+  - Note: the water table location is the thickness of the water table plus saturated capillary head (satpsi)
+  - local_variables:
   @param lam                [-]  : 1/bb (bb: pore size distribution)
   @param soil_depth         [cm] : depth of the soil column
   @param last_layer_depth   [cm] : depth of the last layer from the surface
@@ -541,7 +579,8 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
   if (verbosity.compare("high") == 0) {
     std::cerr<<"SoilMoistureProfile: number of wetting fronts = "<<ncells_layered<<"\n";
     for (int i =0; i <ncells_layered; i++)
-      std::cerr<<"SoilMoistureProfile (input): (depth, water_content) = "<<parameters->soil_depths_layered[i]<<", "<<parameters->soil_moisture_layered[i]<<"\n";
+      std::cerr<<"SoilMoistureProfile (input): (depth, water_content) = "<<parameters->soil_depths_layered[i]
+	       <<", "<<parameters->soil_moisture_layered[i]<<"\n";
   }
 
   parameters->last_layer_depth = parameters->soil_depths_layered[ncells_layered-1];
@@ -593,7 +632,8 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 	double zz = fmax(parameters->water_table_depth - parameters->soil_z[i], 1.0e-4);
 	double theta = delta + pow((parameters->satpsi/zz),lam) * parameters->smcmax;
 	
-	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the last layer and profile below that depth of the last layer
+	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the
+	                   // last layer and profile below that depth of the last layer
 	  delta = 0.0 - theta;
 	  theta = theta + delta;
 	  layers_flag=false;
@@ -619,7 +659,8 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 
       // linear interpolation between consecutive layers
       if (parameters->soil_z[i] <= parameters->soil_depths_layered[c] && c < ncells_layered-1) {
-	t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], parameters->soil_moisture_layered[c], parameters->soil_moisture_layered[c+1], parameters->soil_z[i]);
+	t_v = LinearInterpolation(z_layers_n[c], z_layers_n[c+1], parameters->soil_moisture_layered[c],
+				  parameters->soil_moisture_layered[c+1], parameters->soil_z[i]);
 	parameters->soil_moisture_profile[i] = t_v;
 	
 	if (parameters->soil_z[i+1] > parameters->soil_depths_layered[c]) // the parameter c keeps track of the layer
@@ -630,7 +671,8 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 	double zz = fmax(parameters->water_table_depth - parameters->soil_z[i], 1.0e-4);
 	double theta = delta + pow((parameters->satpsi/zz),lam)*parameters->smcmax;
 	
-	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the last layer and profile below that depth of the last layer
+	if (layers_flag) { // Ensure continuity of soil moisture at the interface of the depth of the
+	                   // last layer and profile below that depth of the last layer
 	  delta = 0.0 - theta;
 	  theta = theta + delta;
 	  layers_flag = false;
@@ -757,7 +799,7 @@ SoilMoistureProfileFromWaterTableDepth(struct soil_profile_parameters* parameter
     std::cout<<"Water table depth (m) = "<< parameters->water_table_depth <<"\n";
     PrintSoilMoistureProfile(parameters);
   }
-  
+
 }
 
 

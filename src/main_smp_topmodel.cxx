@@ -19,11 +19,11 @@
 
 
 /*
-  This pseudo framework couples Topmodel and SoilMoistureProfiles modules to compute water table
+  This pseudo-framework couples Topmodel and SoilMoistureProfiles modules to compute water table
   and soil moisture profile using two schemes based on catchment deficit, and baseflow and recharge fluxes.
   More details can be found on the main github repo, however, the two methods implemented here are based on
   Method 1 : Eq. (15) in Franchini et al. (1996))
- Method 2 : Eq. (2) in Blazkova et al. (2002)
+  Method 2 : Eq. (2) in Blazkova et al. (2002)
 */
 
 /***************************************************************
@@ -124,16 +124,17 @@ main(int argc, const char *argv[]) {
   ************************************************************************/
   printf("looping through and calling updata\n");
 
-  // output files -- writing water table depth and soil moisture profiles to separate files
+  // output files -- writing water table depth, soil moisture fraction, and soil moisture profiles to separate files
   ofstream fout, fout_wt;
   fout.open("smp_data.csv");
   fout_wt.open("water_table.csv");
-  fout_wt << "water_table [m]"<<"\n";
+  fout_wt << "water_table [m]"<<",soil_moisture_fraction"<<"\n";
 
   int nz = 20; // number of cells for soil discretization
   double *smc = new double[nz];
   double water_table;
- 
+  double soil_moisture_fraction;
+  
   for (int i = 0; i < nstep; i++) {
 
     model->update(model);
@@ -145,12 +146,14 @@ main(int argc, const char *argv[]) {
     
     smp_bmi.GetValue("soil_moisture_profile",&smc[0]);
     smp_bmi.GetValue("soil_water_table",&water_table);
+    smp_bmi.GetValue("soil_moisture_fraction",&soil_moisture_fraction);
+
     fout<<i<<",";
     for (int k = 0; k < 20; k++)
       fout <<smc[k]<<",";
     fout<< std::endl;
 
-    fout_wt << water_table <<"\n";
+    fout_wt << water_table <<","<< soil_moisture_fraction <<"\n";
     //smp_bmi.PrintSoilMoistureProfile();
   }
 

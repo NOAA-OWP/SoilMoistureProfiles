@@ -24,6 +24,7 @@
   @param nlayers                   [-] : number of soil moisture layers, typically different than the ncells
   @param ncells_layered            [-] : number of soil wetting front, typically different than the ncells and nlayers
   @param soil_depth                [m] : depth of the computational domain
+  @param soil_depth_NWM            [m] : National Water Model 3.0 soil column depth (set to 2.0 m)
   @param last_layer_depth          [m] : depth of the last layer (for non-conceptual reservior, e.g, LGAR)
   @param soil_z                    [m] : soil discretization; 1D array of depths from the surface
   @param layers_z                  [m] : depth of layers from the surface
@@ -78,6 +79,7 @@ namespace soil_moisture_profile {
     double satpsi;
     int    ncells;
     double soil_depth;
+    double soil_depth_NWM;
     double last_layer_depth;
     double *soil_z;
 
