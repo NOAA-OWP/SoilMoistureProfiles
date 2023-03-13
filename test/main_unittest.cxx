@@ -40,13 +40,16 @@ int main(int argc, char *argv[])
   std::cout<<"\n**************** TEST VALUES ************************************\n";
   int nz = 4;
   bool test_status = true;
-  int num_input_vars = 5;
+  int num_input_vars = 8;
   int num_output_vars = 3;
   
-  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_layered", "soil_depths_layered", "num_cells_layered"};
+  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_layered",
+					"soil_depths_layered", "num_cells_layered", "Qb_topmodel", "Qv_topmodel",
+					"global_deficit"};
   std::vector<string> bmi_output_vars = {"soil_moisture_profile", "soil_water_table","soil_moisture_fraction"};
   
-  int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(double), sizeof(double), sizeof(int)};
+  int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(double), sizeof(double), sizeof(int),
+			sizeof(double), sizeof(double), sizeof(double)};
   int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double), sizeof(double)};
   //double soil_moisture_profile[] = {0.389,0.396,0.397,0.397}; // total_moisture_content
   
@@ -359,58 +362,63 @@ int main(int argc, char *argv[])
   std::cout<<"********** Input variables ***************** \n";
   // Loop through both input and output variables and call get/set_value_*()
   
-  for (int i=0; i<count_in-1; i++) { // count_in-1 excludes the last variable which is int
+  for (int i=0; i<count_in; i++) { 
+    
     std::string var_name = names_in[i];
     std::cout<<"Variable name: "<< var_name <<"\n";
-    
-    double *var = new double[1];
-    double *dest = new double[1];
-    int indices[] = {0};
-    int len = 1;
-    /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    // Test get_value() at each timestep
-    model.GetValue(var_name, &(var[0]));
-    std::cout<<" Get value: "<< var[0] <<"\n";
-    
-    /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    // Test get_value_at_indices()
-    model.GetValueAtIndices(var_name, dest, indices, len);
-    std::cout<<" Get value at indices: " << dest[0]<<"\n";
-    
-    /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    // Test get_value_ptr()
-    double *var_ptr = new double[1];
-    var_ptr= (double*) model.GetValuePtr(var_name);
-    std::cout<<" Get value ptr: "<<*var_ptr<<"\n";
-    
-    /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    // Test BMI set_value_at_indices()
-    double dest_new[] = {-0.000472};
-    
-    if (var_name == "soil_storage")
-      dest_new[0] = 0.8;
-    
-    double *dest_new_up = new double[1];
-    
-    //      int indices[] = {0,1,2,3}; 
-    model.SetValueAtIndices(var_name, &indices[0], len, &dest_new[0]);
-    
-    std::cout<<" Set value at indices: "<<dest_new[0]<<"\n";
-    // get_value_at_indices to see if changed
-    model.GetValueAtIndices(var_name, dest_new_up,  &indices[0], len);
-    std::cout<<" Get value at indices: "<<dest_new_up[0]<<"\n";
-    if (dest_new[0] == dest_new_up[0])
-      test_status &= true;
-    else
-      test_status &= false;
 
-    // Reset to initial values
-    /*
-    if (var_name == "soil__moisture_content_total") 
-      model.SetValue(var_name, &(soil_moisture_profile[0]));
-    if (var_name == "soil__moisture_content_liquid") 
-      model.SetValue(var_name, &(soil_MCL[0]));
-    */
+    // excludes the num_cells_layered variable which is of type int
+    if (var_name != "num_cells_layered") {
+      double *var = new double[1];
+      double *dest = new double[1];
+      int indices[] = {0};
+      int len = 1;
+      /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+      // Test get_value() at each timestep
+      model.GetValue(var_name, &(var[0]));
+      std::cout<<" Get value: "<< var[0] <<"\n";
+      
+      /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+      // Test get_value_at_indices()
+      model.GetValueAtIndices(var_name, dest, indices, len);
+      std::cout<<" Get value at indices: " << dest[0]<<"\n";
+      
+      /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+      // Test get_value_ptr()
+      double *var_ptr = new double[1];
+      var_ptr= (double*) model.GetValuePtr(var_name);
+      std::cout<<" Get value ptr: "<<*var_ptr<<"\n";
+      
+      /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+      // Test BMI set_value_at_indices()
+      double dest_new[] = {-0.000472};
+      
+      if (var_name == "soil_storage")
+	dest_new[0] = 0.8;
+      
+      double *dest_new_up = new double[1];
+      
+      //      int indices[] = {0,1,2,3}; 
+      model.SetValueAtIndices(var_name, &indices[0], len, &dest_new[0]);
+      
+      std::cout<<" Set value at indices: "<<dest_new[0]<<"\n";
+      // get_value_at_indices to see if changed
+      model.GetValueAtIndices(var_name, dest_new_up,  &indices[0], len);
+      std::cout<<" Get value at indices: "<<dest_new_up[0]<<"\n";
+      if (dest_new[0] == dest_new_up[0])
+	test_status &= true;
+      else
+	test_status &= false;
+      
+      // Reset to initial values
+      /*
+	if (var_name == "soil__moisture_content_total") 
+	model.SetValue(var_name, &(soil_moisture_profile[0]));
+	if (var_name == "soil__moisture_content_liquid") 
+	model.SetValue(var_name, &(soil_MCL[0]));
+      */
+    }
+
   }
 
   passed = test_status > 0 ? "Yes" : "No";
