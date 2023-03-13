@@ -13,6 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_COMPILER $ENV{CC})
 set(CMAKE_CXX_COMPILER $ENV{CXX})
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+
 project(smpbmi VERSION 1.0.0 DESCRIPTION "OWP SMP BMI Module Shared Library")
 
 option(NGEN "NGEN" OFF)
@@ -35,6 +38,7 @@ endif()
 set(SMP_LIB_NAME_CMAKE smpbmi)
 set(SMP_LIB_DESC_CMAKE "OWP SMP BMI Module Shared Library")
 
+
 # Make sure these are compiled with this directive
 add_compile_definitions(BMI_ACTIVE)
 
@@ -45,14 +49,14 @@ elseif(WITHTOPMODEL)
 add_executable(${exe_name} ./src/main_smp_topmodel.cxx ./topmodel/src/topmodel.c ./topmodel/src/bmi_topmodel.c)
 
 add_library(smplib ./src/bmi_soil_moisture_profile.cxx ./src/soil_moisture_profile.cxx ./include/bmi_soil_moisture_profile.hxx ./include/soil_moisture_profile.hxx)
-
-endif()
-
-
-if(WITHTOPMODEL)
 target_link_libraries(${exe_name} LINK_PUBLIC smplib)
 endif()
+
+
+if(WITHTOPMODEL OR STANDALONE)
 target_link_libraries(${exe_name} PRIVATE m)
+endif()
+
 
 ## for NGEN BUILD
 if(WIN32)
