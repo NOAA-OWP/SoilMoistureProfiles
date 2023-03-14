@@ -26,7 +26,9 @@
  2. `Option WITHTOPMODEL` : An example of using topmodel's outputs to compute `watertable` and `soil_moisture_profile`
  ```
  git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git
- cd SoilMoistureProfiles && mkdir build && cd build
+ cd SoilMoistureProfiles 
+ git clone https://github.com/NOAA-OWP/topmodel (only needed when testing/running with Topmodel, i.e., -DWITHTOPMODEL=ON)
+ mkdir build && cd build
  cmake ../ [-DSTANDALONE=ON,-DWITHTOPMODEL=ON] (pick one option, e.g. `cmake ../ -DSTANDALONE=ON`)
  make && cd ..
  ./run_smp.sh [STANDALONE, WITHTOPMODEL] (pick one option) 
