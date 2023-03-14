@@ -11,7 +11,7 @@
 
 enum {Conceptual=1, Layered=2, Topmodel=3};
 enum {Constant=1, Linear=2};
-enum {Iterative=1, Deficit=2};
+enum {Flux_based=1, Deficit_based=2};
 
 // soil_moisture_profile is the namespacing
 
@@ -70,8 +70,8 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   @param soil_moisture_fraction     [-]   : fraction of soil moisture in the top 40 cm or user-defined
                                             soil_moisture_fraction_depth (water in the topsoil over total water)
   @param soil_moisture_fraction_depth [m] : user specified depth for the fraction of soil moisture (default is 40 cm)
-  @param water_table_based_method    (string) : Iterative (for iteration-based water table)
-                                                Deficit (for deficit-based water table) and only needs to be provided
+  @param water_table_based_method    (string) : Flux_based (for iteration-based water table)
+                                                Deficit_based (for deficit-based water table) and only needs to be provided
 						if soil_storage_model is Topmodel
 */
 
@@ -204,10 +204,10 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       continue;
     }
     else if (param_key == "water_table_based_method") {
-      if (param_value == "deficit")
-	parameters->water_table_based_method = Deficit;
-      else if (param_value == "iterative")
-	parameters->water_table_based_method = Iterative;
+      if (param_value == "deficit_based")
+	parameters->water_table_based_method = Deficit_based;
+      else if (param_value == "flux_based")
+	parameters->water_table_based_method = Flux_based;
       is_water_table_based_method_set = true;
       continue;
     }
@@ -294,9 +294,9 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
   if (parameters->soil_storage_model == Topmodel) {
     
     if (is_water_table_based_method_set) {
-      if (parameters->water_table_based_method != Iterative && parameters->water_table_based_method != Deficit) {
+      if (parameters->water_table_based_method != Flux_based && parameters->water_table_based_method != Deficit_based) {
 	stringstream errMsg;
-	errMsg << "water_table_based_method key is set in the config file "<< config_file << " with wrong options. Options = iterative or deficit \n";
+	errMsg << "water_table_based_method key is set in the config file "<< config_file << " with wrong options. Options = flux_based or deficit_based \n";
 	throw runtime_error(errMsg.str());
       }
     }
@@ -741,12 +741,12 @@ SoilMoistureProfileFromWaterTableDepth(struct soil_profile_parameters* parameter
   double delta_theta = (parameters->smcmax - theta_fc);
 
   
-  if (parameters->water_table_based_method == Deficit || parameters->init_profile) {
+  if (parameters->water_table_based_method == Deficit_based || parameters->init_profile) {
     parameters->water_table_depth = parameters->global_deficit/delta_theta * to_cm + satpsi_cm; // add saturated head to account for capillary fringe
     
     parameters->init_profile = false;  // turn off the flag for times t > 0 
     }
-  else if (parameters->water_table_based_method == Iterative) {
+  else if (parameters->water_table_based_method == Flux_based) {
     // Eq. (15) in M. Franchini et al. Journal of Hydrology 175 (1996) 293-338
     parameters->water_table_depth -= (parameters->Qv_topmodel - parameters->Qb_topmodel)/parameters->cat_area * dt * to_cm;
   }
