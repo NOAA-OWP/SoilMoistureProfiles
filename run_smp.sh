@@ -21,7 +21,7 @@ if [ $flag == "STANDALONE" ]; then
     args='./config/config_conceptual.txt'
     exe_name='smp_standalone'
 else if [ $flag == "WITHTOPMODEL" ]; then
-	 args="topmodel/data/topmod.run config/config_topmodel.txt"
+	 args="config/topmod.run config/config_topmodel.txt"
 	 exe_name='smp_topmodel'
      fi
 fi
