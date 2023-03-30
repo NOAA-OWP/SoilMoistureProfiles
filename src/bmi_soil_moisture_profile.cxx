@@ -13,8 +13,6 @@
 #include "../include/soil_moisture_profile.hxx"
 
 
-string verbosity="none";
-
 void BmiSoilMoistureProfile::
 Initialize (std::string config_file)
 {
@@ -22,6 +20,8 @@ Initialize (std::string config_file)
     this->state = new soil_moisture_profile::soil_profile_parameters;
     soil_moisture_profile::SoilMoistureProfile(config_file, state);
   }
+
+  this->verbosity = this->state->verbosity;
 }
 
 

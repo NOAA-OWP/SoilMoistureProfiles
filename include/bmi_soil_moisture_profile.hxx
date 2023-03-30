@@ -94,6 +94,7 @@ private:
   
   std::string input_var_names[input_var_name_count];
   std::string output_var_names[output_var_name_count];
+  std::string verbosity;
 };
 
 

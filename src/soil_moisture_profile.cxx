@@ -212,7 +212,12 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       continue;
     }
     else if (param_key == "verbosity") {
-      verbosity = param_value;
+      
+      if (param_value == "high" || param_value == "low")
+	parameters->verbosity = param_value;
+      else
+	parameters->verbosity = "none";
+	  
       continue;
     }
     
@@ -397,6 +402,7 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
 void soil_moisture_profile::
 SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* parameters)
 {
+  std::string verbosity = parameters->verbosity;
   // converting variables to cm for numerical reasons only
   double satpsi_cm = parameters->satpsi * 100.;
   double model_depth = parameters->soil_storage_model_depth * 100.;
@@ -573,6 +579,7 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
 void soil_moisture_profile::
 SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* parameters)
 {
+  std::string verbosity = parameters->verbosity;
   int ncells_layered = parameters->ncells_layered; //number of wetting fronts
   double tolerance = 1.0e-4;
 
@@ -739,7 +746,7 @@ SoilMoistureProfileFromWaterTableDepth(struct soil_profile_parameters* parameter
   double to_cm = 100;
   double theta_fc = parameters->smcmax / 3.0;
   double delta_theta = (parameters->smcmax - theta_fc);
-
+  std::string verbosity = parameters->verbosity;
   
   if (parameters->water_table_based_method == Deficit_based || parameters->init_profile) {
     parameters->water_table_depth = parameters->global_deficit/delta_theta * to_cm + satpsi_cm; // add saturated head to account for capillary fringe

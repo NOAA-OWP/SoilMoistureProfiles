@@ -48,6 +48,7 @@
   @param global_deficit        [m]    : catchment soil moisture deficit in the topmodel
   @param field_capacity        [m]    : soil field capacity
   @param cat_area              [m^2]  : catchment area
+  @param verbosity             [-]    : flag for screen outputs for debugging, options = none, high
 */
 
 #include <vector>
@@ -60,10 +61,9 @@
 
 using namespace std;
 
-extern string verbosity;
 
 namespace soil_moisture_profile {
-
+  
   struct soil_profile_parameters {
     int    shape[3];
     double spacing[8];
@@ -91,7 +91,8 @@ namespace soil_moisture_profile {
     int    soil_moisture_layered_option;
 
     bool   init_profile;
-
+    std::string verbosity;
+    
     // layered model
     double *soil_moisture_layered;
     double *soil_depths_layered;
