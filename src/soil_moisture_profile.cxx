@@ -548,12 +548,16 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
     // check compute water in the model domaian
     double total_water = parameters->soil_moisture_profile[0] * parameters->soil_z[0];
 
-    for (int i=1; i<parameters->ncells; i++)
+    for (int i=1; i<parameters->ncells; i++) {
       total_water += parameters->soil_moisture_profile[i] * (parameters->soil_z[i] - parameters->soil_z[i-1]);
-    
+    }
     std::cout<<"Given soil water = "<<parameters->soil_storage<<", Computed soil water = "<<total_water<<"\n";
   }
-    
+
+  for (int i=1; i<parameters->ncells; i++) {
+    assert (parameters->soil_moisture_profile[i] < parameters->smcmax);
+    assert (parameters->soil_moisture_profile[i] > 0.0);
+  }
 }
 
 
