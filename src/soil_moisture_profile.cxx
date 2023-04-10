@@ -555,7 +555,7 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   }
 
   for (int i=1; i<parameters->ncells; i++) {
-    assert (parameters->soil_moisture_profile[i] < parameters->smcmax);
+    assert (parameters->soil_moisture_profile[i] <= parameters->smcmax);
     assert (parameters->soil_moisture_profile[i] > 0.0);
   }
 }
