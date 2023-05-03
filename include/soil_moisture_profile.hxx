@@ -88,7 +88,7 @@ namespace soil_moisture_profile {
     
     int    soil_storage_model;
     double soil_storage_model_depth;
-    int    soil_moisture_wetting_fronts_option;
+    int    soil_moisture_profile_option;
 
     bool   init_profile;
     std::string verbosity;
@@ -100,7 +100,6 @@ namespace soil_moisture_profile {
     int     num_wetting_fronts;
     int     max_num_wetting_fronts;
     int     num_layers;
-    bool    soil_depth_wetting_fronts_bmi;
     bool    soil_depth_layers_bmi;
     bool    smcmax_bmi;
 
