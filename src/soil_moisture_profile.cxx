@@ -419,16 +419,15 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
 {
   std::string verbosity = parameters->verbosity;
   // converting variables to cm for numerical reasons only
-  double satpsi_cm = parameters->satpsi * 100.;
+  double satpsi_cm   = parameters->satpsi * 100.;
   double model_depth = parameters->soil_storage_model_depth * 100.;
-  double zb = 0.0;  // bottom of the computational domain
-  double z0 = 0.0;  // bottom of the fictitious domain (to track fictitious water table location)
-  double zi = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
-
-  double lam       = 1.0/parameters->bb;
-  double beta      = 1.0 - lam;
-  double alpha     = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
-  double tolerance = 1.0E-6;
+  double zb          = 0.0;  // bottom of the computational domain
+  double z0          = 0.0;  // bottom of the fictitious domain (to track fictitious water table location)
+  double zi          = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
+  double lam         = 1.0/parameters->bb;
+  double beta        = 1.0 - lam;
+  double alpha       = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
+  double tolerance   = 1.0E-6;
 
   double soil_storage_max = model_depth * parameters->smcmax[0];
   
@@ -438,7 +437,6 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   assert(parameters->soil_storage >= 0.0); /* to ensure that soil storage is non-negative due to unexpected
 					      bugs in cfe (or any other conceptual models) */
   
-
   int count = 0;
 
   /* compute a new profile only if sufficient amount of water is added at this timestep.
@@ -469,7 +467,6 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
     
       
     double diff=1000.0; // guess for the initial differnce between the roots
-  
     double f, zi_new, df_dzi;
 
     // note for stability reasons, the loop is terminated when the water-table depth exceeds 1000m,
@@ -523,35 +520,19 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
     parameters->water_table_depth = (model_depth - zi)/100.;
 
     /*******************************************************************/
-    // get a high resolution moisture profile that will be mapped on the desired soil discretization
-    
-    int z_hres = 1000;
-    double *smct_temp = new double[z_hres];
-    double *z_temp = new double[z_hres];
-    
-    // we have the new water table location now, so let's compute the soil moisture curve
-    double z = zi + satpsi_cm;
-    double dz_v = (model_depth - zi - satpsi_cm)/z_hres; // vertical spacing
-    double z_head = satpsi_cm; // input variable to the soil moisture function
-    
-    for (int i=0;i<z_hres;i++) {
-      z_head += dz_v;
-      smct_temp[i] = parameters->smcmax[0] * pow((satpsi_cm/z_head),lam) ;
-      
-      z+=dz_v;
-      z_temp[i] = z;
-    }
-    
-    // map the high resolution soil moisture curve to the soil discretization depth that is provided in the config file
+    // compute the soil moisture profile for the given soil discretization
+
     for (int i=0; i<parameters->ncells; i++) {
-      for (int j=0; j<z_hres; j++) {
-	if ( (model_depth - parameters->soil_z[i]*100) <= (zi + satpsi_cm) )
-	  parameters->soil_moisture_profile[i] = parameters->smcmax[0];
-	else if (z_temp[j]  >= (model_depth - parameters->soil_z[i]*100) ) {
-	  parameters->soil_moisture_profile[i] = smct_temp[j];
-	  break;
-	}
-      }
+      double z_temp = parameters->water_table_depth - parameters->soil_z[i];
+      double theta;
+      
+      if (parameters->water_table_depth <= parameters->soil_z[i])
+	theta = parameters->smcmax[0];
+      else
+	theta = parameters->smcmax[0] * pow((parameters->satpsi/z_temp),lam);
+      
+      parameters->soil_moisture_profile[i] = fmin(theta, parameters->smcmax[0]);
+      
     }
     
   }
