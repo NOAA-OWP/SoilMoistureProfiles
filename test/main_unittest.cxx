@@ -24,18 +24,19 @@
 
 int main(int argc, char *argv[])
 {
-  BmiSoilMoistureProfile model,model_cyc;
+  BmiSoilMoistureProfile model, model_layered;
 
-  if (argc != 2) {
-    printf("Usage: ./run_unittest.sh CONFIGURATION_FILE\n\n");
-    printf("Runs soil moisture profile model through its BMI with a configuration file.\n");
+  if (argc != 4) {
+    printf("Usage: ./run_unittest.sh CONFIGURATION_FILE1 CONFIGURATION_FILE2 CONFIGURATION_FILE3\n");
+    printf("Number of arguments provided = %d \n", argc);
+    printf("Runs soil moisture profile model through its BMI with THREE configuration files.\n");
     return FAILURE;
   }
 
   std::cout<<"\n**************** BEGIN SoilFreezeThaw BMI UNIT TEST *******************\n";
   
   model.Initialize(argv[1]);
-  model_cyc.Initialize(argv[1]);
+  model_layered.Initialize(argv[2]);
 
   std::cout<<"\n**************** TEST VALUES ************************************\n";
   int nz = 4;
@@ -43,8 +44,8 @@ int main(int argc, char *argv[])
   int num_input_vars = 8;
   int num_output_vars = 3;
   
-  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_layered",
-					"soil_depths_layered", "num_cells_layered", "Qb_topmodel", "Qv_topmodel",
+  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_wetting_fronts",
+					"soil_depth_wetting_fronts", "num_wetting_fronts", "Qb_topmodel", "Qv_topmodel",
 					"global_deficit"};
   std::vector<string> bmi_output_vars = {"soil_moisture_profile", "soil_water_table","soil_moisture_fraction"};
   
@@ -367,8 +368,8 @@ int main(int argc, char *argv[])
     std::string var_name = names_in[i];
     std::cout<<"Variable name: "<< var_name <<"\n";
 
-    // excludes the num_cells_layered variable which is of type int
-    if (var_name != "num_cells_layered") {
+    // excludes the num_wetting_fronts variable which is of type int
+    if (var_name != "num_wetting_fronts") {
       double *var = new double[1];
       double *dest = new double[1];
       int indices[] = {0};
@@ -410,13 +411,6 @@ int main(int argc, char *argv[])
       else
 	test_status &= false;
       
-      // Reset to initial values
-      /*
-	if (var_name == "soil__moisture_content_total") 
-	model.SetValue(var_name, &(soil_moisture_profile[0]));
-	if (var_name == "soil__moisture_content_liquid") 
-	model.SetValue(var_name, &(soil_MCL[0]));
-      */
     }
 
   }
@@ -429,6 +423,8 @@ int main(int argc, char *argv[])
   std::cout<<RESET<<"\n";
   
   std::cout<<"************* Output variables ***************** \n";
+
+  // Update the model for Conceptual soil reservoir's unitest
   model.Update();
   
   double water_table_test_value = 1.50956; // depth from the surface in meters
@@ -481,8 +477,152 @@ int main(int argc, char *argv[])
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<"| All BMI Tests passed: "<< RED<< passed<<RESET<<GREEN<<"\n";
-  std::cout<<"| Water table depth (from surface) [m]: \n| benchmark vs computed | "<<water_table_test_value<<" vs "<<water_table_computed<<"\n";
-  std::cout<<"| Soil moisture fraction [-]: \n| benchmark vs computed | "<<soil_moisture_fraction_test_value<<" vs "<<soil_moisture_fraction_computed<<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<RESET<<"\n";
+
+
+  std::cout<<GREEN<<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<"| Conceptual Soil Reservoir unittest \n";
+  std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
+  std::cout<<"| Water table depth (from surface) [m]: \n| Benchmark vs Computed | "
+	   << water_table_test_value <<" vs "<< water_table_computed <<"\n";
+  std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "
+	   << soil_moisture_fraction_test_value <<" vs "<< soil_moisture_fraction_computed <<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<RESET<<"\n";
+
+
+  //##########################################################################################################
+  // Update the model for Conceptual soil reservoir's unitest
+
+  int num_wf = 4;
+  int *num_wf_ptr = &num_wf;
+  
+  std::string vname_smc_wf   = "soil_moisture_wetting_fronts";    // input
+  std::string vname_depth_wf = "soil_depth_wetting_fronts";       // input
+  std::string vname_num_wf   = "num_wetting_fronts";              // input
+  std::string vname_smc_profile   = "soil_moisture_profile";      // output
+  std::string vname_water_table   = "soil_water_table";           // output
+  std::string vname_soil_moist_fract = "soil_moisture_fraction";  // output
+
+  //##########################################################################################################
+  // Test #1: four wetting fronts with lower two layers fully saturated; and two wetting fronts in the 2nd layer
+  // benchmark values for Layered-based model
+  double water_table_benchmark            = 0.44; // depth from the surface in meters
+  double soil_moisture_fraction_benchmark = 0.117867; // soil moisture fraction in m
+  
+  {
+    double soil_moisture_wetting_fronts[] = {0.25, 0.4773, 0.4773, 0.4617};
+    double soil_depth_wetting_fronts[]    = {0.44, 1.12, 1.75, 2.0};
+  
+    // Set values
+    model_layered.SetValue(vname_num_wf,num_wf_ptr);
+    model_layered.SetValue(vname_smc_wf,&soil_moisture_wetting_fronts[0]);
+    model_layered.SetValue(vname_depth_wf,&soil_depth_wetting_fronts[0]);
+    
+    model_layered.Update();
+    
+    water_table_computed = 0.0;
+    soil_moisture_fraction_computed = 0.0;
+    
+    model_layered.GetValue(vname_water_table, &water_table_computed);
+    model_layered.GetValue(vname_soil_moist_fract, &soil_moisture_fraction_computed);
+    
+    test_status = fabs(water_table_computed - water_table_benchmark) < 1.E-4 ? true : false;
+    test_status &= fabs(soil_moisture_fraction_computed - soil_moisture_fraction_benchmark) < 1.E-4 ? true : false;
+    
+    passed = test_status > 0 ? "Yes" : "No";
+    
+  }
+  
+  std::cout<<GREEN<<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<"| Layered Soil Reservoir unittest (#1) \n";
+  std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
+  std::cout<<"| Water table depth (from surface) [m]: \n| Benchmark vs Computed | "
+	   << water_table_benchmark <<" vs "<< water_table_computed <<"\n";
+  std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "
+	   << soil_moisture_fraction_benchmark <<" vs "<< soil_moisture_fraction_computed <<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<RESET<<"\n";
+
+
+  //##########################################################################################################
+  // Test #2: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
+  // benchmark values for Layered-based model with CONSTANT PROFILE OPTION
+  water_table_benchmark            = 12.455; // depth from the surface in meters
+  soil_moisture_fraction_benchmark = 0.235212; // soil moisture fraction in m
+  
+  {
+    double soil_moisture_wetting_fronts[] = {0.4513, 0.25, 0.3173, 0.2417};
+    double soil_depth_wetting_fronts[]    = {0.23, 0.4, 1.75, 2.0};
+    
+    // Set values
+    model_layered.SetValue(vname_num_wf,num_wf_ptr);
+    model_layered.SetValue(vname_smc_wf,&soil_moisture_wetting_fronts[0]);
+    model_layered.SetValue(vname_depth_wf,&soil_depth_wetting_fronts[0]);
+    
+    model_layered.Update();
+    
+    water_table_computed             = 0.0;
+    soil_moisture_fraction_computed = 0.0;
+    
+    model_layered.GetValue(vname_water_table, &water_table_computed);
+    model_layered.GetValue(vname_soil_moist_fract, &soil_moisture_fraction_computed);
+    
+    test_status = fabs(water_table_computed - water_table_benchmark) < 1.E-4 ? true : false;
+    test_status &= fabs(soil_moisture_fraction_computed - soil_moisture_fraction_benchmark) < 1.E-4 ? true : false;
+    
+    passed = test_status > 0 ? "Yes" : "No";
+  }
+  
+  std::cout<<GREEN<<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<"| Layered Soil Reservoir unittest (#2) \n";
+  std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
+  std::cout<<"| Water table depth (from surface) [m]: \n| Benchmark vs Computed | "<<water_table_benchmark<<" vs "<<water_table_computed<<"\n";
+  std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<RESET<<"\n";
+
+
+  //##########################################################################################################
+  // Test #3: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
+  // benchmark values for Layered-based model with LINEAR PROFILE OPTION
+  water_table_benchmark            = 12.455; // depth from the surface in meters
+  soil_moisture_fraction_benchmark = 0.251803; // soil moisture fraction in m
+  
+  {
+    model_layered.Initialize(argv[3]);
+    double soil_moisture_wetting_fronts[] = {0.4513, 0.25, 0.3173, 0.2417};
+    double soil_depth_wetting_fronts[]    = {0.23, 0.4, 1.75, 2.0};
+    
+    // Set values
+    model_layered.SetValue(vname_num_wf,num_wf_ptr);
+    model_layered.SetValue(vname_smc_wf,&soil_moisture_wetting_fronts[0]);
+    model_layered.SetValue(vname_depth_wf,&soil_depth_wetting_fronts[0]);
+    
+    model_layered.Update();
+    
+    water_table_computed            = 0.0;
+    soil_moisture_fraction_computed = 0.0;
+    
+    model_layered.GetValue(vname_water_table, &water_table_computed);
+    model_layered.GetValue(vname_soil_moist_fract, &soil_moisture_fraction_computed);
+    
+    test_status = fabs(water_table_computed - water_table_benchmark) < 1.E-4 ? true : false;
+    test_status &= fabs(soil_moisture_fraction_computed - soil_moisture_fraction_benchmark) < 1.E-4 ? true : false;
+    
+    passed = test_status > 0 ? "Yes" : "No";
+  }
+  
+  std::cout<<GREEN<<"\n";
+  std::cout<<"| *************************************** \n";
+  std::cout<<"| Layered Soil Reservoir unittest (#3) \n";
+  std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
+  std::cout<<"| Water table depth (from surface) [m]: \n| Benchmark vs Computed | "<<water_table_benchmark<<" vs "<<water_table_computed<<"\n";
+  std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
   

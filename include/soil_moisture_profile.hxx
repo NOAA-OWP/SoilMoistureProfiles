@@ -12,11 +12,11 @@
   
   NOTE: For detailed model description please see README.md on github page
   
-  @param soil_storage              [m] : soil storage (input through bmi)
-  @param water_table_depth         [m] : depth from the surface to the water table location
-  @param soil_moisture_profile     [-] : soil moisture content (1D vertical profile)
-  @param soil_moisture_layered     [-] : soil moisture content of wetting fronts (bmi input to layered the model)
-  @param soil_depths_layered       [m] : absolute depth of the wetting fronts (bmi input to layered the model)
+  @param soil_storage                  [m] : soil storage (input through bmi)
+  @param water_table_depth             [m] : depth from the surface to the water table location
+  @param soil_moisture_profile         [-] : soil moisture content (1D vertical profile)
+  @param soil_moisture_wetting_fronts  [-] : soil moisture content of wetting fronts (bmi input to layered the model)
+  @param soil_depth_wetting_fronts     [m] : absolute depth of the wetting fronts (bmi input to layered the model)
   @param smcmax                    [-] : maximum soil moisture content (porosity)
   @param bb                        [-] : pore size distribution, beta exponent in Clapp-Hornberger (1978) function
   @param satpsi                    [m] : saturated capillary head (saturated moisture potential)
@@ -74,7 +74,7 @@ namespace soil_moisture_profile {
     double water_table_depth;
     double *soil_moisture_profile;
     
-    double smcmax;
+    double *smcmax;
     double bb;
     double satpsi;
     int    ncells;
@@ -88,18 +88,21 @@ namespace soil_moisture_profile {
     
     int    soil_storage_model;
     double soil_storage_model_depth;
-    int    soil_moisture_layered_option;
+    int    soil_moisture_wetting_fronts_option;
 
     bool   init_profile;
     std::string verbosity;
     
     // layered model
-    double *soil_moisture_layered;
-    double *soil_depths_layered;
-    int   ncells_layered;
-    int   max_ncells_layered;
-    bool  soil_depths_layered_bmi;
-
+    double *soil_moisture_wetting_fronts;
+    double *soil_depth_wetting_fronts;
+    double *soil_depth_layers;
+    int     num_wetting_fronts;
+    int     max_num_wetting_fronts;
+    int     num_layers;
+    bool    soil_depth_wetting_fronts_bmi;
+    bool    soil_depth_layers_bmi;
+    bool    smcmax_bmi;
 
     //topmodel bmi outputs
     double Qb_topmodel;
@@ -132,8 +135,9 @@ namespace soil_moisture_profile {
   void SoilMoistureProfileFromWaterTableDepth(struct soil_profile_parameters* parameters);
   
   // computes linearly interpolated values for layered-reservoir with option = linear
-  double LinearInterpolation(double z1, double z2, double t1, double t2, double z);
+  double LinearInterpolation(double z, double z1, double z2, double t1, double t2);
 
+  void FindWaterTableLayeredReservoir(struct soil_profile_parameters* parameters);
   // print soil moisture profile and soil depths
   void PrintSoilMoistureProfile(struct soil_profile_parameters* parameters);
   
