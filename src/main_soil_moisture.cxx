@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     std::string var_name_sc = "soil_storage_change";
     std::string var_name_wt = "soil_water_table";
     std::string var_name_smc = "soil_moisture_profile";
-    std::string var_name_smcl = "soil_moisture_layered";
+    std::string var_name_smcl = "soil_moisture_wetting_fronts";
     std::string var_name_smc_bmi = "soil_storage_model";
     
     int grid, rank, *shape;
@@ -65,7 +65,10 @@ int main(int argc, char *argv[])
 
     /****************************************************************************/
     // unit test data for conceptual soil reservoir
-    double SMCT[] = {0.3375634,0.34234789,0.34752731,0.35330897,0.35974973,0.3669139,0.37517657,0.38464055,0.39596964,0.40977129,0.42703622,0.439,0.439,0.439,0.439,0.439,0.439,0.439,0.439,0.439};
+    double soil_moisture_profile[] = {0.3375956134,0.3423608214,0.3475802559,0.3533405627,0.3597547738,0.3669739833,
+				      0.3752061855,0.3847482243,0.3960434405,0.4097942568,0.4272064334,0.4390000000,
+				      0.4390000000,0.4390000000,0.4390000000,0.4390000000,0.4390000000,0.4390000000,
+				      0.4390000000,0.4390000000};
     double water_table_thickness = 1.50956; // in meters
     enum option { Conceptual = 1, Layered = 2};
     /****************************************************************************/
@@ -112,9 +115,9 @@ int main(int argc, char *argv[])
       std::cout<<"Referance value | Simulated value | Difference \n";
       for (int i=0; i < shape[0]; i++) {
 	std::cout<< left << setw(18) << var_smc[i]
-		 << setw(18) << SMCT[i]
-		 << setw(1) << abs(var_smc[i] - SMCT[i])<<"\n";
-	assert (abs(var_smc[i] - SMCT[i]) < 1.E-6);     
+		 << setw(18) << soil_moisture_profile[i]
+		 << setw(1) << abs(var_smc[i] - soil_moisture_profile[i])<<"\n";
+	assert (abs(var_smc[i] - soil_moisture_profile[i]) < 1.E-6);     
 	fprintf(fp, "%6.4e", var_smc[i]);
 	fprintf(fp, "\n");
       }
