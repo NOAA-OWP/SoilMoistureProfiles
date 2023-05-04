@@ -46,10 +46,11 @@ add_compile_definitions(BMI_ACTIVE)
 if(STANDALONE)
 add_executable(${exe_name} ./src/main_soil_moisture.cxx ./src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
 elseif(WITHTOPMODEL)
-add_executable(${exe_name} ./src/main_smp_topmodel.cxx ./topmodel/src/topmodel.c ./topmodel/src/bmi_topmodel.c)
+add_executable(${exe_name} ./src/main_smp_topmodel.cxx ./extern/topmodel/src/topmodel.c ./extern/topmodel/src/bmi_topmodel.c)
 
 add_library(smplib ./src/bmi_soil_moisture_profile.cxx ./src/soil_moisture_profile.cxx ./include/bmi_soil_moisture_profile.hxx ./include/soil_moisture_profile.hxx)
 target_link_libraries(${exe_name} LINK_PUBLIC smplib)
+target_include_directories(${exe_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/)
 endif()
 
 

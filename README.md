@@ -27,7 +27,7 @@
  ```
  git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git
  cd SoilMoistureProfiles 
- git clone https://github.com/NOAA-OWP/topmodel (only needed when testing/running with Topmodel, i.e., -DWITHTOPMODEL=ON)
+ git clone https://github.com/NOAA-OWP/topmodel extern/topmodel (needed for running with Topmodel, i.e., -DWITHTOPMODEL=ON)
  mkdir build && cd build
  cmake ../ [-DSTANDALONE=ON,-DWITHTOPMODEL=ON] (pick one option, e.g. `cmake ../ -DSTANDALONE=ON`)
  make && cd ..

@@ -9,9 +9,9 @@
 #include <stdbool.h>
 
 
-#include "../topmodel/include/topmodel.h"
-#include "../topmodel/include/bmi.h"
-#include "../topmodel/include/bmi_topmodel.h"
+#include "./topmodel/include/topmodel.h"
+#include "./topmodel/include/bmi.h"
+#include "./topmodel/include/bmi_topmodel.h"
 
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_soil_moisture_profile.hxx"

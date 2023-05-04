@@ -1,0 +1,9 @@
+# RUN EXECUTABLES #
+###################
+./build/*
+
+
+# External models #
+#################
+./extern/*
+*~
