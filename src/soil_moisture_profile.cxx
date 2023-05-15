@@ -390,8 +390,10 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
     
   }
   
+  parameters->soil_moisture_fraction = fmin(parameters->soil_moisture_fraction, parameters->soil_storage);
   assert (parameters->soil_storage >0);
   parameters->soil_moisture_fraction /= parameters->soil_storage;
+  
 }
 
 /*
@@ -457,14 +459,14 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
     }
 
     // this won't happen, hopefully, if it does then assign a small non-zero number to the soil moisture profile
-    if(soil_storage_current_timestep_cm == 0.0) {
+    // also to avoid computing water table and over-estimated soil moisture for extremely dry soils
+    if(soil_storage_current_timestep_cm <= 1.0E-6) {
       for(int j=0;j<parameters->ncells;j++)
-	parameters->soil_moisture_profile[j] = 1.0E-5;
+	parameters->soil_moisture_profile[j] = 1.0E-6;
 
       parameters->water_table_depth = 1000.0; // fictitious water table
       return;
     }
-    
       
     double diff=1000.0; // guess for the initial differnce between the roots
     double f, zi_new, df_dzi;
