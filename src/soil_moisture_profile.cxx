@@ -391,8 +391,11 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   }
   
   parameters->soil_moisture_fraction = fmin(parameters->soil_moisture_fraction, parameters->soil_storage);
-  assert (parameters->soil_storage >0);
-  parameters->soil_moisture_fraction /= parameters->soil_storage;
+  
+  if (parameters->soil_storage > 0.0)
+    parameters->soil_moisture_fraction /= parameters->soil_storage;
+  else
+    parameters->soil_moisture_fraction = 0.0;
   
 }
 
