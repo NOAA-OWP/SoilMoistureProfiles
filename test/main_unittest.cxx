@@ -492,6 +492,7 @@ int main(int argc, char *argv[])
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
 
+  assert (passed == "Yes");
 
   //##########################################################################################################
   // Update the model for Conceptual soil reservoir's unitest
@@ -547,7 +548,8 @@ int main(int argc, char *argv[])
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
 
-
+  assert (passed == "Yes");
+ 
   //##########################################################################################################
   // Test #2: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
   // benchmark values for Layered-based model with CONSTANT PROFILE OPTION
@@ -585,7 +587,8 @@ int main(int argc, char *argv[])
   std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
-
+  
+  assert (passed == "Yes");
 
   //##########################################################################################################
   // Test #3: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
@@ -625,6 +628,64 @@ int main(int argc, char *argv[])
   std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
+
+  assert (passed == "Yes");
+
+  //##########################################################################################################
+  // Test #4: calibratable parameters
+  {
+    std::cout<<GREEN<<"\n";
+    std::cout<<"| *************************************** \n";
+    std::cout<<"| Calibrated parameters test \n";
+    
+    model.Initialize(argv[1]);
+
+    double *smcmax_set, b_set, satpsi_set;
+    double *smcmax_get, b_get, satpsi_get;
+
+    smcmax_set = new double[1];
+    smcmax_get = new double[1];
+    
+    // Get initial values
+    model.GetValue("smcmax",&smcmax_set);
+    model.GetValue("b",&b_set);
+    model.GetValue("satpsi",&satpsi_set);
+
+    std::cout<<"| Initial values | smcmax = "<< smcmax_set[0] <<", b = "<< b_set <<", satpsi = "<< satpsi_set <<"\n";
+    
+    // set values
+    smcmax_set[0] += 0.012;
+    b_set += 0.013;
+    satpsi_set += 0.014;
+
+    std::cout<<"| Setting | smcmax = "<< smcmax_set[0] <<", b = "<< b_set <<", satpsi = "<< satpsi_set <<"\n";
+
+    model.SetValue("smcmax",&smcmax_set);
+    model.SetValue("b",&b_set);
+    model.SetValue("satpsi",&satpsi_set);
+
+    model.GetValue("smcmax", &smcmax_get);
+    model.GetValue("b", &b_get);
+    model.GetValue("satpsi", &satpsi_get);
+    
+    std::cout<<"| Getting | smcmax = "<< smcmax_get[0] <<", b = "<< b_get <<", satpsi = "<< satpsi_get <<"\n";
+    model.Update();
+    
+
+    test_status = fabs(smcmax_set[0] -  smcmax_get[0]) < 1.E-10 ? true : false;
+    test_status &= fabs(b_set - b_get) < 1.E-10 ? true : false;
+    test_status &= fabs(satpsi_set - satpsi_get) < 1.E-10 ? true : false;
+    
+    passed = test_status > 0 ? "Yes" : "No";
+
+   
+    std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
+    std::cout<<"| *************************************** \n";
+    std::cout<<RESET<<"\n";
+    
+    assert (passed == "Yes");
+  }  
+
   
   return FAILURE;
 }

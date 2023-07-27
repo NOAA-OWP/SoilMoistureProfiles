@@ -62,6 +62,8 @@ GetVarGrid(std::string name)
     return 1;
   else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0 || name.compare("global_deficit") == 0)
     return 1;
+  else if (name.compare("smcmax") == 0 || name.compare("b") == 0 || name.compare("satpsi") == 0)
+    return 1;
   else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
     return 2;
   else if (name.compare("soil_moisture_wetting_fronts") == 0 || name.compare("soil_depth_wetting_fronts") == 0) // array of doubles (layered model)
@@ -322,6 +324,12 @@ GetValuePtr (std::string name)
     return (void*)(&this->state->Qv_topmodel);
   else if (name.compare("global_deficit") == 0)
     return (void*)(&this->state->global_deficit);
+  else if (name.compare("smcmax") == 0)
+    return (void*)(&this->state->smcmax);
+  else if (name.compare("b") == 0)
+    return (void*)(&this->state->b);
+  else if (name.compare("satpsi") == 0)
+    return (void*)(&this->state->satpsi);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";

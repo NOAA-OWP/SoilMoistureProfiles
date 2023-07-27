@@ -52,7 +52,7 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   Read and initialize values from configuration file
   @input soil_z   (1D)        :   soil discretization; array of depths from the surface [m]
   @input layers_z  (1D)       : depth of each layer from the surface [m]
-  @input bb  (double)         : pore size distribution [-], beta exponent on Clapp-Hornberger (1978)
+  @input b  (double)          : pore size distribution [-], beta exponent on Clapp-Hornberger (1978)
   @input satpsi  (double)     : saturated capillary head (saturated moisture potential) [m]
   @input ncells  (int)        : number of cells of the discretized soil column
   @input ncells_layered       : number of layers (wetting fronts) for the layered model
@@ -84,7 +84,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
   bool is_soil_z_set                    = false;
   bool is_soil_depth_layers_set         = false;
   bool is_smcmax_set                    = false;
-  bool is_bb_set                        = false;
+  bool is_b_set                        = false;
   bool is_satpsi_set                    = false;
   bool is_soil_storage_model_set        = false;
   bool is_soil_storage_model_depth_set  = false;
@@ -166,9 +166,9 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       continue;
     }
     else if (param_key == "soil_params.b") {
-      parameters->bb = stod(param_value);
-      assert (parameters->bb > 0);
-      is_bb_set = true;
+      parameters->b = stod(param_value);
+      assert (parameters->b > 0);
+      is_b_set = true;
       continue;
     }
     else if (param_key == "soil_params.satpsi") {
@@ -261,9 +261,9 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     throw runtime_error(errMsg.str());
   }
   
-  if (!is_bb_set) {
+  if (!is_b_set) {
     stringstream errMsg;
-    errMsg << "bb (Clapp-Hornberger's parameter) not set in the config file "<< config_file << "\n";
+    errMsg << "b (Clapp-Hornberger's parameter) not set in the config file "<< config_file << "\n";
     throw runtime_error(errMsg.str());
   }
   
@@ -403,7 +403,7 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   Computes 1D soil moisture profile for conceptual reservoir using Newton-Raphson iterative method
   For detailed decription of the model implemented here, please see README.md on the github repo
   local_variables:
-  @param lam  [-] : 1/bb (bb: pore size distribution)
+  @param lam  [-] : 1/b (b: pore size distribution)
   @param satpsi_cm [cm] : saturated moisture potential
   @param soil_storage_model_depth [m] : depth of the soil reservoir model (e.g., CFE)
   @param zb  [cm] : bottom of the computational domain
@@ -429,7 +429,7 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   double zb          = 0.0;  // bottom of the computational domain
   double z0          = 0.0;  // bottom of the fictitious domain (to track fictitious water table location)
   double zi          = 0.01; // initial guess for the water table location, use Newton-Raphson to find new zi
-  double lam         = 1.0/parameters->bb;
+  double lam         = 1.0/parameters->b;
   double beta        = 1.0 - lam;
   double alpha       = pow(satpsi_cm,lam)/beta; // a constant term obtained in the integration of the soil moisture function
   double tolerance   = 1.0E-6;
@@ -575,7 +575,7 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
 		     value between consecutive layers.
   - Note: the water table location is the thickness of the water table plus saturated capillary head (satpsi)
   - local_variables:
-  @param lam                [-]  : 1/bb (bb: pore size distribution)
+  @param lam                [-]  : 1/b (b: pore size distribution)
   @param soil_depth         [cm] : depth of the soil column
   @param last_layer_depth   [cm] : depth of the last layer from the surface
   @param tolerance          [-]  : tolerance to find location of the water table
@@ -597,7 +597,7 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 
   parameters->last_layer_depth = parameters->soil_depth_wetting_fronts[num_wf-1];
   
-  double lam = 1.0/parameters->bb; // pore distribution index
+  double lam = 1.0/parameters->b; // pore distribution index
   
   vector<double> z_layers_n(1,0.0);
 
@@ -718,7 +718,7 @@ FindWaterTableLayeredReservoir(struct soil_profile_parameters* parameters)
   int num_wf            = parameters->num_wetting_fronts; //number of wetting fronts
   int num_layers        = parameters->num_layers;
   double tolerance      = 1.0e-3;
-  double lam = 1.0/parameters->bb; // pore distribution index
+  double lam = 1.0/parameters->b; // pore distribution index
   bool is_water_table_found = false;
   
   // find and update water table location if it is within the model domain
@@ -818,7 +818,7 @@ ExtendedProfileBelowDomainDepth(struct soil_profile_parameters* parameters) {
   Computes 1D soil moisture profile for models (e.g. Topmodel) using the water table depth
   For detailed decription of the model implemented here, please see README.md on the github repo
   local_variables:
-  @param lam  [-] : 1/bb (bb: pore size distribution)
+  @param lam  [-] : 1/b (b: pore size distribution)
   @param satpsi_cm [cm] : saturated moisture potential
   @param soil_moisture_profile [-] : OUTPUT (soil moisture content vertical profile [-])
   @param dt                    [h] : topmodel's timestep
@@ -834,7 +834,7 @@ SoilMoistureProfileFromWaterTableDepth(struct soil_profile_parameters* parameter
 {
   // converting variables to cm for numerical reasons only
   double satpsi_cm   = parameters->satpsi * 100.;
-  double lam         = 1.0/parameters->bb;
+  double lam         = 1.0/parameters->b;
   double model_depth = 600;
   double dt = 1.0;
   double to_cm = 100;
