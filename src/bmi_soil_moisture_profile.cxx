@@ -325,7 +325,7 @@ GetValuePtr (std::string name)
   else if (name.compare("global_deficit") == 0)
     return (void*)(&this->state->global_deficit);
   else if (name.compare("smcmax") == 0)
-    return (void*)(&this->state->smcmax);
+    return (void*)(this->state->smcmax);
   else if (name.compare("b") == 0)
     return (void*)(&this->state->b);
   else if (name.compare("satpsi") == 0)
