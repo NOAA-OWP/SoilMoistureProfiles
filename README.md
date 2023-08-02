@@ -52,7 +52,6 @@ _________________________________________________________________
 | soil_storage_model | string | conceptual or layered or topmodel | - | - | if `conceptual`, conceptual models are used for computing the soil moisture profile (e.g., CFE). If `layered`, layered-based soil moisture models are used (e.g., LGAR). If `topmodel`, topmodel's variables are used
 | soil_moisture_profile_option | string | constant or linear | - | - | `constant` for layered-constant profile. `linear`  for linearly interpolated values between two consecutive layers. Needed if `soil_storage_model = layered`.
 | soil_depth_layers | double (1D array) | - | - | - | Absolute depth of soil layers. Needed if `soil_storage_model = layered`.
-| max_num_wetting_fronts | int | - | - | - | Maximum number of wetting fronts. Default is set to 30. Needed if `soil_storage_model = layered`.
 | soil_moisture_fraction_depth | double | (0, domain_depth] | m | - | *user specified depth for the soil moisture fraction (default is 40 cm)
 | water_table_based_method | string | flux-based or deficit-based | - | - | Needed if `soil_storage_model = topmodel`. `flux-based` uses an iterative scheme, and `deficit-based` uses catchment deficit to compute soil moisture profile
 

@@ -21,9 +21,9 @@ public:
   BmiSoilMoistureProfile() {
     this->input_var_names[0]  = "soil_storage";
     this->input_var_names[1]  = "soil_storage_change";
-    this->input_var_names[2]  = "soil_moisture_wetting_fronts";
-    this->input_var_names[3]  = "soil_depth_wetting_fronts";
-    this->input_var_names[4]  = "num_wetting_fronts";
+    this->input_var_names[2]  = "num_wetting_fronts";
+    this->input_var_names[3]  = "soil_moisture_wetting_fronts";
+    this->input_var_names[4]  = "soil_depth_wetting_fronts";
     this->input_var_names[5]  = "Qb_topmodel";        // baseflow in the topmodel
     this->input_var_names[6]  = "Qv_topmodel";        // recharge rate to the saturated zone to the un saturated zone
                                                      // in the topmodel

@@ -310,10 +310,14 @@ GetValuePtr (std::string name)
     return (void*)(&this->state->soil_moisture_fraction);
   else if (name.compare("soil_moisture_profile") == 0)
     return (void*)this->state->soil_moisture_profile;
-  else if (name.compare("soil_moisture_wetting_fronts") == 0)
+  else if (name.compare("soil_moisture_wetting_fronts") == 0) {
+    state->soil_moisture_wetting_fronts = new double[this->state->num_wetting_fronts];
     return (void*)this->state->soil_moisture_wetting_fronts;
-  else if (name.compare("soil_depth_wetting_fronts") == 0)
+  }
+  else if (name.compare("soil_depth_wetting_fronts") == 0) {
+    state->soil_depth_wetting_fronts = new double[this->state->num_wetting_fronts];
     return (void*)this->state->soil_depth_wetting_fronts;
+  }
   else if (name.compare("soil_storage_model") == 0)
     return (void*)(&this->state->soil_storage_model);
   else if (name.compare("num_wetting_fronts") == 0)
@@ -372,6 +376,10 @@ SetValue (std::string name, void *src)
     int nbytes = 0;
     nbytes = this->GetVarNbytes(name);
     memcpy(dest, src, nbytes);
+    
+    if (name.compare("num_wetting_fronts") == 0)
+      this->state->shape[1] = this->state->num_wetting_fronts;
+    
   }
 
 }

@@ -27,7 +27,7 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   if (parameters->soil_storage_model == Conceptual || parameters->soil_storage_model == Topmodel)
     parameters->shape[1] = 1;
   else if (parameters->soil_storage_model == Layered)
-    parameters->shape[1] = parameters->max_num_wetting_fronts;
+    parameters->shape[1] = parameters->num_wetting_fronts;
 
   parameters->soil_moisture_profile = new double[parameters->ncells];
 
@@ -43,7 +43,7 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   parameters->origin[1]    = 0.;
   parameters->soil_storage = 0.0;
   parameters->init_profile = true;
-  parameters->num_wetting_fronts = 1;
+  //parameters->num_wetting_fronts = 1;
   parameters->soil_depth_NWM = 2.0;
   parameters->soil_storage_change_per_timestep = 0.0;
 }
@@ -88,7 +88,6 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
   bool is_satpsi_set                    = false;
   bool is_soil_storage_model_set        = false;
   bool is_soil_storage_model_depth_set  = false;
-  bool is_max_num_wetting_fronts_set    = false;
   bool is_water_table_depth_set         = false;
   bool is_water_table_based_method_set  = false;
   bool is_soil_moisture_fraction_depth_set        = false;
@@ -201,12 +200,6 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       is_soil_storage_model_depth_set = true;
       continue;
     }
-    else if (param_key == "max_num_wetting_fronts") {
-      parameters->max_num_wetting_fronts =  stod(param_value);
-      assert (parameters->max_num_wetting_fronts > 0);
-      is_max_num_wetting_fronts_set = true;
-      continue;
-    }
     else if (param_key == "water_table_depth") {
       parameters->water_table_depth = stod(param_value);
       is_water_table_depth_set = true;
@@ -296,16 +289,12 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       errMsg << "soil_moisture_profile_option_set key is not set in the config file "<< config_file << ", options = constant or linear \n";
       throw runtime_error(errMsg.str());
     }
-    
-    if (!is_max_num_wetting_fronts_set) {
-      parameters->max_num_wetting_fronts = 30;
-    }
 
     if (!is_water_table_depth_set) {
       parameters->water_table_depth = 6.0;
     }
     
-    assert (parameters->max_num_wetting_fronts > 0);
+    assert (parameters->num_wetting_fronts > 0);
     assert (parameters->water_table_depth >= 0);
   }
 
