@@ -62,9 +62,9 @@ GetVarGrid(std::string name)
     return 1;
   else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0 || name.compare("global_deficit") == 0)
     return 1;
-  else if (name.compare("smcmax") == 0 || name.compare("b") == 0 || name.compare("satpsi") == 0)
+  else if (name.compare("b") == 0 || name.compare("satpsi") == 0)
     return 1;
-  else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
+  else if (name.compare("soil_moisture_profile") == 0 || name.compare("smcmax") == 0) // array of doubles (conceptual model)
     return 2;
   else if (name.compare("soil_moisture_wetting_fronts") == 0 || name.compare("soil_depth_wetting_fronts") == 0) // array of doubles (layered model)
     return 3; 
@@ -329,7 +329,7 @@ GetValuePtr (std::string name)
   else if (name.compare("global_deficit") == 0)
     return (void*)(&this->state->global_deficit);
   else if (name.compare("smcmax") == 0)
-    return (void*)(this->state->smcmax);
+    return (void*)this->state->smcmax;
   else if (name.compare("b") == 0)
     return (void*)(&this->state->b);
   else if (name.compare("satpsi") == 0)
