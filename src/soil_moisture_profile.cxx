@@ -31,8 +31,8 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
 
   parameters->soil_moisture_profile = new double[parameters->ncells];
 
-  parameters->soil_moisture_wetting_fronts = new double[parameters->shape[1]];
-  parameters->soil_depth_wetting_fronts    = new double[parameters->shape[1]];
+  parameters->soil_moisture_wetting_fronts = new double[parameters->shape[1]]();
+  parameters->soil_depth_wetting_fronts    = new double[parameters->shape[1]]();
 
   // For water_table_based_method
   parameters->cat_area     = 1.0;        // catchment area used in the topmodel (normalized)
@@ -43,8 +43,8 @@ SoilMoistureProfile(string config_file, struct soil_profile_parameters* paramete
   parameters->origin[1]    = 0.;
   parameters->soil_storage = 0.0;
   parameters->init_profile = true;
-  //parameters->num_wetting_fronts = 1;
   parameters->soil_depth_NWM = 2.0;
+  parameters->num_wetting_fronts = parameters->shape[1];
   parameters->soil_storage_change_per_timestep = 0.0;
 }
 
@@ -327,6 +327,7 @@ SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters)
   double thickness = 0.0;
   double soil_moisture_fraction_depth = parameters->soil_moisture_fraction_depth;
   parameters->soil_moisture_fraction = 0.0; // reset to 0 at each timestep
+  
   
   if (parameters->soil_storage_model == Conceptual) {
     SoilMoistureProfileFromConceptualReservoir(parameters);
