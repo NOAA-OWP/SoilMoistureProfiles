@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     return FAILURE;
   }
 
-  std::cout<<"\n**************** BEGIN SoilFreezeThaw BMI UNIT TEST *******************\n";
+  std::cout<<"\n**************** BEGIN SoilMoistureProfiles BMI UNIT TEST *******************\n";
   
   model.Initialize(argv[1]);
   model_layered.Initialize(argv[2]);
