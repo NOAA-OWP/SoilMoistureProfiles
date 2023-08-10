@@ -33,23 +33,23 @@ int main(int argc, char *argv[])
     return FAILURE;
   }
 
-  std::cout<<"\n**************** BEGIN SoilFreezeThaw BMI UNIT TEST *******************\n";
+  std::cout<<"\n**************** BEGIN SoilMoistureProfiles BMI UNIT TEST *******************\n";
   
   model.Initialize(argv[1]);
   model_layered.Initialize(argv[2]);
 
   std::cout<<"\n**************** TEST VALUES ************************************\n";
   int nz = 4;
-  bool test_status = true;
-  int num_input_vars = 8;
+  bool test_status    = true;
+  int num_input_vars  = 8;
   int num_output_vars = 3;
   
-  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "soil_moisture_wetting_fronts",
-					"soil_depth_wetting_fronts", "num_wetting_fronts", "Qb_topmodel", "Qv_topmodel",
-					"global_deficit"};
+  std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "num_wetting_fronts",
+					"soil_moisture_wetting_fronts", "soil_depth_wetting_fronts",
+					"Qb_topmodel", "Qv_topmodel", "global_deficit"};
   std::vector<string> bmi_output_vars = {"soil_moisture_profile", "soil_water_table","soil_moisture_fraction"};
   
-  int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(double), sizeof(double), sizeof(int),
+  int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(int), sizeof(double), sizeof(double),
 			sizeof(double), sizeof(double), sizeof(double)};
   int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double), sizeof(double)};
   //double soil_moisture_profile[] = {0.389,0.396,0.397,0.397}; // total_moisture_content
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
   std::cout<<"\nPulling information from BMI\n************************************\n";
   std::string model_name;
-  int count_in = 0;
+  int count_in  = 0;
   int count_out = 0;
   std::vector<std::string> names_in;
   std::vector<std::string> names_out;
@@ -406,11 +406,14 @@ int main(int argc, char *argv[])
       // get_value_at_indices to see if changed
       model.GetValueAtIndices(var_name, dest_new_up,  &indices[0], len);
       std::cout<<" Get value at indices: "<<dest_new_up[0]<<"\n";
+
       if (dest_new[0] == dest_new_up[0])
 	test_status &= true;
       else
 	test_status &= false;
-      
+
+      assert (test_status == true);
+
     }
 
   }
@@ -470,13 +473,14 @@ int main(int argc, char *argv[])
       
     }
     
+    assert (test_status == true);
       
   }
   
   passed = test_status > 0 ? "Yes" : "No";
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
-  std::cout<<"| All BMI Tests passed: "<< RED<< passed<<RESET<<GREEN<<"\n";
+  std::cout<<"| All BMI Tests passed: "<< RED << passed<<RESET<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
 
@@ -492,6 +496,7 @@ int main(int argc, char *argv[])
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
 
+  assert (passed == "Yes");
 
   //##########################################################################################################
   // Update the model for Conceptual soil reservoir's unitest
@@ -547,7 +552,8 @@ int main(int argc, char *argv[])
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
 
-
+  assert (passed == "Yes");
+ 
   //##########################################################################################################
   // Test #2: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
   // benchmark values for Layered-based model with CONSTANT PROFILE OPTION
@@ -585,7 +591,8 @@ int main(int argc, char *argv[])
   std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
-
+  
+  assert (passed == "Yes");
 
   //##########################################################################################################
   // Test #3: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
@@ -625,6 +632,64 @@ int main(int argc, char *argv[])
   std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
+
+  assert (passed == "Yes");
+
+  //##########################################################################################################
+  // Test #4: calibratable parameters
+  {
+    std::cout<<GREEN<<"\n";
+    std::cout<<"| *************************************** \n";
+    std::cout<<"| Calibrated parameters test \n";
+    
+    model.Initialize(argv[1]);
+
+    double *smcmax_set, b_set, satpsi_set;
+    double *smcmax_get, b_get, satpsi_get;
+
+    smcmax_set = new double[1];
+    smcmax_get = new double[1];
+    
+    // Get initial values
+    model.GetValue("smcmax",&smcmax_set[0]);
+    model.GetValue("b",&b_set);
+    model.GetValue("satpsi",&satpsi_set);
+    
+    std::cout<<"| Initial values | smcmax = "<< smcmax_set[0] <<", b = "<< b_set <<", satpsi = "<< satpsi_set <<"\n";
+    
+    // set values
+    smcmax_set[0] += 0.012;
+    b_set += 0.013;
+    satpsi_set += 0.014;
+
+    std::cout<<"| Setting | smcmax = "<< smcmax_set[0] <<", b = "<< b_set <<", satpsi = "<< satpsi_set <<"\n";
+
+    model.SetValue("smcmax",&smcmax_set[0]);
+    model.SetValue("b",&b_set);
+    model.SetValue("satpsi",&satpsi_set);
+
+    model.GetValue("smcmax", &smcmax_get[0]);
+    model.GetValue("b", &b_get);
+    model.GetValue("satpsi", &satpsi_get);
+    
+    std::cout<<"| Getting | smcmax = "<< smcmax_get[0] <<", b = "<< b_get <<", satpsi = "<< satpsi_get <<"\n";
+    model.Update();
+    
+
+    test_status = fabs(smcmax_set[0] -  smcmax_get[0]) < 1.E-10 ? true : false;
+    test_status &= fabs(b_set - b_get) < 1.E-10 ? true : false;
+    test_status &= fabs(satpsi_set - satpsi_get) < 1.E-10 ? true : false;
+    
+    passed = test_status > 0 ? "Yes" : "No";
+
+   
+    std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
+    std::cout<<"| *************************************** \n";
+    std::cout<<RESET<<"\n";
+    
+    assert (passed == "Yes");
+  }  
+
   
   return FAILURE;
 }

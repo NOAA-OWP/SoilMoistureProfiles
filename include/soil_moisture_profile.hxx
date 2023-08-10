@@ -18,7 +18,7 @@
   @param soil_moisture_wetting_fronts  [-] : soil moisture content of wetting fronts (bmi input to layered the model)
   @param soil_depth_wetting_fronts     [m] : absolute depth of the wetting fronts (bmi input to layered the model)
   @param smcmax                    [-] : maximum soil moisture content (porosity)
-  @param bb                        [-] : pore size distribution, beta exponent in Clapp-Hornberger (1978) function
+  @param b                         [-] : pore size distribution, beta exponent in Clapp-Hornberger (1978) function
   @param satpsi                    [m] : saturated capillary head (saturated moisture potential)
   @param ncells                    [-] : number of cells of the discretized soil column
   @param nlayers                   [-] : number of soil moisture layers, typically different than the ncells
@@ -75,7 +75,7 @@ namespace soil_moisture_profile {
     double *soil_moisture_profile;
     
     double *smcmax;
-    double bb;
+    double b;
     double satpsi;
     int    ncells;
     double soil_depth;

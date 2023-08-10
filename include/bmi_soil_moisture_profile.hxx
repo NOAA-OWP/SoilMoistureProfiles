@@ -19,19 +19,24 @@ namespace coupler {
 class BmiSoilMoistureProfile : public bmixx::Bmi {
 public:
   BmiSoilMoistureProfile() {
-    this->input_var_names[0] = "soil_storage";
-    this->input_var_names[1] = "soil_storage_change";
-    this->input_var_names[2] = "soil_moisture_wetting_fronts";
-    this->input_var_names[3] = "soil_depth_wetting_fronts";
-    this->input_var_names[4] = "num_wetting_fronts";
-    this->input_var_names[5] = "Qb_topmodel";        // baseflow in the topmodel
-    this->input_var_names[6] = "Qv_topmodel";        // recharge rate to the saturated zone to the un saturated zone
+    this->input_var_names[0]  = "soil_storage";
+    this->input_var_names[1]  = "soil_storage_change";
+    this->input_var_names[2]  = "num_wetting_fronts";
+    this->input_var_names[3]  = "soil_moisture_wetting_fronts";
+    this->input_var_names[4]  = "soil_depth_wetting_fronts";
+    this->input_var_names[5]  = "Qb_topmodel";        // baseflow in the topmodel
+    this->input_var_names[6]  = "Qv_topmodel";        // recharge rate to the saturated zone to the un saturated zone
                                                      // in the topmodel
-    this->input_var_names[7] = "global_deficit";     // global soil deficit in the topmodel
+    this->input_var_names[7]  = "global_deficit";    // global soil deficit in the topmodel
     
     this->output_var_names[0] = "soil_moisture_profile";  // entire profile of the soil column (1D array)
     this->output_var_names[1] = "soil_water_table";       // depth of the water table from the surface in meters
     this->output_var_names[2] = "soil_moisture_fraction"; // fraction of soil moisture, top 0.4 m (or user specified depth)
+
+    // add calibratable parameters
+    this->calib_var_names[0]  = "smcmax";
+    this->calib_var_names[1]  = "b";
+    this->calib_var_names[2]  = "satpsi";
   };
   
   void Initialize(std::string config_file);
@@ -87,13 +92,17 @@ public:
   void GetGridFaceEdges(const int grid, int *face_edges);
   void GetGridFaceNodes(const int grid, int *face_nodes);
   void GetGridNodesPerFace(const int grid, int *nodes_per_face);
+  void ResetSize (std::string name);
+  
 private:
   soil_moisture_profile::soil_profile_parameters* state;
   static const int input_var_name_count  = 8;
   static const int output_var_name_count = 3;
+  static const int calib_var_name_count  = 3;
   
   std::string input_var_names[input_var_name_count];
   std::string output_var_names[output_var_name_count];
+  std::string calib_var_names[calib_var_name_count];
   std::string verbosity;
 };
 

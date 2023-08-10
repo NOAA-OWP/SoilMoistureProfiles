@@ -62,10 +62,14 @@ GetVarGrid(std::string name)
     return 1;
   else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0 || name.compare("global_deficit") == 0)
     return 1;
+  else if (name.compare("b") == 0 || name.compare("satpsi") == 0)
+    return 1;
   else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
     return 2;
   else if (name.compare("soil_moisture_wetting_fronts") == 0 || name.compare("soil_depth_wetting_fronts") == 0) // array of doubles (layered model)
-    return 3; 
+    return 3;
+  else if (name.compare("smcmax") == 0) // fixed number of layers for calibratable params
+    return 4;
   else
     return -1;
 }
@@ -78,7 +82,7 @@ GetVarType(std::string name)
 
   if (var_grid == 0)
     return "int";
-  else if (var_grid == 1 || var_grid == 2 || var_grid == 3)
+  else if (var_grid == 1 || var_grid == 2 || var_grid == 3 || var_grid == 4)
     return "double";
   else
     return "";
@@ -152,6 +156,9 @@ GetGridShape(const int grid, int *shape)
   else if (grid == 3) {
     shape[0] = this->state->shape[1];
   }
+  else if (grid == 4) {
+    shape[0] = this->state->num_layers;
+  }
 }
 
 
@@ -192,6 +199,8 @@ GetGridSize(const int grid)
     return this->state->shape[0];
   else if (grid == 3)
     return this->state->shape[1];
+  else if (grid == 4)
+    return this->state->num_layers;
   else
     return -1;
 }
@@ -322,6 +331,12 @@ GetValuePtr (std::string name)
     return (void*)(&this->state->Qv_topmodel);
   else if (name.compare("global_deficit") == 0)
     return (void*)(&this->state->global_deficit);
+  else if (name.compare("smcmax") == 0)
+    return (void*)this->state->smcmax;
+  else if (name.compare("b") == 0)
+    return (void*)(&this->state->b);
+  else if (name.compare("satpsi") == 0)
+    return (void*)(&this->state->satpsi);
   else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
@@ -345,7 +360,6 @@ GetValueAtIndices (std::string name, void *dest, int *inds, int len)
     char *ptr;
 
     itemsize = this->GetVarItemsize(name);
-
     for (i=0, ptr=(char *)dest; i<len; i++, ptr+=itemsize) {
       offset = inds[i] * itemsize;
       memcpy(ptr, (char *)src + offset, itemsize);
@@ -353,19 +367,38 @@ GetValueAtIndices (std::string name, void *dest, int *inds, int len)
   }
 }
 
-
+void BmiSoilMoistureProfile::
+ResetSize (std::string name)
+{
+// reset the size of wetting fronts array to the number of wetting fronts at the timestep
+  if (name.compare("soil_moisture_wetting_fronts") == 0) {
+    assert (this->state->num_wetting_fronts > 0);
+    state->soil_moisture_wetting_fronts = new double[this->state->num_wetting_fronts]();
+  }
+  else if (name.compare("soil_depth_wetting_fronts") == 0) {
+    assert (this->state->num_wetting_fronts > 0);
+    state->soil_depth_wetting_fronts = new double[this->state->num_wetting_fronts]();
+  }
+}
+  
 void BmiSoilMoistureProfile::
 SetValue (std::string name, void *src)
 {
   void * dest = NULL;
+  ResetSize(name);
+  
   dest = this->GetValuePtr(name);
-
+  
   if (dest) {
     int nbytes = 0;
     nbytes = this->GetVarNbytes(name);
     memcpy(dest, src, nbytes);
+    
+    if (name.compare("num_wetting_fronts") == 0)
+      this->state->shape[1] = this->state->num_wetting_fronts;
+    
   }
-
+  
 }
 
 
@@ -374,8 +407,10 @@ SetValueAtIndices (std::string name, int * inds, int len, void *src)
 {
   void * dest = NULL;
 
+  ResetSize(name);
+  
   dest = this->GetValuePtr(name);
-
+  
   if (dest) {
     int i;
     int itemsize = 0;
@@ -383,10 +418,13 @@ SetValueAtIndices (std::string name, int * inds, int len, void *src)
     char *ptr;
 
     itemsize = this->GetVarItemsize(name);
-
+    
     for (i=0, ptr=(char *)src; i<len; i++, ptr+=itemsize) {
       offset = inds[i] * itemsize;
       memcpy((char *)dest + offset, ptr, itemsize);
+
+      if (name.compare("num_wetting_fronts") == 0)
+	this->state->shape[1] = this->state->num_wetting_fronts;
     }
   }
 }
@@ -395,7 +433,7 @@ SetValueAtIndices (std::string name, int * inds, int len, void *src)
 std::string BmiSoilMoistureProfile::
 GetComponentName()
 {
-  return "SoilMoistureProfile BMI";
+  return "SoilMoistureProfiles BMI";
 }
 
 
