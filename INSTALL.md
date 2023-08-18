@@ -7,7 +7,6 @@ Detailed instructions on how to build SoilMoistureProfiles for different setups/
  mkdir build && cd build
  cmake ../ -DSTANDALONE=ON
  make && cd ..
- ./run_smp.sh STANDALONE 
  ```
 
 ### Build (pseudo framework)
@@ -17,7 +16,6 @@ Detailed instructions on how to build SoilMoistureProfiles for different setups/
  mkdir build && cd build
  cmake ../ -DWITHTOPMODEL=ON
  make && cd ..
- ./run_smp.sh WITHTOPMODEL
  ```
  
  ### Build (nextgen framework)
