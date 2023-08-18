@@ -5,9 +5,9 @@ A detailed description of the parameters for model configuration (i.e., initiali
 
 | Variable _____________________ | Datatype _______________ |  Limits _________________ | Units ____ | Role ___ |  Description _____________________________________________________________________|
 | :-------- | :-------- | :------ | :----- | :---- |  :----------------------- |
-| smcmax | double  (1D array) | - | - | - | the maximum moisture content (i.e., porosity). Note porosity for layered-based models vary by layers |
-| b | double | - | - | - | the pore size distribution, beta exponent in Clapp-Hornberger function |
-| satpsi | double | - | - | - | saturated capillary head (saturated moisture potential) |
+| *smcmax | double  (1D array) | - | - | - | the maximum moisture content (i.e., porosity). Note porosity for layered-based models vary by layers |
+| *b | double | - | - | - | the pore size distribution, beta exponent in Clapp-Hornberger function |
+| *satpsi | double | - | - | - | saturated capillary head (saturated moisture potential) |
 | soil_z | double (1D array) | - | m | - | vertical resolution of the soil moisture profile (depths from the surface) |
 | soil_storage_model_depth | double | - | m | - | depth of the soil reservoir model (e.g., CFE). Note: this depth can be different from the depth of the soil moisture profile which is based on `soil_z` |
 | soil_storage_model | string | conceptual or layered or topmodel | - | - | if `conceptual`, conceptual models are used for computing the soil moisture profile (e.g., CFE). If `layered`, layered-based soil moisture models are used (e.g., LGAR). If `topmodel`, topmodel's variables are used
