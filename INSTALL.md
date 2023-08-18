@@ -17,7 +17,7 @@ Detailed instructions on how to build SoilMoistureProfiles for different setups/
  mkdir build && cd build
  cmake ../ -DWITHTOPMODEL=ON
  make && cd ..
- ./run_smp.sh WITHTOPMODEL] 
+ ./run_smp.sh WITHTOPMODEL
  ```
  
  ### Build (nextgen framework)
