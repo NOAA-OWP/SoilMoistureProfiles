@@ -23,7 +23,7 @@ The soil moisture profiles schemes provide soil moisture distributed over one-di
   - Installation (see [instructions](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md))
   - Test examples
     - Unittest: (see [tests](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/tests/README.md))
-    - Standalone: An example computing `watertable` and `soil_moisture_profile` using a soil conceptual reservoir (see [run](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/ajk/doc_update/RUN.md#standalone-example))
+    - Standalone: An example computing `watertable` and `soil_moisture_profile` using a soil conceptual reservoir (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/RUN.md#standalone-example))
     - With topmodel: An example coupling TopModel to SMP (Soil Moisture Profiles) to compute `watertable` and `soil_moisture_profile` (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/RUN.md#pseudo-framework-example))
 
 ### Model Configuration File
