@@ -35,7 +35,7 @@ Run: <a href="https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_upda
 
 ## Nextgen framework example
 Detailed instructions for running and building SoilMoistureProfiles coupled to other models (for instance, CFE or SFT) in the nextgen framework are provided at [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/INSTALL.md).
-### Build (nextgen framework)
+### Build
 ```
 mkdir smp && cd smp (in the nextgen directory)
 ln -s ../extern
