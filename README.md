@@ -24,8 +24,8 @@ Detailed instructions on how to build and run SoilMoistureProfiels (SMP) can be 
   - Test examples highlights
     - Unittest: (see [tests](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/tests/README.md))
     - Standalone: An example computing `watertable` and `soil_moisture_profile` using a soil conceptual reservoir (see [build/run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md#standalone-example))
-    - With topmodel: An example coupling TopModel to SMP (Soil Moisture Profiles) to compute `watertable` and `soil_moisture_profile` (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md#pseudo-framework-example))
-    - Nextgen examples: Realization files for the two above examples (Standalone and with topmodel) are provided [here](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/realizations) (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md#nextgen-framework-example)).
+    - With topmodel: An example coupling TopModel to SMP (Soil Moisture Profiles) to compute `watertable` and `soil_moisture_profile` (see [build/run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md#pseudo-framework-example))
+    - Nextgen examples: Realization files for the two above examples (Standalone and with topmodel) are provided [here](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/realizations) (see [build/run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md#nextgen-framework-example)).
 
 ## Model Configuration File
 Detailed description of the parameters for model configuration is provided ([here](https://github.com/NOAA-OWP/SoilMoistureProfiles/tree/ajk/doc_update/configs/README.md))
