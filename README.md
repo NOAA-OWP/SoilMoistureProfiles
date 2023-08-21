@@ -1,16 +1,16 @@
 ## SoilMoistureProfiles
-The soil moisture profiles schemes provide soil moisture distributed over one-dimensional vertical column. These schemes facilitate coupling among different models such as (CFE and SFT or LASAM and SFT). The following three schemes are provided here to compute vertical soil moisture profiles.
- * Scheme for conceptual soil reserviors **(e.g., [CFE](https://github.com/NOAA-OWP/cfe))** 
- * Schemes for layered soil reservoirs **(e.g., [LGAR](https://github.com/NOAA-OWP/LGAR-C))**
- * Schemes for topmodel (details are provided below; [TopModel](https://github.com/NOAA-OWP/topmodel))
+The soil moisture profiles schemes provide soil moisture distributed over a one-dimensional vertical column. These schemes facilitate coupling among different models such as (CFE and SFT or LASAM and SFT). The following three schemes are provided here to compute vertical soil moisture profiles.
+ * Scheme for conceptual soil reservoirs (e.g., **[CFE](https://github.com/NOAA-OWP/cfe))** 
+ * Schemes for layered soil reservoirs (e.g., **[LGAR](https://github.com/NOAA-OWP/LGAR-C))**
+ * Schemes for topmodel (details are provided below; **[TopModel](https://github.com/NOAA-OWP/topmodel))**
  
- ### Conceptual soil reservior
+ ### Conceptual soil reservoir
  For conceptual reservoirs, see the following schematic and algorithm. We use the Clap-Hornberger soil moisture characteristic function here, and  **soil moisture storage** is the main input passed through a BMI.
    
   ![smp_schematic](https://user-images.githubusercontent.com/15165757/164322224-479477d7-2275-4ce3-a00b-9270cc0d3201.png)
   
- ### Layered soil reservior
- For layered soil reserviors, the two options include 
+ ### Layered soil reservoir
+ For layered soil reservoirs, the two options include 
   * constant by layer, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
   * linearly interpolated profile between consecutive layers, and Clap-Horngerger soil moisture characteristic function for the profile below the depth of the last layer
   
