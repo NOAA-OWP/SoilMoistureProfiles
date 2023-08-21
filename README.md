@@ -20,7 +20,7 @@ For layered soil reservoirs, the two options include
 
 
 ## Build and Run Instructions
-Detailed instructions on how to build and run SoilMoistureProfiels (SMP) can be found in our [INSTALL][instructions](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md) guide.
+Detailed instructions on how to build and run SoilMoistureProfiels (SMP) can be found here [INSTALL](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md).
   - Test examples highlights
     - Unittest: (see [tests](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/tests/README.md))
     - Standalone: An example computing `watertable` and `soil_moisture_profile` using a soil conceptual reservoir (see [build/run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/INSTALL.md#standalone-example))
