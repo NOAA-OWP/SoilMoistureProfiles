@@ -1,8 +1,8 @@
 ## SoilMoistureProfiles
 The soil moisture profiles schemes provide soil moisture distributed over one-dimensional vertical column. These schemes facilitate coupling among different models such as (CFE and SFT or LASAM and SFT). The following three schemes are provided here to compute vertical soil moisture profiles.
- * Scheme for conceptual soil reserviors **(e.g., CFE)** 
- * Schemes for layered soil reservoirs **(e.g., LGAR)**
- * Schemes for topmodel (details are provided below)
+ * Scheme for conceptual soil reserviors **(e.g., [CFE](https://github.com/NOAA-OWP/cfe))** 
+ * Schemes for layered soil reservoirs **(e.g., [LGAR](https://github.com/NOAA-OWP/LGAR-C))**
+ * Schemes for topmodel (details are provided below; [TopModel](https://github.com/NOAA-OWP/topmodel))
  
  ### Conceptual soil reservior
  For conceptual reservoirs, see the following schematic and algorithm. We use the Clap-Hornberger soil moisture characteristic function here, and  **soil moisture storage** is the main input passed through a BMI.
@@ -25,6 +25,7 @@ The soil moisture profiles schemes provide soil moisture distributed over one-di
     - Unittest: (see [tests](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/tests/README.md))
     - Standalone: An example computing `watertable` and `soil_moisture_profile` using a soil conceptual reservoir (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/RUN.md#standalone-example))
     - With topmodel: An example coupling TopModel to SMP (Soil Moisture Profiles) to compute `watertable` and `soil_moisture_profile` (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/RUN.md#pseudo-framework-example))
+    - Nextgen examples: Realization files for the two above examples (Standalone and with topmodel) are provided [here](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/realizations) (see [run](https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/RUN.md#nextgen-framework-example)).
 
 ### Model Configuration File
   - Detailed description of the parameters for model configuration is provided ([here](https://github.com/NOAA-OWP/SoilMoistureProfiles/tree/ajk/doc_update/configs/README.md))
