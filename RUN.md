@@ -25,6 +25,6 @@ ln -s extern/SoilMoistureProfiles/SoilMoistureProfiles/realizations
    ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_config_smp.json 
  - With Topmodel example
    cp ./extern/topmodel/topmodel/data/* data
-   ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_config_smp_topmodel.json (for with topmodel example)
+   ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_config_smp_topmodel.json
 ```
 
