@@ -5,7 +5,7 @@
         "output_interval": 3600
     },
     "catchments": {
-        "cat-87": {
+        "cat-27": {
 	    "formulations": [
 		{
                     "name": "bmi_multi",
