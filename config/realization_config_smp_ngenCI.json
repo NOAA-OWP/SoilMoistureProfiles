@@ -5,7 +5,7 @@
         "output_interval": 3600
     },
     "catchments": {
-        "cat-27": {
+        "cat-87": {
 	    "formulations": [
 		{
                     "name": "bmi_multi",
@@ -45,7 +45,7 @@
 				"name": "bmi_c++",
 				"params": {
 				    "model_type_name": "bmi_smp",
-				    "library_file": "./extern/SoilMoistureProfiles/cmake_build/libsmpbmi",
+				    "library_file": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/cmake_build/libsmpbmi",
 				    "init_config": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/config/config_conceptual.txt",
 				    "allow_exceed_end_time": true,
 				    "main_output_variable": "soil_storage",
