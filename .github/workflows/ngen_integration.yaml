@@ -5,9 +5,9 @@ name: Ngen Integration Tests
 # Controls when the action will run.
 on:
   push:
-    branches: [ master ]
+    branches: [ main, dev, notreal ]
   pull_request:
-    branches: [ master ]
+    branches: [ main, dev, notreal ]
   workflow_dispatch:
 
 env:
