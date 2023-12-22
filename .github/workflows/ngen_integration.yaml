@@ -88,6 +88,13 @@ jobs:
           mod-dir: "extern/cfe/"
           targets: "cfebmi"
 
+      - name: Build Topmodel
+        id: submod_build_4
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/topmodel/"
+          targets: "topmodelbmi"
+
       - name: Build PET
         id: submod_build_5
         uses: ./.github/actions/ngen-submod-build
@@ -130,10 +137,3 @@ jobs:
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
           inputfile='extern/SoilMoistureProfiles/SoilMoistureProfiles/config/realization_config_smp_ngenCI.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
-
-      # The following remove a post ngen build error likely related to the temporary files left over during the
-      # build process
-      - name: Re-checkout Ngen
-        uses: actions/checkout@v3
-        with:
-          repository: noaa-owp/ngen
