@@ -127,7 +127,7 @@ def get_topmodel_block(model_exe, input_dir):
             "model_type_name": "TOPMODEL", 
             "main_output_variable": "Qout",
             "library_file": model_exe,
-            "init_config": os.path.join(input_dir, 'topmodel/{{id}}_config_topmodel.run'),
+            "init_config": os.path.join(input_dir, 'topmodel/topmod_{{id}}.run'),
             "allow_exceed_end_time": True,
             "fixed_time_step": False,
             "uses_forcing_file": False,
@@ -138,6 +138,8 @@ def get_topmodel_block(model_exe, input_dir):
             "registration_function": "register_bmi_topmodel"
         }
     }
+
+    return block 
 
 #############################################################################
 # module for Soil Freeze-thaw (SFT) block in the nextgen realization file 
@@ -514,8 +516,9 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
         model_type_name = "NOM_TOPMODEL"
         main_output_variable = "Qout"
         modules = [nom_block, topmodel_block]
-        output_variables = ["RAIN_RATE", "Qout", "soil_water__domain_volume_deficit","land_surface_water__runoff_mass_flux"]
-        output_header_fields = ["rain_rate", "qout", "soil_deficit", "direct_runoff"]
+        print ("HERE", topmodel_block)
+        output_variables = ["Qout", "soil_water__domain_volume_deficit","land_surface_water__runoff_mass_flux"]
+        output_header_fields = ["qout", "soil_deficit", "direct_runoff"]
     elif (coupled_models == "nom_cfe_smp_sft"):
         model_type_name = "NOM_CFE_SMP_SFT"
         main_output_variable = "Q_OUT"

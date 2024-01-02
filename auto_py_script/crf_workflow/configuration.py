@@ -43,9 +43,9 @@ def get_soil_class_NWM(infile):
 # @param infile : input file pointing to hydrofabric basin geopkacge
 # - returns     : geodataframe 
 #############################################################################
-def read_gpkg_file(infile):
+def read_gpkg_file(infile, coupled_models):
 
-    gdf_soil = gpd.read_file(infile, layer='cfe_noahowp_attributes')
+    gdf_soil = gpd.read_file(infile, layer='model_attributes')
     gdf_soil.set_index("divide_id", inplace=True)
 
     layers = fiona.listlayers(infile)
@@ -53,8 +53,9 @@ def read_gpkg_file(infile):
     print ("\n")
     
     # extract TWI for topmodel
-    gdf_twi = gpd.read_file(infile, layer='twi')
-    gdf_twi.set_index("divide_id", inplace=True)
+    if ("nom_topmodel" in coupled_models):
+        gdf_twi = gpd.read_file(infile, layer='twi')
+        gdf_twi.set_index("divide_id", inplace=True)
     
     gdf_soil['bexp_soil_layers_stag=1'].fillna(16,inplace=True)
     gdf_soil['dksat_soil_layers_stag=1'].fillna(0.00000338,inplace=True)
@@ -103,12 +104,16 @@ def read_gpkg_file(infile):
     gdf.loc[mask, 'soil_params.b'] = min_value
 
     # TWI for topmodel
-    gdf['twi'] = gdf_twi['fun.twi']
-
+    if ("nom_topmodel" in coupled_models):
+        #gdf['twi'] = gdf_twi['fun.twi']
+        gdf['twi'] = gdf_twi['twi']
+        gdf['width_dist'] = gdf_twi['width_dist']
+        
+    
     # get catchment ids
     df_cats = gpd.read_file(infile, layer='divides')
     catids = [int(re.findall('[0-9]+',s)[0]) for s in df_cats['divide_id']]
-
+    
     return gdf, catids
 
 #############################################################################
@@ -139,7 +144,7 @@ def write_forcing_files(catids, infile):
 #############################################################################
 def write_nom_input_files(catids, nom_dir, forcing_dir, gpkg_file, simulation_time):
     
-    df_soil = gpd.read_file(gpkg_file, layer='cfe_noahowp_attributes')
+    df_soil = gpd.read_file(gpkg_file, layer='model_attributes')
     df_cats = gpd.read_file(gpkg_file, layer='divides')
     df_cats = df_cats.to_crs("EPSG:4326") # change CRS to 4326
     
@@ -190,12 +195,12 @@ def write_nom_input_files(catids, nom_dir, forcing_dir, gpkg_file, simulation_ti
                     ]
         
         forcing = ["&forcing",
-                   "  ZREF               = 10.0                         ! measurement height for wind speed (m)",
-                   "  rain_snow_thresh   = 1.0                          ! rain-snow temperature threshold (degrees Celcius)",
+                   "  ZREF               = 10.0                        ! measurement height for wind speed (m)",
+                   "  rain_snow_thresh   = 1.0                         ! rain-snow temperature threshold (degrees Celcius)",
                    "/ \n"
                    ]
 
-        model_opt = ["&model_options                                      ! see OptionsType.f90 for details",
+        model_opt = ["&model_options                                   ! see OptionsType.f90 for details",
                      "  precip_phase_option               = 1",
                      "  snow_albedo_option                = 1",
                      "  dynamic_veg_option                = 4",
@@ -272,9 +277,9 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
         
-        giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
+        #giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
         
-        df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
+        #df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
 
         # cfe params set
         cfe_params = ['forcing_file=BMI',
@@ -294,7 +299,7 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
                       'expon='+str(gdf_soil['expon'][cat_name])+'[]',
                       'gw_storage=0.05[m/m]',
                       'alpha_fc=0.33',
-                      'soil_storage=0.05[m/m]',
+                      'soil_storage=0.1[m/m]',
                       'K_nash=0.03[]',
                       'K_lf=0.01[]',
                       'nash_storage=0.0,0.0',
@@ -307,8 +312,9 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
         if (gdf_soil['soil_params.b'][cat_name] == 1.0):
             cfe_list[3] = 1.1
         
-        cfe_params.append('giuh_ordinates='+df_giuh.loc['giuh_ordinates'].iloc[0])
-        #cfe_params.append('giuh_ordinates=0.3,0.25,0.2,0.15,0.1')
+        #cfe_lst[24] += df_giuh.loc['giuh_ordinates'].iloc[0]
+        #cfe_params.append('giuh_ordinates='+df_giuh.loc['giuh_ordinates'].iloc[0])
+        cfe_params.append('giuh_ordinates=0.3,0.25,0.2,0.15,0.1')
         
         if(runoff_scheme == 'Xinanjiang'):
             cfe_params[1]='surface_partitioning_scheme=Xinanjiang'
@@ -345,15 +351,15 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
     for catID in catids:
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
-
+        
         ##################
         topmod = ["0",
                   f'{cat_name}',
                   "./forcing/%s.csv"%cat_name,
-                  "./topmodel/subcat_%s.dat"%cat_name,
-                  "./topmodel/params_%s.dat"%cat_name,
-                  "./topmodel/topmod_%s.out"%cat_name,
-                  "./topmodel/hyd_%s.out"%cat_name
+                  f'./{topmodel_dir}/subcat_{cat_name}.dat',
+                  f'./{topmodel_dir}/params_{cat_name}.dat',
+                  f'./{topmodel_dir}/topmod_{cat_name}.out',
+                  f'./{topmodel_dir}/hyd_{cat_name}.out'
                   ]
 
         fname_tm = f'topmod_{cat_name}.run' # + '_config_.run'
@@ -381,10 +387,17 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
         # frequency: distributed area by percentile, v: twi value
                 
         twi_cat = twi_cat.sort_values(by=['v'],ascending=False)
-        
+
+        # add width function commulative distribution
+        width_f = json.loads(gdf_soil['width_dist'][cat_name])
+        df_width_f = pd.DataFrame(width_f, columns=['v', 'frequency'])
+        v_cumm = np.cumsum(df_width_f['frequency'])
+        #print ("Width: ", width_f)
+        #print (v_cumm)
+        #quit()
         nclasses_twi = len(twi_cat['frequency'].values)
        
-        nclasses_width_function = 6 # width functions (distance to the outlet)
+        nclasses_width_function = len(df_width_f['frequency'].values) # width functions (distance to the outlet)
         subcat = ["1 1 1",
                   f'Extracted study basin: {cat_name}',
                   f'{nclasses_twi} 1',
@@ -399,6 +412,13 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
             twi_str+="{0:.6f}".format(freq) + " " + "{0:.6f}".format(value)+ "\n"
         
         subcat[3] = twi_str.strip()
+
+        # update list/location for the width function
+        widthf_str = ''
+        for freq, value in zip(v_cumm.values, df_width_f['v'].values):
+            widthf_str+="{0:.6f}".format(freq) + " " + "{0:.6f}".format(value)+ " "
+
+        subcat[5] = widthf_str.strip()
         
         fname_tm = f'subcat_{cat_name}.dat'
         tm_file = os.path.join(topmodel_dir, fname_tm)
@@ -425,9 +445,12 @@ def write_sft_input_files(catids, runoff_scheme, forcing_dir, gdf_soil, soil_cla
         sys.exit("Runoff scheme should be: Schaake or Xinanjiang")
 
     # num cells -- number of cells used for soil column discretization
-    ncells = 4
-    soil_z = "0.1,0.3,1.0,2.0"
+    #ncells = 4
+    #soil_z = "0.1,0.3,1.0,2.0"
 
+    ncells = 19
+    soil_z = "0.1,0.15,0.18,0.23,0.29,0.36,0.44,0.55,0.69,0.86,1.07,1.34,1.66,2.07,2.58,3.22,4.01,5.0,6.0"
+    
     delimiter = ','
 
     nsteps_yr = 365 * 24 # number of steps in the first year of the met. data
@@ -474,7 +497,8 @@ def write_sft_input_files(catids, runoff_scheme, forcing_dir, gdf_soil, soil_cla
 #############################################################################
 def write_smp_input_files(catids, gdf_soil, smp_dir, coupled_models):
 
-    soil_z = "0.1,0.3,1.0,2.0"
+    #soil_z = "0.1,0.3,1.0,2.0"
+    soil_z = "0.1,0.15,0.18,0.23,0.29,0.36,0.44,0.55,0.69,0.86,1.07,1.34,1.66,2.07,2.58,3.22,4.01,5.0,6.0"
 
     # loop over all catchments and write config files
     for catID in catids:
@@ -486,7 +510,8 @@ def write_smp_input_files(catids, gdf_soil, smp_dir, coupled_models):
                       'soil_params.smcmax=' + str(gdf_soil['soil_params.smcmax'][cat_name]) + '[m/m]',
                       'soil_params.b=' + str(gdf_soil['soil_params.b'][cat_name]) + '[]',
                       'soil_params.satpsi=' + str(gdf_soil['soil_params.satpsi'][cat_name]) + '[m]',
-                      f'soil_z={soil_z}[m]'
+                      f'soil_z={soil_z}[m]',
+                      'soil_moisture_fraction_depth=1.0[m]'
                       ]
 
         if ("cfe" in coupled_models):
@@ -518,7 +543,8 @@ def write_lasam_input_files(catids, giuh_dir, soil_param_file, gdf_soil, lasam_d
     sft_calib = "False" # update later (should be taken as an argument)
 
     # used when LASAM coupled with SFT
-    soil_z="10,30,100.0,200.0"
+    #soil_z="10,30,100.0,200.0"
+    soil_z = "10.0,15.0,18.0,23.0,29.0,36.0,44.0,55.0,69.0,86.0,107.0,134.0,166.0,207.0,258.0,322.0,401.0,500.0,600.0"
     
     # lasam parameters
     lasam_params_base = ['verbosity=none',
@@ -551,13 +577,14 @@ def write_lasam_input_files(catids, giuh_dir, soil_param_file, gdf_soil, lasam_d
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
 
-        giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
-        df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
+        #giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
+        #df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
 
         lasam_params = lasam_params_base.copy()
         lasam_params[soil_type_loc] += str(gdf_soil['ISLTYP'][cat_name])
-        lasam_params[giuh_loc_id]   += df_giuh.loc['giuh_ordinates'].iloc[0]
-
+        #lasam_params[giuh_loc_id]  += df_giuh.loc['giuh_ordinates'].iloc[0]
+        lasam_params[giuh_loc_id]   +=  '0.3,0.25,0.2,0.15,0.1'
+        
         fname_lasam = cat_name + '_config_lasam.txt'
         lasam_file = os.path.join(lasam_dir, fname_lasam)
         with open(lasam_file, "w") as f:
@@ -621,7 +648,7 @@ def main():
     #catids = glob.glob(os.path.join(args.giuh_dir,'*.txt'))
     #catids = [int(re.findall('[0-9]+',s)[0]) for s in catids]
    
-    gdf_soil, catids = read_gpkg_file(args.gpkg_file)
+    gdf_soil, catids = read_gpkg_file(args.gpkg_file, args.models_option)
     
     # doing it outside NOM as some of params from this file are also needed by CFE for Xinanjiang runoff scheme
     nom_params = os.path.join(args.ngen_dir,"extern/noah-owp-modular/noah-owp-modular/parameters")

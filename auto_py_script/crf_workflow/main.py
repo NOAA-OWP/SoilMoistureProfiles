@@ -24,19 +24,38 @@ import subprocess
 # -r    : runoff scheme for CFE OPTION=[Schaake, Xinanjiang]
 # -t    : simulation start/end times (example is given below)
 
-path_gpkg = "data/sebec_test.gpkg"
+path_gpkg = "data/gage_01033000.gpkg" # sebec_test.gpkg"
 path_giuh = "data/output/giuh"
 path_forcing = "data/forcing"
 path_ngen = "ngen_py3.11"
-path_output = "inputsBC"
-model_option = "NC" #"BC"
+path_output = "inputsNT"
+model_option = "NT"
 runoff_scheme= 'Schaake'
 #runoff_scheme= 'Xinanjiang'
+
+
+"""
+# SCAN SITES
+
+huc12_id = ['HUC12-100302030705', 'HUC12-101800090503', 'HUC12-100401041801', 'HUC12-102600120103',
+            'HUC12-101301020105', 'HUC12-160101010403']
+path_gpkg = f"data/{huc12_id[1]}.gpkg"
+path_giuh = "data/output/giuh"
+path_forcing = "/Users/ahmadjan/Core/simulations/owp/AGU_2023/forcing_all"
+path_ngen = "../ngen_py3.11"
+path_output = "inputsC"
+model_option = "NCSS" #"BC"
+#model_option = "NLSS"
+runoff_scheme= 'Schaake'
+#runoff_scheme= 'Xinanjiang'
+"""
 
 
 path_crf = os.path.dirname(sys.argv[0])
 #simulation_time = '{"start_time" : "2012 10 01 0000", "end_time" : "201310010000"}' # format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
 simulation_time = '{"start_time" : "2012-10-01 00:00:00", "end_time" : "2013-10-01 00:00:00"}' # format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
+
+simulation_time = '{"start_time" : "2010-10-01 00:00:00", "end_time" : "2015-10-01 00:00:00"}' # format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
 
 print (simulation_time)
 
