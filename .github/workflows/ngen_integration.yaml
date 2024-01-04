@@ -1,4 +1,4 @@
-# Test ngen-cfe integration
+# Test ngen-smp integration
 
 name: Ngen Integration Tests
 
@@ -20,7 +20,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Run general unit tests in linux environment
-  test_surfacebmi_plus_cfe:
+  test_smp:
     # The type of runner that the job will run on
     strategy:
       matrix:
@@ -30,7 +30,7 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checkout and build the SoilFreezeThaw
+      # Checkout and build the SoilMoistureProfiles
       - name: Checkout the commit
         uses: actions/checkout@v4
 
@@ -39,7 +39,7 @@ jobs:
           cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
 
-      - name: Save SoilMoistureProfile to a Temp Directory
+      - name: Save SoilMoistureProfiles to a Temp Directory
         run: |
           # Move files to a temporary directory
           mkdir ${{runner.temp}}/smp
@@ -67,26 +67,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: noaa-owp/ngen
-
-      - name: Build Surfacebmi
-        id: submod_build_1
-        uses: ./.github/actions/ngen-submod-build
-        with:
-          mod-dir: " extern/noah-owp-modular/"
-          targets: "surfacebmi"
-
-      - name: Build ISO C Fortran BMI
-        id: submod_build_2
-        uses: ./.github/actions/ngen-submod-build
-        with:
-          mod-dir: "extern/iso_c_fortran_bmi/"
-
-      - name: Build CFE
-        id: submod_build_3
-        uses: ./.github/actions/ngen-submod-build
-        with:
-          mod-dir: "extern/cfe/"
-          targets: "cfebmi"
 
       - name: Build Topmodel
         id: submod_build_4
@@ -118,7 +98,6 @@ jobs:
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
           #is this required for this test?
           bmi_c: 'ON'
-          bmi_fortran: 'ON'
         timeout-minutes: 15
 
       - name: Move SFT Files Including cmake_build to Appropriate Directory
@@ -133,7 +112,6 @@ jobs:
 
       - name: Run Ngen Test
         run: |
-          # Run ngen with topmodel with CFE
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
           inputfile='extern/SoilMoistureProfiles/SoilMoistureProfiles/config/realization_config_smp_ngenCI.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
