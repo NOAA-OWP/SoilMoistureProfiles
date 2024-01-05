@@ -49,17 +49,6 @@ jobs:
       - name: checkout actions in another repo
         uses: actions/checkout@v4
         with:
-          repository: noaa-owp/soilfreezethaw
-
-      - name: Build the SFT Library
-        run: |
-          cmake -B cmake_build -S . -DNGEN=ON
-          make -C cmake_build
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: checkout actions in another repo
-        uses: actions/checkout@v4
-        with:
           repository: noaa-owp/ngen
 
       - name: Build Topmodel
