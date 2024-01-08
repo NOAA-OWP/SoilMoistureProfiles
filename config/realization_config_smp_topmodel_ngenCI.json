@@ -1,0 +1,109 @@
+{
+    "time": {
+        "start_time": "2015-12-01 00:00:00",
+        "end_time": "2015-12-01 03:00:00",
+        "output_interval": 3600
+    },
+    "catchments": {
+        "cat-27": {
+	    "formulations": [
+		{
+                    "name": "bmi_multi",
+                    "params": {
+			"model_type_name": "bmi_multi_sloth_smp",
+			"forcing_file": "",
+			"init_config": "",
+			"allow_exceed_end_time": true,
+			"main_output_variable": "soil_storage",
+			"output_variables" : [
+			    "soil_water_table"
+			],
+			"modules": [
+			    {
+				"name": "bmi_c++",
+				"params": {
+                                    "model_type_name": "bmi_c++_sloth",
+                                    "library_file": "./extern/sloth/cmake_build/libslothmodel",
+                                    "init_config": "/dev/null",
+                                    "allow_exceed_end_time": true,
+                                    "main_output_variable": "z",
+                                    "uses_forcing_file": false,
+                                    "model_params": {
+					"sloth_SOIL_STORAGE(1,double,m,node)": 0.8,
+					"sloth_SOIL_STORAGE_CHANGE(1,double,m,node)": -0.000472,
+					"soil_moisture_wetting_fronts(1,double,1,node)": 0.0,
+					"soil_depth_wetting_fronts(1,double,1,node)": 0.0,
+					"num_wetting_fronts(1,int,1,node)": 1
+                                    }
+				}
+                            },
+			    {
+				"name": "bmi_c",
+				"params": {
+				    "model_type_name": "bmi_c_pet",
+				    "library_file": "./extern/evapotranspiration/evapotranspiration/cmake_build/libpetbmi",
+				    "forcing_file": "",
+				    "init_config": "./extern/cfe/cfe/configs/cat_87_bmi_config_pet_pass.txt",
+				    "allow_exceed_end_time": true,
+				    "main_output_variable": "water_potential_evaporation_flux",
+				    "registration_function":"register_bmi_pet",
+				    "uses_forcing_file": false
+				}
+			    },
+			    {
+				"name": "bmi_c",
+				"params": {
+				    "model_type_name": "bmi_c_topmodel",
+				    "library_file": "./extern/topmodel/cmake_build/libtopmodelbmi",
+                                    "init_config": "./extern/topmodel/topmodel/data/topmod.run",
+				    "allow_exceed_end_time": true,
+				    "main_output_variable": "Qout",
+				    "registration_function": "register_bmi_topmodel",
+				    "variables_names_map" : {
+					"water_potential_evaporation_flux" : "water_potential_evaporation_flux",
+					"atmosphere_water__liquid_equivalent_precipitation_rate" : "APCP_surface",
+					"atmosphere_air_water~vapor__relative_saturation" : "SPFH_2maboveground",
+					"land_surface_air__temperature" : "TMP_2maboveground",
+					"land_surface_wind__x_component_of_velocity" : "UGRD_10maboveground",
+					"land_surface_wind__y_component_of_velocity" : "VGRD_10maboveground",
+					"land_surface_radiation~incoming~longwave__energy_flux" : "DLWRF_surface",
+					"land_surface_radiation~incoming~shortwave__energy_flux" : "DSWRF_surface",
+					"land_surface_air__pressure" : "PRES_surface"
+				    },
+				    "uses_forcing_file": false
+				}
+			    },
+			    {
+				"name": "bmi_c++",
+				"params": {
+				    "model_type_name": "bmi_smp",
+				    "library_file": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/cmake_build/libsmpbmi",
+				    "init_config": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/config/config_topmodel.txt",
+				    "allow_exceed_end_time": true,
+				    "main_output_variable": "soil_storage",
+				    "variables_names_map" : {
+					"soil_storage" : "sloth_SOIL_STORAGE",
+					"soil_storage_change" : "sloth_SOIL_STORAGE_CHANGE",
+					"Qb_topmodel" : "land_surface_water__baseflow_volume_flux",
+					"Qv_topmodel" : "soil_water_root-zone_unsat-zone_top__recharge_volume_flux",
+					"global_deficit" : "soil_water__domain_volume_deficit"
+				    },
+				     "output_variables" : [
+					 "soil_storage",
+					 "soil_water_table"
+				    ],
+				    "uses_forcing_file": false
+				}
+			    }
+			],
+			"uses_forcing_file": false
+                    }
+		}
+            ],
+            "forcing": {
+		"path": "./extern/cfe/cfe/forcings/cat87_01Dec2015-.csv",
+		"provider": "CsvPerFeature"
+            }
+	}
+    }
+}
