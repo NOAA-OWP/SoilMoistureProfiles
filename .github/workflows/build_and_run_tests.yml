@@ -37,7 +37,7 @@ jobs:
 
     - name: Build and Run Unittest
       run: |
-        cd test
+        cd tests
         if [ ${{ runner.os }} == 'macOS' ]
         then
           brew install gnu-sed
