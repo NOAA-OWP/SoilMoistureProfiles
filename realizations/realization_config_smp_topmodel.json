@@ -41,7 +41,7 @@
 				"name": "bmi_c",
 				"params": {
 				    "model_type_name": "bmi_c_pet",
-				    "library_file": "./extern/evapotranspiration/cmake_build/libpetbmi",
+				    "library_file": "./extern/evapotranspiration/evapotranspiration/cmake_build/libpetbmi",
 				    "forcing_file": "",
 				    "init_config": "./extern/cfe/cfe/configs/cat_87_bmi_config_pet_pass.txt",
 				    "allow_exceed_end_time": true,
@@ -55,7 +55,7 @@
 				"params": {
 				    "model_type_name": "bmi_c_topmodel",
 				    "library_file": "./extern/topmodel/cmake_build/libtopmodelbmi",
-				    "init_config": "./data/topmod.run",
+				    "init_config": "./extern/topmodel/topmodel/data/topmod.run",
 				    "allow_exceed_end_time": true,
 				    "main_output_variable": "Qout",
 				    "registration_function": "register_bmi_topmodel",
@@ -77,7 +77,7 @@
 				"name": "bmi_c++",
 				"params": {
 				    "model_type_name": "bmi_smp",
-				    "library_file": "./extern/SoilMoistureProfiles/cmake_build/libsmpbmi",
+				    "library_file": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/cmake_build/libsmpbmi",
 				    "init_config": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/configs/config_topmodel.txt",
 				    "allow_exceed_end_time": true,
 				    "main_output_variable": "soil_storage",

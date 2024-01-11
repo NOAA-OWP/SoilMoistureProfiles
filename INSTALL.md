@@ -41,6 +41,7 @@ mkdir smp && cd smp (in the nextgen directory)
 ln -s ../extern
 ln -s ../data
 ln -s extern/SoilMoistureProfiles/SoilMoistureProfiles/realizations
+cp extern/topmodel/topmodel/data/* data
 ```
 ### Run
  - Standalone example
