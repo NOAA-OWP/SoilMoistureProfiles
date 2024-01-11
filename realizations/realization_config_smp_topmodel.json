@@ -16,8 +16,7 @@
 			"allow_exceed_end_time": true,
 			"main_output_variable": "soil_storage",
 			"output_variables" : [
-			    "soil_storage",
-			    "water_table"
+			    "soil_water_table"
 			],
 			"modules": [
 			    {
@@ -34,7 +33,7 @@
 					"sloth_SOIL_STORAGE_CHANGE(1,double,m,node)": -0.000472,
 					"soil_moisture_wetting_fronts(1,double,1,node)": 0.0,
 					"soil_depth_wetting_fronts(1,double,1,node)": 0.0,
-					"num_wetting_fronts(1,double,1,node)": 0.0
+					"num_wetting_fronts(1,int,1,node)": 1
                                     }
 				}
                             },
@@ -79,7 +78,7 @@
 				"params": {
 				    "model_type_name": "bmi_smp",
 				    "library_file": "./extern/SoilMoistureProfiles/cmake_build/libsmpbmi",
-				    "init_config": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/config/config_topmodel.txt",
+				    "init_config": "./extern/SoilMoistureProfiles/SoilMoistureProfiles/configs/config_topmodel.txt",
 				    "allow_exceed_end_time": true,
 				    "main_output_variable": "soil_storage",
 				    "variables_names_map" : {

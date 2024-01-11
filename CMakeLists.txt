@@ -27,7 +27,7 @@ if(NGEN)
 endif()
 
 if(STANDALONE)
-message("${Red} Standalone Soil moisture profile (using conceptual reservoir)! ${ColourReset}")
+message("${Red} Standalone Soil moisture profile (using conceptual/layered reservoir)! ${ColourReset}")
 set(exe_name "smp_standalone")
 elseif(WITHTOPMODEL)
 message("${Red} Soil moisture profile for topmodel (watertable-based)! ${ColourReset}")
