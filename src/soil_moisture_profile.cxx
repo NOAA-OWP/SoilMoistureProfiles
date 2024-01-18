@@ -145,7 +145,8 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       }
       continue;
     }
-    else if (param_key == "soil_params.smcmax") {
+	// NOTE: `soil_params.smcmax` may be deprecated in the future in favor of `smcmax`
+    else if (param_key == "smcmax" || param_key == "soil_params.smcmax") {
       if (param_value == "bmi" || param_value == "BMI") {
 	parameters->smcmax_bmi = true;
       }
@@ -164,13 +165,15 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
       
       continue;
     }
-    else if (param_key == "soil_params.b") {
+	// NOTE: `soil_params.b` may be deprecated in the future in favor of `b`
+    else if (param_key == "b" || param_key == "soil_params.b") {
       parameters->b = stod(param_value);
       assert (parameters->b > 0);
       is_b_set = true;
       continue;
     }
-    else if (param_key == "soil_params.satpsi") {
+	// NOTE: `soil_params.satpsi` may be deprecated in the future in favor of `satpsi`
+    else if (param_key == "satpsi" || param_key == "soil_params.satpsi") {
       parameters->satpsi = stod(param_value);
       is_satpsi_set = true;
       continue;
