@@ -1,30 +1,13 @@
+# @author Ahmad Jan Khattak
+# @email ahmad.jan@noaa.gov
+# @date  February 05, 2024
 
-
+# ########################### TWI ########################
 # Function computes topographic wetness index (TWI) and generates files 
 # needed for computing width function (see below)
-twi_function <- function(infile, directory, dem_path, nclasses = 5) {
+twi_function <- function(infile, directory, distribution = 'quantiles', nclasses = 5) {
   
-  elev <- rast(dem_path)
-  
-  # Get the DEMph
   div <- read_sf(infile, 'divides')
-  div_bf <- st_buffer(div,dist=5000)
-  
-  dem <- crop(elev, project(vect(div_bf), crs(elev)), snap = "out")
-  cm_to_m <- 0.01
-  dem <- dem * cm_to_m
-  writeRaster(dem, glue("{directory}/dem.tif"), overwrite = TRUE)
-  
-  gdal_utils("warp",
-             source = glue("{directory}/dem.tif"),
-             destination = glue("{directory}/dem_proj.tif"),
-             options = c("-of", "GTiff", "-t_srs", "EPSG:5070", "-r", "bilinear")
-  )
-  
-  #dem_proj = raster(glue("{directory}/dem_proj.tif"))
-  wbt_breach_depressions(dem = glue("{directory}/dem_proj.tif"), output = glue("{directory}/dem_corr.tif") )
-  
-  #################### TWI ########################
   
   # @param out_type Output type; one of 'cells' (default), 'catchment area', and 'specific contributing area'.
   wbt_d8_flow_accumulation(input = glue("{directory}/dem_corr.tif"), output = glue("{directory}/sca.tif")
@@ -36,25 +19,26 @@ twi_function <- function(infile, directory, dem_path, nclasses = 5) {
   wbt_wetness_index(sca = glue("{directory}/sca.tif"), slope = glue("{directory}/slope.tif"), 
                     output = glue("{directory}/twi.tif"))
   
-  
   twi = rast(glue("{directory}/twi.tif"))
-  
+  print (twi)
   twi[twi < 0] <- 0
   twi[twi > 50] <- 50
   
-  twi_cat <- execute_zonal(data = twi,
-                            geom = div,
-                            ID = "divide_id",
-                            fun = zonal::equal_population_distribution,
-                            groups = nclasses)
-  #print (twi_cat)
-  
-  #twi_compute <<- execute_zonal(data = twi,
-  #                              geom = div,
-  #                              ID = "divide_id",
-  #                              fun = zonal::distribution,
-  #                              breaks = 30)
-  
+  if (distribution == 'quantiles') {
+    twi_cat <- execute_zonal(data = twi,
+                             geom = div,
+                             ID = "divide_id",
+                             fun = equal_population_distribution,
+                             groups = nclasses)
+    
+  }
+  else if (distribution == 'simple') {
+     twi_cat <- execute_zonal(data = twi,
+                              geom = div,
+                              ID = "divide_id",
+                              fun = zonal::distribution,
+                              breaks = nclasses)
+  }
 
   return(twi_cat)
 }
@@ -69,11 +53,10 @@ width_function <- function(infile, directory) {
                  output = glue("{directory}/dem_d8.tif"))
   
   wbt_downslope_flowpath_length(d8_pntr = glue("{directory}/dem_d8.tif"), 
-                                output = glue("{directory}/down_fp_length.tif"), watersheds=NULL)
+                                output = glue("{directory}/downslope_fp_length.tif"), watersheds=NULL)
   # note: watersheds=div never tested but maybe useful in some cases; defualt is NULL
   
-  #dem_sca <- raster(glue("{directory}/sca.tif"))
-  flowpath_length <- rast(glue("{directory}/down_fp_length.tif"))
+  flowpath_length <- rast(glue("{directory}/downslope_fp_length.tif"))
   
   fp_min_ftn = execute_zonal(data = flowpath_length,
                              geom = div,
@@ -87,8 +70,8 @@ width_function <- function(infile, directory) {
                              fun = fun_crop_upper)  
   
   # create a grid based on min values of sub-catchments, grid resolution consistent with downslope_flowpth_length
-  rasterized_fp_min <- rasterize(fp_min_ftn, flowpath_length, field=fp_min_ftn$fun.down_fp_length)
-  rasterized_fp_max <- rasterize(fp_max_ftn, flowpath_length, field=fp_max_ftn$fun.down_fp_length)
+  rasterized_fp_min <- rasterize(fp_min_ftn, flowpath_length, field=fp_min_ftn$fun.downslope_fp_length)
+  rasterized_fp_max <- rasterize(fp_max_ftn, flowpath_length, field=fp_max_ftn$fun.downslope_fp_length)
   
   # assign fp_length raster to rast_fp_temp 
   rast_fp_temp <- flowpath_length
@@ -109,18 +92,6 @@ width_function <- function(infile, directory) {
                               breaks = c(0.0,0.1,500,1000,1500))
   
   return(width_dist)
-}
-
-fun_crop_lower <- function(values, coverage_fraction) {
-  data = (values * coverage_fraction)[coverage_fraction > 0.1]
-  percentile_10 <- unname(quantile(data, probs = 0.15, na.rm = TRUE)) # unname function returns the quantile value only, and not the cut points
-  data[data <= percentile_10] = percentile_10
-}
-
-fun_crop_upper <- function(values, coverage_fraction) {
-  data = (values * coverage_fraction)[coverage_fraction > .1]
-  percentile_90 <- unname(quantile(data, probs = 0.85, na.rm = TRUE))
-  data[data >= percentile_90] = percentile_90
 }
 
 
