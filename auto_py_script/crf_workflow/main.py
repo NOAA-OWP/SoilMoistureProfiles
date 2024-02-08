@@ -24,13 +24,13 @@ import subprocess
 # -r    : runoff scheme for CFE OPTION=[Schaake, Xinanjiang]
 # -t    : simulation start/end times (example is given below)
 
-path_gpkg = "data/gage_01033000.gpkg" # sebec_test.gpkg"
-path_giuh = "data/output/giuh"
-path_forcing = "data/forcing"
-path_ngen = "ngen_py3.11"
-path_output = "inputsNT"
-model_option = "NT"
-runoff_scheme= 'Schaake'
+path_gpkg      = "data/gage_01033000.gpkg"
+path_giuh      = "data/output/giuh"
+path_forcing   = "data/forcing"
+path_ngen      = "ngen_py3.11"
+path_output    = "inputsNL"
+model_option   = "NL"
+runoff_scheme  = 'Schaake'
 #runoff_scheme= 'Xinanjiang'
 
 
@@ -40,7 +40,7 @@ runoff_scheme= 'Schaake'
 huc12_id = ['HUC12-100302030705', 'HUC12-101800090503', 'HUC12-100401041801', 'HUC12-102600120103',
             'HUC12-101301020105', 'HUC12-160101010403']
 path_gpkg = f"data/{huc12_id[1]}.gpkg"
-path_giuh = "data/output/giuh"
+path_giuh = "data/output/giuh/"
 path_forcing = "/Users/ahmadjan/Core/simulations/owp/AGU_2023/forcing_all"
 path_ngen = "../ngen_py3.11"
 path_output = "inputsC"

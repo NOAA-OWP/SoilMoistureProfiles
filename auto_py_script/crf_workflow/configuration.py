@@ -56,7 +56,11 @@ def read_gpkg_file(infile, coupled_models):
     if ("nom_topmodel" in coupled_models):
         gdf_twi = gpd.read_file(infile, layer='twi')
         gdf_twi.set_index("divide_id", inplace=True)
-    
+
+    if ("cfe" in coupled_models or "lasam" in coupled_models):
+        gdf_giuh = gpd.read_file(infile, layer='giuh')
+        gdf_giuh.set_index("divide_id", inplace=True)
+        
     gdf_soil['bexp_soil_layers_stag=1'].fillna(16,inplace=True)
     gdf_soil['dksat_soil_layers_stag=1'].fillna(0.00000338,inplace=True)
     gdf_soil['psisat_soil_layers_stag=1'].fillna(0.355,inplace=True)  
@@ -105,11 +109,12 @@ def read_gpkg_file(infile, coupled_models):
 
     # TWI for topmodel
     if ("nom_topmodel" in coupled_models):
-        #gdf['twi'] = gdf_twi['fun.twi']
         gdf['twi'] = gdf_twi['twi']
         gdf['width_dist'] = gdf_twi['width_dist']
         
-    
+    if ("cfe" in coupled_models or "lasam" in coupled_models):
+        gdf['giuh'] = gdf_giuh['giuh']
+        
     # get catchment ids
     df_cats = gpd.read_file(infile, layer='divides')
     catids = [int(re.findall('[0-9]+',s)[0]) for s in df_cats['divide_id']]
@@ -276,9 +281,8 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
     for catID in catids:
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
-        
+
         #giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
-        
         #df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
 
         # cfe params set
@@ -314,7 +318,14 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
         
         #cfe_lst[24] += df_giuh.loc['giuh_ordinates'].iloc[0]
         #cfe_params.append('giuh_ordinates='+df_giuh.loc['giuh_ordinates'].iloc[0])
-        cfe_params.append('giuh_ordinates=0.3,0.25,0.2,0.15,0.1')
+        #cfe_params.append('giuh_ordinates=0.3,0.25,0.2,0.15,0.1')
+
+        # add giuh ordinates
+        giuh_cat = json.loads(gdf_soil['giuh'][cat_name])
+        giuh_cat = pd.DataFrame(giuh_cat, columns=['v', 'frequency'])
+
+        giuh_ordinates = ",".join(str(x) for x in np.array(giuh_cat["frequency"]))
+        cfe_params.append(f'giuh_ordinates={giuh_ordinates}')
         
         if(runoff_scheme == 'Xinanjiang'):
             cfe_params[1]='surface_partitioning_scheme=Xinanjiang'
@@ -341,7 +352,6 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
 #                         Xinanjiang properties for a given soil type
 # @gdf_soil             : geodataframe contains soil properties extracted from the hydrofabric
 # @param cfe_dir        : output directory (config files are written to this directory)
-# @param giuh_dir       : GIUH data directory (pre-computed GIUH distributions for each catchment)
 # @param gpkg_file      : basin geopackage file
 # @param coupled_models : option needed to modify CFE config files based on the coupling type
 #############################################################################
@@ -392,9 +402,7 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
         width_f = json.loads(gdf_soil['width_dist'][cat_name])
         df_width_f = pd.DataFrame(width_f, columns=['v', 'frequency'])
         v_cumm = np.cumsum(df_width_f['frequency'])
-        #print ("Width: ", width_f)
-        #print (v_cumm)
-        #quit()
+        
         nclasses_twi = len(twi_cat['frequency'].values)
        
         nclasses_width_function = len(df_width_f['frequency'].values) # width functions (distance to the outlet)
@@ -582,8 +590,17 @@ def write_lasam_input_files(catids, giuh_dir, soil_param_file, gdf_soil, lasam_d
 
         lasam_params = lasam_params_base.copy()
         lasam_params[soil_type_loc] += str(gdf_soil['ISLTYP'][cat_name])
-        #lasam_params[giuh_loc_id]  += df_giuh.loc['giuh_ordinates'].iloc[0]
-        lasam_params[giuh_loc_id]   +=  '0.3,0.25,0.2,0.15,0.1'
+
+        # add giuh ordinates
+        giuh_cat = json.loads(gdf_soil['giuh'][cat_name])
+        giuh_cat = pd.DataFrame(giuh_cat, columns=['v', 'frequency'])
+
+        giuh_ordinates = ",".join(str(x) for x in np.array(giuh_cat["frequency"]))
+        lasam_params[giuh_loc_id] += giuh_ordinates
+
+        #lasam_params[giuh_loc_id]  += df_giuh.loc['giuh_ordinates'].iloc[0] # for TauDEM-based workflow
+        #lasam_params[giuh_loc_id]   +=  '0.3,0.25,0.2,0.15,0.1'
+
         
         fname_lasam = cat_name + '_config_lasam.txt'
         lasam_file = os.path.join(lasam_dir, fname_lasam)
@@ -616,7 +633,7 @@ def main():
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-gpkg", dest="gpkg_file",     type=str, required=True,  help="the gpkg file")
-        parser.add_argument("-giuh", dest="giuh_dir",      type=str, required=True,  help="the giuh files directory")
+        parser.add_argument("-giuh", dest="giuh_dir",      type=str, required=False,  help="the giuh files directory")
         parser.add_argument("-f",    dest="forcing_dir",   type=str, required=True,  help="the forcing files directory")
         parser.add_argument("-o",    dest="output_dir",    type=str, required=True,  help="the output files directory")
         parser.add_argument("-ngen", dest="ngen_dir",      type=str, required=True,  help="the ngen directory")
@@ -630,9 +647,9 @@ def main():
     
     args = parser.parse_args()
     
-    if (not os.path.exists(args.giuh_dir)):
-        str_msg = 'GIUH directory does not exist! %s'%args.giuh_dir
-        sys.exit(str_msg)
+    #if (not os.path.exists(args.giuh_dir)):
+    #    str_msg = 'GIUH directory does not exist! %s'%args.giuh_dir
+    #    sys.exit(str_msg)
 
     if (not os.path.exists(args.gpkg_file)):
         str_msg = 'The gpkg file does not exist! %s'%args.gpkg_file
