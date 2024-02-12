@@ -13,13 +13,13 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
   river <- read_sf(infile, "flowpaths")
   
   # @param out_type Output type; one of 'cells' (default), 'catchment area', and 'specific contributing area'.
-  wbt_d8_flow_accumulation(input = glue("{directory}/dem_corr.tif"), output = glue("{directory}/sca.tif"),
+  wbt_d8_flow_accumulation(input = glue("{directory}/dem_corr.tif"), output = glue("{directory}/giuh_sca.tif"),
                            out_type = 'specific contributing area')
   
-  sca <- rast(glue("{directory}/sca.tif"))
+  sca <- rast(glue("{directory}/giuh_sca.tif"))
   rasterized_river <- rasterizeGeom(vect(river), sca, fun="length")
   
-  writeRaster(rasterized_river, glue("{directory}/river.tif"), overwrite = TRUE)
+  writeRaster(rasterized_river, glue("{directory}/giuh_river.tif"), overwrite = TRUE)
   
   #x <- ifel(sca <= gully_threshold, vel_gully, vel_overland) #original script
   x <- ifel(sca > gully_threshold, vel_gully, vel_overland)
@@ -31,7 +31,7 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
   x <- 1.0/(x*sec_to_min) 
   names(x)  = "travel_time"
   
-  writeRaster(x, glue("{directory}/travel_time.tif") ,overwrite=TRUE)  
+  writeRaster(x, glue("{directory}/giuh_travel_time.tif") ,overwrite=TRUE)  
   
   # This one calculates the path to the basin outlet
   wbt_d8_pointer(dem = glue("{directory}/dem_corr.tif"), output = glue("{directory}/dem_d8.tif"))
@@ -39,7 +39,7 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
   # Using S = V * T => T = S/V; divide distance (flowpath_length) by weights (1/V)
   wbt_downslope_flowpath_length(d8_pntr = glue("{directory}/dem_d8.tif"),
                                 output  = glue("{directory}/giuh_minute.tif"),
-                                weights = glue("{directory}/travel_time.tif"))
+                                weights = glue("{directory}/giuh_travel_time.tif"))
   
   # from basin outlet to catchment outlet workflow
   giuh_minute <- rast(glue("{directory}/giuh_minute.tif"))
@@ -69,6 +69,10 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
   # subtract adjusted-raster (created 15% and 85% quantiles) from minimun-catchment-value to get localized distance
   # of a point to the catchment outlet
   downslope_giuh_cat_outlet <- rast_giuh_minute_temp - rasterized_time_min
+  
+  print (downslope_giuh_cat_outlet)
+  
+  writeRaster(downslope_giuh_cat_outlet, glue("{directory}/downslope_giuh_cat_outlet.tif") ,overwrite=TRUE)  
   
   # channel cumulative distribution of area with distance
   giuh_dist <- execute_zonal(data = downslope_giuh_cat_outlet,
