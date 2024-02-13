@@ -1,4 +1,4 @@
-# Instructions for computing Geomorphological Instantaneous Unit Hydrograph (GIUH) and Topographic Wetness Index (TWI)
+## Instructions for computing Geomorphological Instantaneous Unit Hydrograph (GIUH) and Topographic Wetness Index (TWI)
 This set of scripts offers a workflow for establishing basin-scale simulations from the ground up 
 and executing them within the NextGen framework.
 
@@ -9,6 +9,6 @@ and executing them within the NextGen framework.
   NextGen realization file. Detailed instruction can be found [here](https://github.com/ajkhattak/SoilMoistureProfiles/tree/ajk/auto_py_script/auto_py_script/crf_workflow/main.py)
 
  
-## NOTE
+### NOTE
 This workflow does not download basin's forcing data. Users are required to provide the forcing data. 
 General instructions on how to download forcing data are documented [here](https://github.com/ajkhattak/SoilMoistureProfiles/new/ajk/auto_py_script/auto_py_script/FORCING.md).
