@@ -11,4 +11,4 @@ and executing them within the NextGen framework.
  
 ### NOTE
 This workflow does not download basin's forcing data. Users are required to provide the forcing data. 
-General instructions on how to download forcing data are documented [here](https://github.com/ajkhattak/SoilMoistureProfiles/new/ajk/auto_py_script/auto_py_script/FORCING.md).
+General instructions on how to download forcing data are documented [here](https://github.com/ajkhattak/SoilMoistureProfiles/blob/ajk/auto_py_script/auto_py_script/FORCING.md).
