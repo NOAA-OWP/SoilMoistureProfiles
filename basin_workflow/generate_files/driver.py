@@ -28,15 +28,15 @@ coupled_models_options = {
 }
 
 class colors:
-    BLUE   = '\33[34m'
-    BLACK = '\33[30m'
-    RED   = '\33[31m'
-    CYAN   = '\033[96m'
-    GREEN  = '\033[32m'
+    BLUE    = '\33[34m'
+    BLACK   = '\33[30m'
+    RED     = '\33[31m'
+    CYAN    = '\033[96m'
+    GREEN   = '\033[32m'
     WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
+    FAIL    = '\033[91m'
+    ENDC    = '\033[0m'
+    BOLD    = '\033[1m'
     UNDERLINE = '\033[4m'
     
 def main():
@@ -44,7 +44,6 @@ def main():
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-gpkg", dest="gpkg_file",     type=str, required=True,  help="the gpkg file")
-        parser.add_argument("-giuh", dest="giuh_dir",      type=str, required=True,  help="the giuh files directory")
         parser.add_argument("-f",    dest="forcing_dir",   type=str, required=True, help="the forcing files directory")
         parser.add_argument("-o",    dest="output_dir",    type=str, required=True,  help="the output files directory")
         parser.add_argument("-ngen", dest="ngen_dir",      type=str, required=True,  help="the ngen directory")
@@ -60,10 +59,6 @@ def main():
     # check if geopackage file exists, if not throw an error
     if (not os.path.exists(args.gpkg_file)):
         sys.exit('The gpkg file (%s) does not exist!'%args.gpkg_file)
-
-    # check if giuh dir exists, if not throw an error
-    if (not os.path.exists(args.giuh_dir)):
-        sys.exit('GIUH directory (%s) does not exist!'%args.giuh_dir)
 
     # check if forcing dir exists, if not throw an error
     if (not os.path.exists(args.forcing_dir)):
@@ -101,7 +96,7 @@ def main():
 
     path_crf_gen_files = os.path.join(path_crf,"configuration.py")
 
-    generate_config_files = f'python {path_crf_gen_files} -gpkg {args.gpkg_file} -giuh {args.giuh_dir} -ngen {args.ngen_dir} \
+    generate_config_files = f'python {path_crf_gen_files} -gpkg {args.gpkg_file} -ngen {args.ngen_dir} \
                               -f {args.forcing_dir} -o {args.output_dir} -m {coupled_models} -r {args.runoff_scheme} -t \'{args.time}\' '
 
     print ("*******************************************")
