@@ -79,7 +79,8 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
                              geom = div,
                              ID = "divide_id",
                              fun = zonal::distribution,
-                             breaks = c(0.0, 60,120,180,240,300,360))
+                             breaks = seq(0.0, 600, by=60),
+                             constrain = TRUE)
   
   return(giuh_dist)
 }

@@ -27,7 +27,7 @@ if(!requireNamespace("climateR", quietly=TRUE))
   devtools::install_github("mikejohnson51/climateR", force = TRUE)
 
 if(!requireNamespace("zonal", quietly=TRUE))
-  devtools::install_github("mikejohnson51/zonal", ref = '24c5ee6', force = TRUE)
+  devtools::install_github("mikejohnson51/zonal", force = TRUE)
 
 if(!requireNamespace("AOI", quietly=TRUE))
   devtools::install_github("mikejohnson51/AOI")
@@ -61,7 +61,7 @@ library(ggplot2)
 ################################################################################
 
 # (a) Point r_path to the directory of R scripts downloaded from the repository
-r_path = "/Users/ahmadjan/Core/SimulationsData/preprocessing/hydrofabric/R"
+r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_auto_repo/auto_py_script/R"
 source(glue("{r_path}/twi_width_function.R"))
 source(glue("{r_path}/helper.R"))
 source(glue("{r_path}/giuh_function.R"))
@@ -94,7 +94,7 @@ if(!is_gpkg_provided) {
   ## caching the downloaded VPU files to "data" and writing all layers to "outfile"
   subset_network(hl_uri = hl, cache_dir = "data", outfile = outfile)
 } else {
-  outfile <- glue('data/gage_{gage_id}.gpkg') # <------ set this path if .gpkg is store somewhere else
+  outfile <- glue('data/gage_{gage_id}.gpkg') # <------ set this path if .gpkg is stored somewhere else
 }
 
 ## Stop if .gpkg does not exist
@@ -152,6 +152,7 @@ gully_threshold <- 90.0
 giuh_compute <- giuh_function(infile = outfile, directory, vel_channel,
                               vel_overland, vel_gully, gully_threshold)
 
+#giuh_compute[2,] %>% t()
 
 # write GIUH layer to the geopackage
 giuh_dat_values = data.frame(ID = giuh_compute$divide_id, giuh = giuh_compute$fun.giuh_minute)
@@ -159,5 +160,6 @@ names(giuh_dat_values)
 colnames(giuh_dat_values) <- c('divide_id', 'giuh')
 names(giuh_dat_values)
 sf::st_write(giuh_dat_values, outfile, layer = "giuh", append = FALSE)
+
 
 ###############################################################################

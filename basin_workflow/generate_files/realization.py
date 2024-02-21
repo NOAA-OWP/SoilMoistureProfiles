@@ -569,7 +569,7 @@ def main():
 
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument("-ngen", dest="ngen_dir",   type=str, required=True, help="the giuh files directory")
+        parser.add_argument("-ngen", dest="ngen_dir",   type=str, required=True, help="the ngen directory")
         parser.add_argument("-f", dest="forcing_dir",   type=str, required=False, help="the forcing files directory")
         parser.add_argument("-i", dest="input_dir",     type=str, required=True, help="the input files directory")
         parser.add_argument("-m", dest="models_option", type=str, required=True, help="option for models coupling")

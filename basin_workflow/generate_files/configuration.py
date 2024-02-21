@@ -263,12 +263,11 @@ def write_nom_input_files(catids, nom_dir, forcing_dir, gpkg_file, simulation_ti
 #                         Xinanjiang properties for a given soil type
 # @gdf_soil             : geodataframe contains soil properties extracted from the hydrofabric
 # @param cfe_dir        : output directory (config files are written to this directory)
-# @param giuh_dir       : GIUH data directory (pre-computed GIUH distributions for each catchment)
 # @param gpkg_file      : basin geopackage file
 # @param coupled_models : option needed to modify CFE config files based on the coupling type
 #############################################################################
-def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
-                          gdf_soil, cfe_dir, coupled_models):
+def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, gdf_soil,
+                          cfe_dir, coupled_models):
 
     if (not runoff_scheme in ["Schaake", "Xinanjiang"]):
         sys.exit("Runoff scheme should be: Schaake or Xinanjiang")
@@ -281,9 +280,6 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
     for catID in catids:
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
-
-        #giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
-        #df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
 
         # cfe params set
         cfe_params = ['forcing_file=BMI',
@@ -315,10 +311,6 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, giuh_dir,
         
         if (gdf_soil['soil_params.b'][cat_name] == 1.0):
             cfe_list[3] = 1.1
-        
-        #cfe_lst[24] += df_giuh.loc['giuh_ordinates'].iloc[0]
-        #cfe_params.append('giuh_ordinates='+df_giuh.loc['giuh_ordinates'].iloc[0])
-        #cfe_params.append('giuh_ordinates=0.3,0.25,0.2,0.15,0.1')
 
         # add giuh ordinates
         giuh_cat = json.loads(gdf_soil['giuh'][cat_name])
@@ -539,14 +531,13 @@ def write_smp_input_files(catids, gdf_soil, smp_dir, coupled_models):
 #############################################################################
 # The function generates configuration file for lumped arid/semi-arid model (LASAM)
 # @param catids         : array/list of integers contain catchment ids
-# @param giuh_dir       : GIUH data directory (pre-computed GIUH distributions for each catchment)
 # @param soil_param_file : input file containing soil properties read by LASAM
 #                          (characterizes soil for specified soil types)
 # @gdf_soil             : geodataframe contains soil properties extracted from the hydrofabric
 # @param lasam_dir        : output directory (config files are written to this directory)
 # @param coupled_models : option needed to modify SMP config files based on the coupling type
 #############################################################################
-def write_lasam_input_files(catids, giuh_dir, soil_param_file, gdf_soil, lasam_dir, coupled_models):
+def write_lasam_input_files(catids, soil_param_file, gdf_soil, lasam_dir, coupled_models):
 
     sft_calib = "False" # update later (should be taken as an argument)
 
@@ -585,9 +576,6 @@ def write_lasam_input_files(catids, giuh_dir, soil_param_file, gdf_soil, lasam_d
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
 
-        #giuh_file = glob.glob(os.path.join(giuh_dir, fname))[0]
-        #df_giuh = pd.read_table(giuh_file,  delimiter='=', names=["Params","Values"], index_col=0)
-
         lasam_params = lasam_params_base.copy()
         lasam_params[soil_type_loc] += str(gdf_soil['ISLTYP'][cat_name])
 
@@ -597,10 +585,6 @@ def write_lasam_input_files(catids, giuh_dir, soil_param_file, gdf_soil, lasam_d
 
         giuh_ordinates = ",".join(str(x) for x in np.array(giuh_cat["frequency"]))
         lasam_params[giuh_loc_id] += giuh_ordinates
-
-        #lasam_params[giuh_loc_id]  += df_giuh.loc['giuh_ordinates'].iloc[0] # for TauDEM-based workflow
-        #lasam_params[giuh_loc_id]   +=  '0.3,0.25,0.2,0.15,0.1'
-
         
         fname_lasam = cat_name + '_config_lasam.txt'
         lasam_file = os.path.join(lasam_dir, fname_lasam)
@@ -618,22 +602,20 @@ def create_directory(dir_name):
 
 #############################################################################
 # main function controlling calls to modules writing config files
-# @param gpkg_file : hydrofabric geopackage file (.gpkg)
-# @param giuh_dir       : GIUH data directory (pre-computed GIUH distributions for each catchment)
-# @param forcing_dir : forcing data directory containing data for each catchment
-# @param output_dir        : output directory (config files are written to subdirectories under this directory)
+# @param gpkg_file       : hydrofabric geopackage file (.gpkg)
+# @param forcing_dir     : forcing data directory containing data for each catchment
+# @param output_dir      : output directory (config files are written to subdirectories under this directory)
 # @param ngen_dir        : path to nextgen directory
-# @param models_option : models coupling option (pre-defined names; see main.py)
-# @param runoff_schame  : surface runoff schemes - Options = Schaake or Xinanjiang (For CFE and SFT)
-# @param time          : dictionary containing simulations start and end time
-# @param overwite      : boolean (if true, existing output directories are deleted or overwritten)
+# @param models_option   : models coupling option (pre-defined names; see main.py)
+# @param runoff_schame   : surface runoff schemes - Options = Schaake or Xinanjiang (For CFE and SFT)
+# @param time            : dictionary containing simulations start and end time
+# @param overwrite       : boolean (if true, existing output directories are deleted or overwritten)
 #############################################################################
 def main():
 
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-gpkg", dest="gpkg_file",     type=str, required=True,  help="the gpkg file")
-        parser.add_argument("-giuh", dest="giuh_dir",      type=str, required=False,  help="the giuh files directory")
         parser.add_argument("-f",    dest="forcing_dir",   type=str, required=True,  help="the forcing files directory")
         parser.add_argument("-o",    dest="output_dir",    type=str, required=True,  help="the output files directory")
         parser.add_argument("-ngen", dest="ngen_dir",      type=str, required=True,  help="the ngen directory")
@@ -646,10 +628,6 @@ def main():
         sys.exit(0)
     
     args = parser.parse_args()
-    
-    #if (not os.path.exists(args.giuh_dir)):
-    #    str_msg = 'GIUH directory does not exist! %s'%args.giuh_dir
-    #    sys.exit(str_msg)
 
     if (not os.path.exists(args.gpkg_file)):
         str_msg = 'The gpkg file does not exist! %s'%args.gpkg_file
@@ -660,10 +638,6 @@ def main():
         str_msg = 'The forcing directory does not exist! %s'%args.forcing_dir
         sys.exit(str_msg)
 
-        
-    # giuh dir based cat ids
-    #catids = glob.glob(os.path.join(args.giuh_dir,'*.txt'))
-    #catids = [int(re.findall('[0-9]+',s)[0]) for s in catids]
    
     gdf_soil, catids = read_gpkg_file(args.gpkg_file, args.models_option)
     
@@ -691,8 +665,8 @@ def main():
         nom_soil_file = os.path.join(nom_params,"SOILPARM.TBL")
         soil_class_NWM = get_soil_class_NWM(nom_soil_file)
         
-        write_cfe_input_files(catids, args.runoff_scheme, soil_class_NWM, args.giuh_dir,
-                              gdf_soil, cfe_dir, args.models_option)
+        write_cfe_input_files(catids, args.runoff_scheme, soil_class_NWM, gdf_soil,
+                              cfe_dir, args.models_option)
 
     # *************** TOPMODEL  ********************
     if "topmodel" in args.models_option:
@@ -744,7 +718,7 @@ def main():
         str_sub ="cp -r "+ lasam_params + " %s"%lasam_dir
         out=subprocess.call(str_sub,shell=True)
 
-        write_lasam_input_files(catids, args.giuh_dir, os.path.join(lasam_dir, "vG_default_params.dat"),
+        write_lasam_input_files(catids, os.path.join(lasam_dir, "vG_default_params.dat"),
                                 gdf_soil, lasam_dir, args.models_option)
     
     

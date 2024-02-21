@@ -16,7 +16,6 @@ import subprocess
 
 ## Required arguments
 # -gpkg : hydrofabric geopackage file (.gpkg)
-# -giuh : path to GIUH files directory (pre-computed GIUH for each catchment)
 # -f    : path to lumped forcings directory (pre-downloaed forcing data for each catchment)
 # -ngen : path to nextgen directory (recommended to have a soft link in the current directory, ln -s path_to_ngen)
 # -o    : path to output directory (all config files will be stored here)
@@ -25,7 +24,6 @@ import subprocess
 # -t    : simulation start/end times (example is given below)
 
 path_gpkg      = "data/gage_01033000.gpkg"
-path_giuh      = "data/output/giuh"
 path_forcing   = "data/forcing"
 path_ngen      = "ngen_py3.11"
 path_output    = "inputsNL"
@@ -40,7 +38,6 @@ runoff_scheme  = 'Schaake'
 huc12_id = ['HUC12-100302030705', 'HUC12-101800090503', 'HUC12-100401041801', 'HUC12-102600120103',
             'HUC12-101301020105', 'HUC12-160101010403']
 path_gpkg = f"data/{huc12_id[1]}.gpkg"
-path_giuh = "data/output/giuh/"
 path_forcing = "/Users/ahmadjan/Core/simulations/owp/AGU_2023/forcing_all"
 path_ngen = "../ngen_py3.11"
 path_output = "inputsC"
@@ -67,7 +64,7 @@ print ("CRF workflow path: ", path_crf )
 
 path_crf_create = os.path.join(path_crf,"driver.py")
 
-driver = f'python {path_crf_create} -gpkg {path_gpkg} -giuh {path_giuh} -ngen {path_ngen} -f {path_forcing} \
+driver = f'python {path_crf_create} -gpkg {path_gpkg} -ngen {path_ngen} -f {path_forcing} \
 -o {path_output} -m {model_option} -r {runoff_scheme} -t \'{simulation_time}\' '
 
 print ("Running (from main.py):\n",driver)
