@@ -95,19 +95,34 @@ width_function <- function(infile, directory) {
 }
 
 
-### Pre-computed TWI values provided in the hydrofabric
-twi_width_pre_computed <- function(div_path) {
+### Pre-computed TWI values provided by the hydrofabric team
+twi_pre_computed_function <- function(infile, distribution = 'quantiles', nclasses = 5) {
   
-  twi <- dap("/vsis3/lynker-spatial/gridded-resources/twi.vrt", AOI = sf::read_sf(div_path,'divides'))  
+  div <- sf::read_sf(infile, 'divides')
+  
+  #twi <- dap("/vsis3/lynker-spatial/gridded-resources/twi.vrt", AOI = sf::read_sf(div_path,'divides'))  
+  
+  twi <- dap("/vsis3/lynker-spatial/gridded-resources/twi.vrt", AOI = div)
+  
   # truncate negative values
   twi[twi < 0] <- 0
   twi[twi > 50] <- 50
   
-  twi_cat = execute_zonal(data = twi,
-                          geom = div,
-                          ID = "divide_id",
-                          fun = zonal::equal_population_distribution,
-                          groups = nclasses)
+  if (distribution == 'quantiles') {
+    twi_cat <- execute_zonal(data = twi,
+                             geom = div,
+                             ID = "divide_id",
+                             fun = equal_population_distribution,
+                             groups = nclasses)
+  }
+  else if (distribution == 'simple') {
+    twi_cat <- execute_zonal(data = twi,
+                             geom = div,
+                             ID = "divide_id",
+                             fun = zonal::distribution,
+                             breaks = nclasses)
+  }
+  
   return(twi_cat)
 }
 
