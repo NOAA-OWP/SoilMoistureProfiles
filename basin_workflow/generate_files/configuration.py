@@ -311,7 +311,6 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, gdf_soil,
         
         if (gdf_soil['soil_params.b'][cat_name] == 1.0):
             cfe_list[3] = 1.1
-        
 
         # add giuh ordinates
         giuh_cat = json.loads(gdf_soil['giuh'][cat_name])
