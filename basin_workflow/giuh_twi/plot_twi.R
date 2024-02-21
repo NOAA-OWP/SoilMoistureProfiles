@@ -1,12 +1,21 @@
-# the script simply barplot and compare Whitebox- and TauDEM-based TWIs
+# Plot fractional area distribution
+# The script barplot and compares TWI computed using Whitebox and TauDEM, also plots
+# pre-computed TWI provided by the hydrofabric team as a parquet file
+
 # TauDEM-based TWI (Python) are provided for catchment IDs 3789 and 3789
 library(ggpubr)
-ncat <- 50 # 1, 50 <-- 
+ncat <- 1 # 1, 50 <-- 
 
 twi_dist <- fromJSON(twi["fun.twi"]$fun.twi[ncat])
 
-twi_R_value = rev(twi_dist$v) # TWI values = ln(A/tanB)
-twi_R_area = rev(twi_dist$frequency)         # distribution of area corresponding to ln(A/tanB)
+twi_R_value = rev(twi_dist$v)           # TWI values = ln(A/tanB)
+twi_R_area = rev(twi_dist$frequency)    # distribution of area corresponding to ln(A/tanB)
+
+#pre-computed TWI
+twi_pre_comp_dist = fromJSON(twi_pre_computed["fun.twi"]$fun.twi[ncat])
+
+twi_pre_comp_value = rev(twi_pre_comp_dist$v)           # TWI values = ln(A/tanB)
+twi_pre_comp_area = rev(twi_pre_comp_dist$frequency)    # distribution of area corresponding to ln(A/tanB)
 
 
 #barplot(rbind(twi_py_value, twi_R_value),beside=TRUE, col= c('red','black'))
@@ -40,44 +49,64 @@ if (ncat == 50) {
 py_x = seq(from=1, to=30, by=1)
 ################################################################################
 
+# PLOT 
+plot_twi_vertically = FALSE
 
-df1 <- data.frame(py_x, twi_R_value, twi_py_value)
+df1 <- data.frame(py_x, twi_R_value, twi_py_value, twi_pre_comp_value)
 df2 <- reshape::melt(df1, id=c('py_x'))
-dat_twi <- c(twi_R_area, twi_py_area)
+dat_twi <- c(twi_R_area, twi_py_area, twi_pre_comp_area)
 
-options(repr.plot.width = 8, repr.plot.height =10) 
-ggplot(df2, aes(x=dat_twi, y=value, fill=variable)) +
-  geom_bar(stat='identity', position='dodge', width=0.005, alpha=0.5) +
-  scale_fill_manual(name = "TWI", 
-                    label = c("R","Py"), 
-                    values = c("red","black"))+
-  theme(aspect.ratio = 1/1) +
-  labs(title = "TWI comparison", x = "area fraction", y = "TWI")
+if (plot_twi_vertically) {
+  options(repr.plot.width = 8, repr.plot.height =10) 
+  ggplot(df2, aes(x=dat_twi, y=value, fill=variable)) +
+    geom_bar(stat='identity', position='dodge', width=0.005, alpha=0.7) +
+    scale_fill_manual(name = "Method", 
+                      label = c("R","Py", "Pre-comp"), 
+                      values = c("red","black","blue"))+
+    theme(aspect.ratio = 1.0/1) +
+    labs(title = "TWI comparison", x = "area fraction", y = "TWI")  
+} else {
+  options(repr.plot.width = 8, repr.plot.height =10) 
+  ggplot(df2, aes(x=value, y=dat_twi, fill=variable)) +
+    geom_bar(stat='identity', position='dodge', width=0.5, alpha=0.7) +
+    scale_fill_manual(name = "Method", 
+                      label = c("R","Py", "Pre-comp"), 
+                      values = c("red","black","blue"))+
+    theme(aspect.ratio = 1.0/1) +
+    labs(title = "TWI comparison", x = "TWI", y = "Area fraction")
+}
 
-df11 <- data.frame(py_x, twi_py_value, twi_R_area, twi_R_value)
 
-options(repr.plot.width = 16, repr.plot.height =4) 
+# area fraction vertically
+
+
+
+
+# Three subplots
+df11 <- data.frame(py_x, twi_py_value, twi_R_area, twi_R_value, twi_pre_comp_value)
+
+
+options(repr.plot.width = 16, repr.plot.height =10) 
 p1 <- ggplot(df11, aes(x=twi_R_area, y=twi_R_value)) +
   geom_bar(stat='identity', position='dodge', width=0.003,fill='black') +
-  labs(title = "TWI-R", x = "area fraction", y = "TWI")+
+  labs(title = "R", x = "area fraction", y = "TWI")+
   coord_cartesian(ylim=c(0,20),xlim=c(0,0.2))
 
 p2 <- ggplot(df11, aes(x=twi_py_area, y=twi_py_value)) +
   geom_bar(stat='identity', position='dodge', width=0.003,alpha=1.0, fill='black') +
-  labs(title = "TWI-Py", x = "area fraction", y = "TWI")+
+  labs(title = "Py", x = "area fraction", y = "TWI")+
   coord_cartesian(ylim=c(0,20),xlim=c(0,0.2))
 
-# later add pre-computed TWI
-#p3 <- ggplot(df11, aes(x=twi_vrt$frequency, y=twi_vrt$v)) +
-#  geom_bar(stat='identity', position='dodge', width=0.003,alpha=1.0,fill='black') +
-#  labs(title = "TWI-HF", x = "area fraction", y = "TWI")+
-#  coord_cartesian(ylim=c(0,20),xlim=c(0,0.2))
+# pre-computed TWI
+p3 <- ggplot(df11, aes(x=twi_pre_comp_area, y=twi_pre_comp_value)) +
+  geom_bar(stat='identity', position='dodge', width=0.003,alpha=1.0,fill='black') +
+  labs(title = "Pre-comp", x = "area fraction", y = "TWI")+
+  coord_cartesian(ylim=c(0,20),xlim=c(0,0.2)) 
 
-#ggarrange(p1, p2, p3,
-#          labels = c("A", "B", "C"),
-#          ncol = 3, nrow = 1)
+ggarrange(p1, p2, p3,
+          labels = c("A", "B", "C"),
+          ncol = 3, nrow = 1)
 
-ggarrange(p1, p2,
-          labels = c("A", "B"),
-          ncol = 2, nrow = 1)
+
+
 

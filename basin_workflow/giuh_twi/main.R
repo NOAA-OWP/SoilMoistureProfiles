@@ -61,7 +61,7 @@ library(ggplot2)
 ################################################################################
 
 # (a) Point r_path to the directory of R scripts downloaded from the repository
-r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_auto_repo/auto_py_script/R"
+r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_auto_repo/basin_workflow/giuh_twi"
 source(glue("{r_path}/twi_width_function.R"))
 source(glue("{r_path}/helper.R"))
 source(glue("{r_path}/giuh_function.R"))
@@ -78,7 +78,6 @@ dem_path = "/vsicurl/https://lynker-spatial.s3.amazonaws.com/gridded-resources/d
 # DEM and related files (such as projected/corrected DEMs, and specific contributing area rasters are stored here)
 directory="dem"
 dir.create(directory, recursive = TRUE, showWarnings = FALSE)
-
 
 
 
@@ -123,6 +122,7 @@ print (layers_after_cfe_attr$name)
 
 ############################### GENERATE TWI ##################################
 # STEP #5: Generate TWI and width function and write to the geopackage
+# Note: The default distribution = 'quantiles'
 ###############################################################################
 dem_function(infile = outfile, directory, dem_path)
 
@@ -138,7 +138,15 @@ colnames(dat_values) <- c('divide_id', 'twi', 'width_dist')
 names(dat_values)
 sf::st_write(dat_values, outfile, layer = "twi", append = FALSE)
 
-width_dist
+### NOTES: Pre-computed TWI
+# Note 1: model attributes ships with pre-computed TWI distribution for four equal quantiles
+#m_attr$twi_dist_4
+
+# Note 2: The user can also compute their own distribution from the pre-computed TWI using the dataset
+# available at s3://lynker-spatial/gridded-resources/twi.vrt
+
+twi_pre_computed <- twi_pre_computed_function(infile = outfile, distribution = 'simple', nclasses = 30)
+
 ############################### GENERATE GIUH ##################################
 # STEP #6: Generate GIUH and write to the geopackage
 ################################################################################
