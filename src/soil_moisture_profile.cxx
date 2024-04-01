@@ -114,7 +114,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
     param_value = line.substr(loc_eq,loc_u - loc_eq);
     
     if (param_key == "soil_z") {
-      vector<double> vec = ReadVectorData(param_value);
+      vector<double> vec = ReadVectorData(param_key, param_value);
       
       parameters->soil_z = new double[vec.size()];
       
@@ -131,7 +131,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
 	parameters->soil_depth_layers_bmi = true;
       }
       else {
-	vector<double> vec = ReadVectorData(param_value);
+	vector<double> vec = ReadVectorData(param_key,param_value);
 	parameters->soil_depth_layers = new double[vec.size()];
 	
 	for (unsigned int i=0; i < vec.size(); i++)
@@ -151,11 +151,13 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
 	parameters->smcmax_bmi = true;
       }
       else {
-	vector<double> vec = ReadVectorData(param_value);
+	vector<double> vec = ReadVectorData(param_key, param_value);
 	parameters->smcmax = new double[vec.size()];
 	
-	for (unsigned int i=0; i < vec.size(); i++)
+	for (unsigned int i=0; i < vec.size(); i++) {
+	  assert (vec[i] > 0);
 	  parameters->smcmax[i] = vec[i];
+	}
 
 	parameters->smcmax_bmi = false;
 	parameters->num_layers = vec.size();
@@ -175,6 +177,7 @@ InitFromConfigFile(string config_file, struct soil_profile_parameters* parameter
 	// NOTE: `soil_params.satpsi` may be deprecated in the future in favor of `satpsi`
     else if (param_key == "satpsi" || param_key == "soil_params.satpsi") {
       parameters->satpsi = stod(param_value);
+      assert (parameters->satpsi > 0.0);
       is_satpsi_set = true;
       continue;
     }
@@ -432,8 +435,8 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
   double soil_storage_change_per_timestep_cm = fabs(parameters->soil_storage_change_per_timestep * 100.0);
   double soil_storage_current_timestep_cm    = 100.0 * parameters->soil_storage;  // storage at the current timestep
   
-  assert(parameters->soil_storage >= 0.0); /* to ensure that soil storage is non-negative due to unexpected
-					      bugs in cfe (or any other conceptual models) */
+  assert(parameters->soil_storage > 0.0); /* to ensure that soil storage is non-zero due to unexpected
+					      bugs (either in the models or calibration tools) */
   
   int count = 0;
 
@@ -912,22 +915,22 @@ Reads 1D data from the config file
 */
 
 vector<double> soil_moisture_profile::
-ReadVectorData(string key)
+ReadVectorData(string param_name, string param_value)
 {
   int pos =0;
   string delimiter = ",";
-  vector<double> value(0.0);
-  string z1 = key;
+  vector<double> values(0.0);
+  string z1 = param_value;
   
   if (z1.find(delimiter) == string::npos) {
     double v = stod(z1);
     if (v == 0.0) {
       stringstream errMsg;
-      errMsg << "soil_z (depth of soil reservior) should be greater than zero. It it set to "<< v << " in the config file "<< "\n";
+      errMsg << "Input provided in the config file for parameter "<< param_name << " is " << v << ". It should be positive."<< "\n";
       throw runtime_error(errMsg.str());
     }
     
-    value.push_back(v);
+    values.push_back(v);
     
   }
   else {
@@ -935,15 +938,15 @@ ReadVectorData(string key)
       pos = z1.find(delimiter);
       string z_v = z1.substr(0, pos);
 
-      value.push_back(stod(z_v.c_str()));
+      values.push_back(stod(z_v.c_str()));
       
       z1.erase(0, pos + delimiter.length());
       if (z1.find(delimiter) == string::npos)
-	value.push_back(stod(z1));
+	values.push_back(stod(z1));
     }
   }
   
-  return value;
+  return values;
 }
 
 void soil_moisture_profile::

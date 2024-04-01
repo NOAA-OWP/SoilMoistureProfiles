@@ -119,7 +119,7 @@ namespace soil_moisture_profile {
   void InitFromConfigFile(std::string config_file, struct soil_profile_parameters* parameters);
 
   // reading 1D array from the config file
-  std::vector<double> ReadVectorData(std::string key);
+  std::vector<double> ReadVectorData(std::string param_name, std::string param_value);
 
   // update the profile for the current timestep
   void SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters);
