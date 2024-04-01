@@ -924,7 +924,7 @@ ReadVectorData(string param_name, string param_value)
   
   if (z1.find(delimiter) == string::npos) {
     double v = stod(z1);
-    if (v == 0.0) {
+    if (v <= 0.0) {
       stringstream errMsg;
       errMsg << "Input provided in the config file for parameter "<< param_name << " is " << v << ". It should be positive."<< "\n";
       throw runtime_error(errMsg.str());
