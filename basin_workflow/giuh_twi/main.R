@@ -130,16 +130,16 @@ twi <- twi_function(infile = outfile, directory = directory, distribution = 'sim
 
 width_dist <- width_function(outfile, directory = directory)
 
-dat_values = data.frame(ID = twi$divide_id, twi = twi$fun.twi, width_dist = width_dist$fun.downslope_fp_length)
+twi_dat_values = data.frame(ID = twi$divide_id, twi = twi$fun.twi, width_dist = width_dist$fun.downslope_fp_length)
 
 # write TWI and width function layers to the geopackage
 names(dat_values)
 colnames(dat_values) <- c('divide_id', 'twi', 'width_dist')
 names(dat_values)
-sf::st_write(dat_values, outfile, layer = "twi", append = FALSE)
+#sf::st_write(dat_values, outfile, layer = "twi", append = FALSE)
 
 ### NOTES: Pre-computed TWI
-# Note 1: model attributes ships with pre-computed TWI distribution for four equal quantiles
+# Note 1: model attributes layer ships with pre-computed TWI distribution with four equal quantiles
 #m_attr$twi_dist_4
 
 # Note 2: The user can also compute their own distribution from the pre-computed TWI using the dataset
@@ -167,7 +167,14 @@ giuh_dat_values = data.frame(ID = giuh_compute$divide_id, giuh = giuh_compute$fu
 names(giuh_dat_values)
 colnames(giuh_dat_values) <- c('divide_id', 'giuh')
 names(giuh_dat_values)
-sf::st_write(giuh_dat_values, outfile, layer = "giuh", append = FALSE)
 
+
+################################################################################
+# Append GIUH, TWI, and width function to model attributes layers
+m_attr$giuh <- giuh_dat_values$giuh # append GIUH column to the model attributes layer
+m_attr$twi <- twi_dat_values$twi   # append TWI column to the model attributes layer
+m_attr$width_dist <- twi_dat_values$width_dist # append width distribution column to the model attributes layer
+
+sf::st_write(m_attr, outfile,layer = "model_attributes", append = FALSE)
 
 ###############################################################################
