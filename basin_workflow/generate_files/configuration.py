@@ -53,13 +53,13 @@ def read_gpkg_file(infile, coupled_models):
     print ("\n")
     
     # extract TWI for topmodel
-    if ("nom_topmodel" in coupled_models):
-        gdf_twi = gpd.read_file(infile, layer='twi')
-        gdf_twi.set_index("divide_id", inplace=True)
+    #if ("nom_topmodel" in coupled_models):
+    #    gdf_twi = gpd.read_file(infile, layer='twi')
+    #    gdf_twi.set_index("divide_id", inplace=True)
 
-    if ("cfe" in coupled_models or "lasam" in coupled_models):
-        gdf_giuh = gpd.read_file(infile, layer='giuh')
-        gdf_giuh.set_index("divide_id", inplace=True)
+    #if ("cfe" in coupled_models or "lasam" in coupled_models):
+    #    gdf_giuh = gpd.read_file(infile, layer='giuh')
+    #    gdf_giuh.set_index("divide_id", inplace=True)
         
     gdf_soil['bexp_soil_layers_stag=1'].fillna(16,inplace=True)
     gdf_soil['dksat_soil_layers_stag=1'].fillna(0.00000338,inplace=True)
@@ -109,11 +109,11 @@ def read_gpkg_file(infile, coupled_models):
 
     # TWI for topmodel
     if ("nom_topmodel" in coupled_models):
-        gdf['twi'] = gdf_twi['twi']
-        gdf['width_dist'] = gdf_twi['width_dist']
+        gdf['twi'] = gdf_soil['twi']
+        gdf['width_dist'] = gdf_soil['width_dist']
         
     if ("cfe" in coupled_models or "lasam" in coupled_models):
-        gdf['giuh'] = gdf_giuh['giuh']
+        gdf['giuh'] = gdf_soil['giuh']
         
     # get catchment ids
     df_cats = gpd.read_file(infile, layer='divides')
