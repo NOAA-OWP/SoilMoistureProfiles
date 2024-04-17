@@ -12,8 +12,10 @@
 # STEP #2: Set pointers to the right directory (e.g., r_path, gpkg_path; see below)
 # STEP #3: Download geopackage
 # STEP #4: Add model attributes to the geopackage
-# STEP #5: Computes and appends TWI and width function to the geopackage
-# STEP #6: Computes and appends GIUH the geopackage
+# STEP #5: Compute TWI and width function
+# STEP #6: Compute GIUH
+# STEP #7: Compute Nash cascade parameters (N and K) for surface runoff
+# STEP #8: Append GIUH, TWI, width function, and Nash cascade parameters to model_attributes layer
 ###############################################################################
 
 
@@ -54,17 +56,18 @@ library(glue)
 library(raster)
 library(jsonlite)
 library(ggplot2)
-
+library(Metrics)
 
 ############################## SET PATHS ######################################
 # STEP #2. Note the three substeps (a), (b), and (c)
 ################################################################################
 
 # (a) Point r_path to the directory of R scripts downloaded from the repository
-r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_auto_repo/basin_workflow/giuh_twi"
+r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_basin_workflow/basin_workflow/giuh_twi"
 source(glue("{r_path}/twi_width_function.R"))
 source(glue("{r_path}/helper.R"))
 source(glue("{r_path}/giuh_function.R"))
+source(glue("{r_path}/nash_cascade.R"))
 
 # (b) Point gpkg_path to the directory where geopackage and other related files will be stored
 # NOTE: .gpkg file should be stored under {gpkg_path}/data directory
@@ -133,9 +136,9 @@ width_dist <- width_function(outfile, directory = directory)
 twi_dat_values = data.frame(ID = twi$divide_id, twi = twi$fun.twi, width_dist = width_dist$fun.downslope_fp_length)
 
 # write TWI and width function layers to the geopackage
-names(dat_values)
-colnames(dat_values) <- c('divide_id', 'twi', 'width_dist')
-names(dat_values)
+names(twi_dat_values)
+colnames(twi_dat_values) <- c('divide_id', 'twi', 'width_dist')
+names(twi_dat_values)
 #sf::st_write(dat_values, outfile, layer = "twi", append = FALSE)
 
 ### NOTES: Pre-computed TWI
@@ -168,13 +171,24 @@ names(giuh_dat_values)
 colnames(giuh_dat_values) <- c('divide_id', 'giuh')
 names(giuh_dat_values)
 
+giuh_dat_values$giuh[1]
+
+
+############################### GENERATE GIUH ##################################
+# STEP #7: Generate Nash cascade parameters for surface runoff
+################################################################################
+nash_params_surface <- get_nash_params(giuh_dat_values, calib_n_k = FALSE)
+
 
 ################################################################################
-# Append GIUH, TWI, and width function to model attributes layers
+# STEP #8: Append GIUH, TWI, width function, and Nash cascade N and K parameters
+# to model attributes layers
+################################################################################
 m_attr$giuh <- giuh_dat_values$giuh # append GIUH column to the model attributes layer
 m_attr$twi <- twi_dat_values$twi   # append TWI column to the model attributes layer
 m_attr$width_dist <- twi_dat_values$width_dist # append width distribution column to the model attributes layer
 
-sf::st_write(m_attr, outfile,layer = "model_attributes", append = FALSE)
+m_attr$N_nash_surface <- nash_params_surface$N_nash
+m_attr$K_nash_surface <- nash_params_surface$K_nash
 
-###############################################################################
+sf::st_write(m_attr, outfile,layer = "model_attributes", append = FALSE)
