@@ -3,34 +3,35 @@ Detailed instructions on how to build and run SoilMoistureProfiles for different
 
 **Note**: Before running the following examples, it is recommended to run the unittests [tests](https://github.com/NOAA-OWP/SoilMoistureProfiles/tree/ajk/doc_update/tests).
 
-## Standalone example
-The example runs SMP for a hypothetical conceptual soil reservoir (with prescribed soil_storage and soil_storage_change SMP BMI input variables) to compute `watertable` and `soil_moisture_profile` and compare the results against benchmark results. The hypothetical conceptual soil reservoir mimics CFE.
+## Pseudo framework example (CFE)
+The example couples SMP to CFE (a conceptual soil reservoir) to compute `watertable` and `soil_moisture_profile`.
 ### Build
  ```
  git clone https://github.com/NOAA-OWP/SoilMoistureProfiles && cd SoilMoistureProfiles
+ git clone https://github.com/NOAA-OWP/cfe extern/cfe
  mkdir build && cd build
- cmake ../ -DSTANDALONE=ON
+ cmake ../ --DCFE=ON
  make && cd ..
  ```
 
 ### Run
 <pre>
-Run: <a href="https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/run_sft.sh">./run_smp.sh</a> STANDALONE (from SoilMoistureProfiles directory)    
+Run: <a href="https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/run_sft.sh">./run_smp.sh</a> CFE (from SoilMoistureProfiles directory)
 </pre>
 
-## Pseudo framework example
+## Pseudo framework example (TopModel)
 An example coupling TopModel to SMP to compute `watertable` and `soil_moisture_profile` from soil moisture deficit.
 ### Build
  ```
- git clone https://github.com/NOAA-OWP/SoilMoistureProfiles && cd SoilMoistureProfiles 
+ git clone https://github.com/NOAA-OWP/SoilMoistureProfiles && cd SoilMoistureProfiles
  git clone https://github.com/NOAA-OWP/topmodel extern/topmodel
  mkdir build && cd build
- cmake ../ -DWITHTOPMODEL=ON
+ cmake ../ -DTOPMODEL=ON
  make && cd ..
  ```
 ### Run
 <pre>
-Run: <a href="https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/run_sft.sh"> ./run_smp.sh</a> WITHTOPMODEL (from SoilMoistureProfiles directory)    
+Run: <a href="https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_update/run_sft.sh"> ./run_smp.sh</a> TOPMODEL (from SoilMoistureProfiles directory)
 </pre>
 
 ## Nextgen framework example
@@ -52,4 +53,4 @@ cp extern/topmodel/topmodel/data/* data
     ```
    cp ./extern/topmodel/topmodel/data/* data
    ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_config_smp_topmodel.json
-   ``` 
+   ```
