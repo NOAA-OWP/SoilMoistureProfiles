@@ -7,7 +7,7 @@ if [ ! $# == 1 ]; then
   exit
 fi
 
-if [ $flag == "STANDALONE" ] || [ "$flag" == "WITHTOPMODEL" ]; then
+if [ $flag == "CFE" ] || [ "$flag" == "TOPMODEL" ]; then
 echo "SMP running with option $flag"
 else
 echo "Invalid option! $flag"
@@ -17,10 +17,10 @@ fi
 
 args=" "
 exe_name=" "
-if [ $flag == "STANDALONE" ]; then
-    args='./configs/config_conceptual.txt'
-    exe_name='smp_standalone'
-else if [ $flag == "WITHTOPMODEL" ]; then
+if [ $flag == "CFE" ]; then
+    args="./configs/config_cfe.txt ./configs/config_conceptual.txt"
+    exe_name='smp_cfe'
+else if [ $flag == "TOPMODEL" ]; then
 	 args="configs/topmod.run configs/config_topmodel.txt"
 	 exe_name='smp_topmodel'
      fi

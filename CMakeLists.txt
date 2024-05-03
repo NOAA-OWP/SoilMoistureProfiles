@@ -10,26 +10,23 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_COMPILER $ENV{CC})
-set(CMAKE_CXX_COMPILER $ENV{CXX})
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 
 project(smpbmi VERSION 1.0.0 DESCRIPTION "OWP SMP BMI Module Shared Library")
 
 option(NGEN "NGEN" OFF)
-option(STANDALONE "STANDALONE" OFF)	
-option(WITHTOPMODEL "WITHTOPMODEL" OFF)
+option(CFE "CFE" OFF)
+option(TOPMODEL "TOPMODEL" OFF)
 
 if(NGEN)
    add_definitions(-DNGEN)
 endif()
 
-if(STANDALONE)
-message("${Red} Standalone Soil moisture profile (using conceptual/layered reservoir)! ${ColourReset}")
-set(exe_name "smp_standalone")
-elseif(WITHTOPMODEL)
+if(CFE)
+message("${Red} Soil moisture profile for CFE! ${ColourReset}")
+set(exe_name "smp_cfe")
+elseif(TOPMODEL)
 message("${Red} Soil moisture profile for topmodel (watertable-based)! ${ColourReset}")
 set(exe_name "smp_topmodel")
 endif()
@@ -43,19 +40,22 @@ set(SMP_LIB_DESC_CMAKE "OWP SMP BMI Module Shared Library")
 add_compile_definitions(BMI_ACTIVE)
 
 # add the executable
-if(STANDALONE)
-add_executable(${exe_name} ./src/main_soil_moisture.cxx ./src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
-elseif(WITHTOPMODEL)
-add_executable(${exe_name} ./src/main_smp_topmodel.cxx ./extern/topmodel/src/topmodel.c ./extern/topmodel/src/bmi_topmodel.c)
-
-add_library(smplib ./src/bmi_soil_moisture_profile.cxx ./src/soil_moisture_profile.cxx ./include/bmi_soil_moisture_profile.hxx ./include/soil_moisture_profile.hxx)
-target_link_libraries(${exe_name} LINK_PUBLIC smplib)
-target_include_directories(${exe_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/)
+if(CFE)
+  add_executable(${exe_name} ./src/main_smp_cfe.cxx ./extern/cfe/src/cfe.c ./extern/cfe/src/bmi_cfe.c
+                             ./extern/cfe/src/giuh.c ./extern/cfe/src/conceptual_reservoir.c ./extern/cfe/src/nash_cascade.c)
+ target_include_directories(${exe_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/cfe/include)
+elseif(TOPMODEL)
+  add_executable(${exe_name} ./src/main_smp_topmodel.cxx ./extern/topmodel/src/topmodel.c ./extern/topmodel/src/bmi_topmodel.c)
+  target_include_directories(${exe_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/extern/topmodel/include)
 endif()
 
 
-if(WITHTOPMODEL OR STANDALONE)
-target_link_libraries(${exe_name} PRIVATE m)
+if(TOPMODEL OR CFE)
+  add_library(smplib ./src/bmi_soil_moisture_profile.cxx ./src/soil_moisture_profile.cxx ./include/bmi_soil_moisture_profile.hxx
+                     ./include/soil_moisture_profile.hxx)
+  target_link_libraries(${exe_name} LINK_PUBLIC smplib)
+  target_include_directories(${exe_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  target_link_libraries(${exe_name} PRIVATE m)
 endif()
 
 
