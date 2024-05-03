@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   }
 
   std::cout<<"\n**************** BEGIN SoilMoistureProfiles BMI UNIT TEST *******************\n";
-  
+
   model.Initialize(argv[1]);
   model_layered.Initialize(argv[2]);
 
@@ -43,17 +43,17 @@ int main(int argc, char *argv[])
   bool test_status    = true;
   int num_input_vars  = 8;
   int num_output_vars = 3;
-  
+
   std::vector<string> bmi_input_vars = {"soil_storage", "soil_storage_change", "num_wetting_fronts",
 					"soil_moisture_wetting_fronts", "soil_depth_wetting_fronts",
 					"Qb_topmodel", "Qv_topmodel", "global_deficit"};
   std::vector<string> bmi_output_vars = {"soil_moisture_profile", "soil_water_table","soil_moisture_fraction"};
-  
+
   int nbytes_input[] = {sizeof(double), sizeof(double), sizeof(int), sizeof(double), sizeof(double),
 			sizeof(double), sizeof(double), sizeof(double)};
   int nbytes_output[] = {int(nz * sizeof(double)), sizeof(double), sizeof(double)};
   //double soil_moisture_profile[] = {0.389,0.396,0.397,0.397}; // total_moisture_content
-  
+
   std::cout<<"Num cells:           "<<nz<<"\n";
   std::cout<<"Num input vars:      "<<num_input_vars<<"\n";
   std::cout<<"Num output vars:     "<<num_output_vars<<"\n";
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   int count_out = 0;
   std::vector<std::string> names_in;
   std::vector<std::string> names_out;
-  
+
 
   // Test get_component_name()
   model_name = model.GetComponentName();
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     throw std::runtime_error(errMsg.str());
   }
 
-  // Test GetInputVarNames 
+  // Test GetInputVarNames
   names_in = model.GetInputVarNames();
   if (VERBOSITY) {
     std::cout<<"Input variable names \n";
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     errMsg << "Number of output variables are different. "<< count_out <<" != "<< num_output_vars <<"\n";
     throw std::runtime_error(errMsg.str());
   }
-  
+
   // Test BMI: VARIABLE INFORMATION FUNCTIONS
   std::cout<<"\n**************** TEST BMI VARIABLE INFORMATION FUNCTIONS\n***************************\n";
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
   std::string location;
   std::string units;
   std::string vartype;
-  
+
   // Loop through both input and output variables and call GetVar* functions
   for (int i=0; i<count_in; i++) {
     std::string var_name = names_in[i];
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
       test_status &= false;
     else
       test_status &= true;
-	
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // Test get_var_units()
     units = model.GetVarUnits(var_name);
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
       test_status &= false;
     else
       test_status &= true;
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // get_var_nbytes()
     nbytes = model.GetVarNbytes(var_name);
@@ -221,14 +221,14 @@ int main(int argc, char *argv[])
 
   if (VERBOSITY)
     std::cout<<"\n*****************************************\n";
-  
+
   for (int i=0; i<count_out; i++) {
     std::string var_name = names_out[i];
     if (VERBOSITY)
       std::cout<<"Output var_name: "<< var_name <<"\n";
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    // Test get_var_grid() 
+    // Test get_var_grid()
     grid = model.GetVarGrid(var_name);
     std::cout<<grid<<"\n";
     if (grid == -1) return -1;
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
       test_status &= true;
     else
       test_status &= false;
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // Test get_var_itemsize()
     itemsize = model.GetVarItemsize(var_name);
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
       test_status &= true;
     else
       test_status &= false;
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // Test get_var_location()
     location = model.GetVarLocation(var_name);
@@ -263,20 +263,20 @@ int main(int argc, char *argv[])
       test_status &= false;
     else
       test_status &= true;
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // Test get_var_units()
     units = model.GetVarUnits(var_name);
     if (VERBOSITY)
       std::cout<<" units: ["<< units <<"]\n";
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // Test get_var_type()
     vartype = model.GetVarType(var_name);
     if (vartype == "") return FAILURE;
     if (VERBOSITY)
       std::cout<<" type: "<< vartype <<"\n";
-    
+
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     // get_var_nbytes()
     nbytes = model.GetVarNbytes(var_name);
@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
       throw std::runtime_error(errMsg.str());
 
     }
-    
+
   }
 
   // Test BMI: MODEL GRID FUNCTIONS
@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
   std::string grid_type;
 
   for (int i=0; i< 3; i++) {
-    if (VERBOSITY)  
+    if (VERBOSITY)
       std::cout<<"Grid id "<< grid_id[i] <<"\n";
 
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -340,13 +340,13 @@ int main(int argc, char *argv[])
       throw std::runtime_error(errMsg.str());
     }
   }
-  
+
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
   /*
   // Test get_grid_type
   grid_type = model.GetGridType(grid_id);
   if (VERBOSITY)
-  std::cout<<" grid type: "<<grid_type<<"\n";  
+  std::cout<<" grid type: "<<grid_type<<"\n";
   std::cout<<"Test status: "<<test_status<<"\n";
   */
 
@@ -359,12 +359,12 @@ int main(int argc, char *argv[])
 
   // Test BMI: GET VALUE FUNCTIONS
   std::cout<<"\n\n************** TEST BMI GETTER SETTER FUNCTIONS********************************\n";
-  
+
   std::cout<<"********** Input variables ***************** \n";
   // Loop through both input and output variables and call get/set_value_*()
-  
-  for (int i=0; i<count_in; i++) { 
-    
+
+  for (int i=0; i<count_in; i++) {
+
     std::string var_name = names_in[i];
     std::cout<<"Variable name: "<< var_name <<"\n";
 
@@ -378,30 +378,30 @@ int main(int argc, char *argv[])
       // Test get_value() at each timestep
       model.GetValue(var_name, &(var[0]));
       std::cout<<" Get value: "<< var[0] <<"\n";
-      
+
       /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
       // Test get_value_at_indices()
       model.GetValueAtIndices(var_name, dest, indices, len);
       std::cout<<" Get value at indices: " << dest[0]<<"\n";
-      
+
       /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
       // Test get_value_ptr()
       double *var_ptr = new double[1];
       var_ptr= (double*) model.GetValuePtr(var_name);
       std::cout<<" Get value ptr: "<<*var_ptr<<"\n";
-      
+
       /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
       // Test BMI set_value_at_indices()
       double dest_new[] = {-0.000472};
-      
+
       if (var_name == "soil_storage")
-	dest_new[0] = 0.8;
-      
+          dest_new[0] = 0.8;
+
       double *dest_new_up = new double[1];
-      
-      //      int indices[] = {0,1,2,3}; 
+
+      //      int indices[] = {0,1,2,3};
       model.SetValueAtIndices(var_name, &indices[0], len, &dest_new[0]);
-      
+
       std::cout<<" Set value at indices: "<<dest_new[0]<<"\n";
       // get_value_at_indices to see if changed
       model.GetValueAtIndices(var_name, dest_new_up,  &indices[0], len);
@@ -424,19 +424,19 @@ int main(int argc, char *argv[])
   std::cout<<"| All tests passed until this point: "<<passed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
-  
+
   std::cout<<"************* Output variables ***************** \n";
 
   // Update the model for Conceptual soil reservoir's unitest
   model.Update();
-  
+
   double water_table_test_value = 1.50956; // depth from the surface in meters
   double soil_moisture_fraction_test_value = 0.174686; // soil moisture fraction in m
   double water_table_computed = 0.0;
   double soil_moisture_fraction_computed = 0.0;
-    
+
   for (int i=0; i<count_out; i++) {
-    
+
     std::string var_name = names_out[i];
     std::cout<<"variable name: "<< var_name <<" "<<test_status<<"\n";
 
@@ -444,18 +444,18 @@ int main(int argc, char *argv[])
       double *var_ptr = new double[nz];
       //var_ptr = (double*) model.GetValuePtr(var_name);
       model.GetValue(var_name, var_ptr);
-      
+
       for (int i=0; i<nz; i++)
 	std::cout<<" Get value: "<<var_ptr[i]<<"\n";
 
     }
     else {
-      
+
       double val;
-      
+
       model.GetValue(var_name, &val);
       std::cout<<" Get value: "<< val <<"\n";
-      
+
       if (var_name.compare("soil_water_table") == 0) {
 	water_table_computed = val;
 	if (fabs(water_table_computed - water_table_test_value) < 0.01)
@@ -470,13 +470,13 @@ int main(int argc, char *argv[])
 	else
 	  test_status &= false;
       }
-      
+
     }
-    
+
     assert (test_status == true);
-      
+
   }
-  
+
   passed = test_status > 0 ? "Yes" : "No";
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
@@ -503,7 +503,7 @@ int main(int argc, char *argv[])
 
   int num_wf = 4;
   int *num_wf_ptr = &num_wf;
-  
+
   std::string vname_smc_wf   = "soil_moisture_wetting_fronts";    // input
   std::string vname_depth_wf = "soil_depth_wetting_fronts";       // input
   std::string vname_num_wf   = "num_wetting_fronts";              // input
@@ -516,31 +516,31 @@ int main(int argc, char *argv[])
   // benchmark values for Layered-based model
   double water_table_benchmark            = 0.44; // depth from the surface in meters
   double soil_moisture_fraction_benchmark = 0.117867; // soil moisture fraction in m
-  
+
   {
     double soil_moisture_wetting_fronts[] = {0.25, 0.4773, 0.4773, 0.4617};
     double soil_depth_wetting_fronts[]    = {0.44, 1.12, 1.75, 2.0};
-  
+
     // Set values
     model_layered.SetValue(vname_num_wf,num_wf_ptr);
     model_layered.SetValue(vname_smc_wf,&soil_moisture_wetting_fronts[0]);
     model_layered.SetValue(vname_depth_wf,&soil_depth_wetting_fronts[0]);
-    
+
     model_layered.Update();
-    
+
     water_table_computed = 0.0;
     soil_moisture_fraction_computed = 0.0;
-    
+
     model_layered.GetValue(vname_water_table, &water_table_computed);
     model_layered.GetValue(vname_soil_moist_fract, &soil_moisture_fraction_computed);
-    
+
     test_status = fabs(water_table_computed - water_table_benchmark) < 1.E-4 ? true : false;
     test_status &= fabs(soil_moisture_fraction_computed - soil_moisture_fraction_benchmark) < 1.E-4 ? true : false;
-    
+
     passed = test_status > 0 ? "Yes" : "No";
-    
+
   }
-  
+
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<"| Layered Soil Reservoir unittest (#1) \n";
@@ -553,36 +553,36 @@ int main(int argc, char *argv[])
   std::cout<<RESET<<"\n";
 
   assert (passed == "Yes");
- 
+
   //##########################################################################################################
   // Test #2: four wetting fronts with only top wetting fully saturated; two wetting fronts in the top layer
   // benchmark values for Layered-based model with CONSTANT PROFILE OPTION
   water_table_benchmark            = 12.455; // depth from the surface in meters
   soil_moisture_fraction_benchmark = 0.235212; // soil moisture fraction in m
-  
+
   {
     double soil_moisture_wetting_fronts[] = {0.4513, 0.25, 0.3173, 0.2417};
     double soil_depth_wetting_fronts[]    = {0.23, 0.4, 1.75, 2.0};
-    
+
     // Set values
     model_layered.SetValue(vname_num_wf,num_wf_ptr);
     model_layered.SetValue(vname_smc_wf,&soil_moisture_wetting_fronts[0]);
     model_layered.SetValue(vname_depth_wf,&soil_depth_wetting_fronts[0]);
-    
+
     model_layered.Update();
-    
+
     water_table_computed             = 0.0;
     soil_moisture_fraction_computed = 0.0;
-    
+
     model_layered.GetValue(vname_water_table, &water_table_computed);
     model_layered.GetValue(vname_soil_moist_fract, &soil_moisture_fraction_computed);
-    
+
     test_status = fabs(water_table_computed - water_table_benchmark) < 1.E-4 ? true : false;
     test_status &= fabs(soil_moisture_fraction_computed - soil_moisture_fraction_benchmark) < 1.E-4 ? true : false;
-    
+
     passed = test_status > 0 ? "Yes" : "No";
   }
-  
+
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<"| Layered Soil Reservoir unittest (#2) \n";
@@ -591,7 +591,7 @@ int main(int argc, char *argv[])
   std::cout<<"| Soil moisture fraction [-]: \n| Benchmark vs Computed | "<<soil_moisture_fraction_benchmark<<" vs "<<soil_moisture_fraction_computed<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<RESET<<"\n";
-  
+
   assert (passed == "Yes");
 
   //##########################################################################################################
@@ -599,31 +599,31 @@ int main(int argc, char *argv[])
   // benchmark values for Layered-based model with LINEAR PROFILE OPTION
   water_table_benchmark            = 12.455; // depth from the surface in meters
   soil_moisture_fraction_benchmark = 0.251803; // soil moisture fraction in m
-  
+
   {
     model_layered.Initialize(argv[3]);
     double soil_moisture_wetting_fronts[] = {0.4513, 0.25, 0.3173, 0.2417};
     double soil_depth_wetting_fronts[]    = {0.23, 0.4, 1.75, 2.0};
-    
+
     // Set values
     model_layered.SetValue(vname_num_wf,num_wf_ptr);
     model_layered.SetValue(vname_smc_wf,&soil_moisture_wetting_fronts[0]);
     model_layered.SetValue(vname_depth_wf,&soil_depth_wetting_fronts[0]);
-    
+
     model_layered.Update();
-    
+
     water_table_computed            = 0.0;
     soil_moisture_fraction_computed = 0.0;
-    
+
     model_layered.GetValue(vname_water_table, &water_table_computed);
     model_layered.GetValue(vname_soil_moist_fract, &soil_moisture_fraction_computed);
-    
+
     test_status = fabs(water_table_computed - water_table_benchmark) < 1.E-4 ? true : false;
     test_status &= fabs(soil_moisture_fraction_computed - soil_moisture_fraction_benchmark) < 1.E-4 ? true : false;
-    
+
     passed = test_status > 0 ? "Yes" : "No";
   }
-  
+
   std::cout<<GREEN<<"\n";
   std::cout<<"| *************************************** \n";
   std::cout<<"| Layered Soil Reservoir unittest (#3) \n";
@@ -641,22 +641,25 @@ int main(int argc, char *argv[])
     std::cout<<GREEN<<"\n";
     std::cout<<"| *************************************** \n";
     std::cout<<"| Calibrated parameters test \n";
-    
+
     model.Initialize(argv[1]);
+
+    double soil_storage = 0.8;
+    model.SetValue("soil_storage",&soil_storage);
 
     double *smcmax_set, b_set, satpsi_set;
     double *smcmax_get, b_get, satpsi_get;
 
     smcmax_set = new double[1];
     smcmax_get = new double[1];
-    
+
     // Get initial values
     model.GetValue("smcmax",&smcmax_set[0]);
     model.GetValue("b",&b_set);
     model.GetValue("satpsi",&satpsi_set);
-    
+
     std::cout<<"| Initial values | smcmax = "<< smcmax_set[0] <<", b = "<< b_set <<", satpsi = "<< satpsi_set <<"\n";
-    
+
     // set values
     smcmax_set[0] += 0.012;
     b_set += 0.013;
@@ -671,25 +674,25 @@ int main(int argc, char *argv[])
     model.GetValue("smcmax", &smcmax_get[0]);
     model.GetValue("b", &b_get);
     model.GetValue("satpsi", &satpsi_get);
-    
+
     std::cout<<"| Getting | smcmax = "<< smcmax_get[0] <<", b = "<< b_get <<", satpsi = "<< satpsi_get <<"\n";
     model.Update();
-    
+
 
     test_status = fabs(smcmax_set[0] -  smcmax_get[0]) < 1.E-10 ? true : false;
     test_status &= fabs(b_set - b_get) < 1.E-10 ? true : false;
     test_status &= fabs(satpsi_set - satpsi_get) < 1.E-10 ? true : false;
-    
+
     passed = test_status > 0 ? "Yes" : "No";
 
-   
+
     std::cout<<"| Unittest passed : "<< RED << passed << RESET << GREEN <<"\n";
     std::cout<<"| *************************************** \n";
     std::cout<<RESET<<"\n";
-    
-    assert (passed == "Yes");
-  }  
 
-  
+    assert (passed == "Yes");
+  }
+
+
   return FAILURE;
 }

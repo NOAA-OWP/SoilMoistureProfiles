@@ -122,7 +122,7 @@ main(int argc, const char *argv[]) {
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
-  printf("looping through and calling updata\n");
+  printf("looping through and calling update \n");
 
   // output files -- writing water table depth, soil moisture fraction, and soil moisture profiles to separate files
   ofstream fout, fout_wt;
