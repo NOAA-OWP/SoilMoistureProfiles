@@ -31,7 +31,7 @@ jobs:
     steps:
     - name: Checkout the commit
       uses: actions/checkout@v4
-    
+
    # - name: check gcc version
    #   run: gcc --version
 
@@ -45,13 +45,17 @@ jobs:
         fi
           sed -i 's/\${CXX}/g++/' run_unittest.sh
           ./run_unittest.sh
-    
+
     - name: Build and Run Standalone
       run: |
+        git clone https://github.com/NOAA-OWP/cfe extern/cfe
+        if [ -d build ]; then
+          rm -rf build
+        fi
         mkdir build && cd build
-        cmake ../ -DSTANDALONE=ON
+        cmake ../ -DCFE=ON
         make && cd ..
-        ./run_smp.sh STANDALONE
+        ./run_smp.sh CFE
 
     - name: Build and Run with Topmodel
       run: |
@@ -60,6 +64,6 @@ jobs:
           rm -rf build
         fi
         mkdir build && cd build
-        cmake ../ -DWITHTOPMODEL=ON
+        cmake ../ -DTOPMODEL=ON
         make && cd ..
-        ./run_smp.sh WITHTOPMODEL
+        ./run_smp.sh TOPMODEL

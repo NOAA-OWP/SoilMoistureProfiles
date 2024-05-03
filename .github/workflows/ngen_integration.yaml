@@ -51,6 +51,13 @@ jobs:
         with:
           repository: noaa-owp/ngen
 
+      - name: Build CFE
+        id: submod_build_4
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/cfe/"
+          targets: "cfebmi"
+
       - name: Build Topmodel
         id: submod_build_4
         uses: ./.github/actions/ngen-submod-build
@@ -91,7 +98,7 @@ jobs:
       - name: Run Ngen Test for SMP
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
-          inputfile='extern/SoilMoistureProfiles/SoilMoistureProfiles/realizations/realization_config_smp.json'
+          inputfile='extern/SoilMoistureProfiles/SoilMoistureProfiles/realizations/realization_config_smp_cfe.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
 
       - name: Run Ngen Test with Topmodel
