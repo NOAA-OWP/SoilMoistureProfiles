@@ -46,7 +46,7 @@ jobs:
           sed -i 's/\${CXX}/g++/' run_unittest.sh
           ./run_unittest.sh
 
-    - name: Build and Run Standalone
+    - name: Build and Run CFE
       run: |
         git clone https://github.com/NOAA-OWP/cfe extern/cfe
         if [ -d build ]; then
