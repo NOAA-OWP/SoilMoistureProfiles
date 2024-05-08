@@ -52,28 +52,28 @@ jobs:
           repository: noaa-owp/ngen
 
       - name: Build CFE
-        id: submod_build_4
+        id: submod_build_1
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/cfe/"
           targets: "cfebmi"
 
       - name: Build Topmodel
-        id: submod_build_4
+        id: submod_build_2
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/topmodel/"
           targets: "topmodelbmi"
 
       - name: Build PET
-        id: submod_build_5
+        id: submod_build_3
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/evapotranspiration/evapotranspiration"
           targets: "petbmi"
 
       - name: Build SLoTH
-        id: submod_build_6
+        id: submod_build_4
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/sloth/"
