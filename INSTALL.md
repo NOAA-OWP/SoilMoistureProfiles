@@ -10,7 +10,7 @@ The example couples SMP to CFE (a conceptual soil reservoir) to compute `waterta
  git clone https://github.com/NOAA-OWP/SoilMoistureProfiles && cd SoilMoistureProfiles
  git clone https://github.com/NOAA-OWP/cfe extern/cfe
  mkdir build && cd build
- cmake ../ --DCFE=ON
+ cmake ../ -DCFE=ON
  make && cd ..
  ```
 
