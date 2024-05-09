@@ -35,7 +35,7 @@ Run: <a href="https://github.com/NOAA-OWP/SoilMoistureProfiles/blob/ajk/doc_upda
 </pre>
 
 ## Nextgen framework example
-The [nextgen framework](https://github.com/NOAA-OWP/ngen) allows the user to easily couple different BMI enabled models or model components, including SMP.  Detailed instructions for running and building SoilMoistureProfiles coupled to other models (for instance, CFE or [SoilFreezeThaw](https://github.com/NOAA-OWP/SoilFreezeThaw)) in the nextgen framework are provided at [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/INSTALL.md).  Once nextgen is built, refer to the commands below to run the SMP examples in nextgen.
+The [nextgen framework](https://github.com/NOAA-OWP/ngen) allows the user to easily couple different BMI enabled models, including SMP.  Detailed instructions for running and building SoilMoistureProfiles coupled to other models (for instance, CFE or [SoilFreezeThaw](https://github.com/NOAA-OWP/SoilFreezeThaw)) in the nextgen framework are provided at [instructions](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/INSTALL.md).  Once nextgen is built, refer to the commands below to run the SMP examples in nextgen.
 ### Build
 ```
 mkdir smp && cd smp (in the nextgen directory)
