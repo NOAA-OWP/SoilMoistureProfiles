@@ -51,22 +51,32 @@ jobs:
         with:
           repository: noaa-owp/ngen
 
+      - name: Build CFE
+        uses: actions/checkout@v4
+        with:
+	  repository: noaa-owp/cfe
+
+      - name: Build CFE Library
+        run: |
+          cmake -B cmake_build -S . -DNGEN=ON
+          make -C cmake_build
+	  
       - name: Build Topmodel
-        id: submod_build_4
+        id: submod_build_2
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/topmodel/"
           targets: "topmodelbmi"
 
       - name: Build PET
-        id: submod_build_5
+        id: submod_build_3
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/evapotranspiration/evapotranspiration"
           targets: "petbmi"
 
       - name: Build SLoTH
-        id: submod_build_6
+        id: submod_build_4
         uses: ./.github/actions/ngen-submod-build
         with:
           mod-dir: "extern/sloth/"
@@ -91,7 +101,7 @@ jobs:
       - name: Run Ngen Test for SMP
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
-          inputfile='extern/SoilMoistureProfiles/SoilMoistureProfiles/realizations/realization_config_smp.json'
+          inputfile='extern/SoilMoistureProfiles/SoilMoistureProfiles/realizations/realization_config_smp_cfe.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
 
       - name: Run Ngen Test with Topmodel

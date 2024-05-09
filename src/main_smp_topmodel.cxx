@@ -1,5 +1,5 @@
 /*
-  author: Ahmad Jan
+  author: Ahmad Jan Khattak
   email : ahmad.jan@noaa.gov
   date : March 2023
 */
@@ -9,13 +9,13 @@
 #include <stdbool.h>
 
 
-#include "./topmodel/include/topmodel.h"
-#include "./topmodel/include/bmi.h"
-#include "./topmodel/include/bmi_topmodel.h"
+#include "topmodel.h"
+#include "bmi.h"
+#include "bmi_topmodel.h"
 
 #include "../bmi/bmi.hxx"
-#include "../include/bmi_soil_moisture_profile.hxx"
-#include "../include/soil_moisture_profile.hxx"
+#include "bmi_soil_moisture_profile.hxx"
+#include "soil_moisture_profile.hxx"
 
 
 /*
@@ -27,11 +27,11 @@
 */
 
 /***************************************************************
-    Function to pass the parameters from Topmodel to SoilMoistureProfiles
+ * Function to pass the parameters from Topmodel to SoilMoistureProfiles
 ***************************************************************/
-void pass_data_from_topmodel_to_smc(Bmi *topmodel_bmi, BmiSoilMoistureProfile *smc_bmi) {
-  
-  
+void pass_data_from_topmodel_to_smp(Bmi *topmodel_bmi, BmiSoilMoistureProfile *smc_bmi) {
+
+
   double Qb;      // baseflow in topmodel
   double Qv;      // flow to saturated zone from unsaturated zone
   double deficit; // catchment soil moisture deficit
@@ -46,7 +46,7 @@ void pass_data_from_topmodel_to_smc(Bmi *topmodel_bmi, BmiSoilMoistureProfile *s
   smc_bmi->SetValue("Qb_topmodel",&Qb);
   smc_bmi->SetValue("Qv_topmodel",&Qv);
   smc_bmi->SetValue("global_deficit",&deficit);
-  
+
 }
 
 /************************************************************************
@@ -55,12 +55,12 @@ void pass_data_from_topmodel_to_smc(Bmi *topmodel_bmi, BmiSoilMoistureProfile *s
 ************************************************************************/
 int
 main(int argc, const char *argv[]) {
-  
+
   /************************************************************************
       A configuration file is required for running this model through BMI
   ************************************************************************/
   if(argc<=1) {
-    printf("make sure to include a path to config files\n");
+    printf("make sure to include path to config files\n");
     exit(1);
   }
 
@@ -68,35 +68,35 @@ main(int argc, const char *argv[]) {
       allocating memory to store the entire BMI structure for TopModel
   ************************************************************************/
   printf("\n Allocating memory to TOPMODEL BMI model structure ... \n");
-  Bmi *model = (Bmi *) malloc(sizeof(Bmi));
-  
+  Bmi *topmodel_bmi = (Bmi *) malloc(sizeof(Bmi));
+
   BmiSoilMoistureProfile smp_bmi;
-  
+
   /************************************************************************
       Registering the BMI model for Topmodel
   ************************************************************************/
-  register_bmi_topmodel(model);
+  register_bmi_topmodel(topmodel_bmi);
   printf("Registering BMI topmodel\n");
-  
+
   /************************************************************************
       Initializing the BMI for Topmodel
   ************************************************************************/
-  
+
   printf("Initializeing BMI Topmodel. %s \n", argv[1]);
   const char *cfg_file_topmodel = argv[1];
-  model->initialize(model, cfg_file_topmodel);
-  
-  printf("Initializeing BMI SMP \n"); 
-  const char *cfg_file_smp = argv[2];      
-  smp_bmi.Initialize(cfg_file_smp); 
-  
+  topmodel_bmi->initialize(topmodel_bmi, cfg_file_topmodel);
+
+  printf("Initializeing BMI SMP \n");
+  const char *cfg_file_smp = argv[2];
+  smp_bmi.Initialize(cfg_file_smp);
+
   /************************************************************************
     Get the information from the configuration here in Main
   ************************************************************************/
   printf("Get the information from the configuration here in Main\n");
   topmodel_model *topmodel;
-  topmodel = (topmodel_model *) model->data;
-  
+  topmodel = (topmodel_model *) topmodel_bmi->data;
+
   /************************************************************************
     This is the basic process for getting the SoilMoistureProfile and Topmodel to share data
     through BMI interface
@@ -106,7 +106,7 @@ main(int argc, const char *argv[]) {
   ************************************************************************/
 
   int nstep;
-  
+
   if (topmodel->stand_alone == TRUE) {
     // Gather number of steps from input file
     // when in standalone mode.
@@ -117,12 +117,12 @@ main(int argc, const char *argv[]) {
     // Note: this is a pseudo-framework
     nstep = 720;
   }
-  
+
 
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
-  printf("looping through and calling updata\n");
+  printf("looping through and calling update \n");
 
   // output files -- writing water table depth, soil moisture fraction, and soil moisture profiles to separate files
   ofstream fout, fout_wt;
@@ -134,16 +134,16 @@ main(int argc, const char *argv[]) {
   double *smc = new double[nz];
   double water_table;
   double soil_moisture_fraction;
-  
+
   for (int i = 0; i < nstep; i++) {
 
-    model->update(model);
+    topmodel_bmi->update(topmodel_bmi);
 
-    pass_data_from_topmodel_to_smc(model, &smp_bmi);   // Get and Set values
+    pass_data_from_topmodel_to_smp(topmodel_bmi, &smp_bmi);   // Get and Set values
 
 
     smp_bmi.Update();
-    
+
     smp_bmi.GetValue("soil_moisture_profile",&smc[0]);
     smp_bmi.GetValue("soil_water_table",&water_table);
     smp_bmi.GetValue("soil_moisture_fraction",&soil_moisture_fraction);
@@ -159,13 +159,12 @@ main(int argc, const char *argv[]) {
 
   fout.close();
   // Run the Mass Balance check
-  
+
   /************************************************************************
     Finalize both the Topmodel bmi
   ************************************************************************/
   printf("\n Finalizing TOPMODEL and SMP BMIs ... \n");
-  model->finalize(model);
+  topmodel_bmi->finalize(topmodel_bmi);
 
   return 0;
 }
-
