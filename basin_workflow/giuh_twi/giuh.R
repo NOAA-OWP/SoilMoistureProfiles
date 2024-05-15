@@ -7,19 +7,19 @@
 
 
 # Function computes Geomorphological Instantaneous Unit Hydrograph (GIUH)
-giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5, vel_gully = .2, gully_threshold = 3) {
+giuh_function <- function(div_infile, dem_output_dir, vel_channel = 1, vel_overland = .5, vel_gully = .2, gully_threshold = 3) {
   
-  div <- read_sf(infile, 'divides')
-  river <- read_sf(infile, "flowpaths")
+  div <- read_sf(div_infile, 'divides')
+  river <- read_sf(div_infile, "flowpaths")
   
   # @param out_type Output type; one of 'cells' (default), 'catchment area', and 'specific contributing area'.
-  wbt_d8_flow_accumulation(input = glue("{directory}/dem_corr.tif"), output = glue("{directory}/giuh_sca.tif"),
+  wbt_d8_flow_accumulation(input = glue("{dem_output_dir}/dem_corr.tif"), output = glue("{dem_output_dir}/giuh_sca.tif"),
                            out_type = 'specific contributing area')
   
-  sca <- rast(glue("{directory}/giuh_sca.tif"))
+  sca <- rast(glue("{dem_output_dir}/giuh_sca.tif"))
   rasterized_river <- rasterizeGeom(vect(river), sca, fun="length")
   
-  writeRaster(rasterized_river, glue("{directory}/giuh_river.tif"), overwrite = TRUE)
+  writeRaster(rasterized_river, glue("{dem_output_dir}/giuh_river.tif"), overwrite = TRUE)
   
   #x <- ifel(sca <= gully_threshold, vel_gully, vel_overland) #original script
   x <- ifel(sca > gully_threshold, vel_gully, vel_overland)
@@ -31,18 +31,18 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
   x <- 1.0/(x*sec_to_min) 
   names(x)  = "travel_time"
   
-  writeRaster(x, glue("{directory}/giuh_travel_time.tif") ,overwrite=TRUE)  
+  writeRaster(x, glue("{dem_output_dir}/giuh_travel_time.tif") ,overwrite=TRUE)  
   
   # This one calculates the path to the basin outlet
-  wbt_d8_pointer(dem = glue("{directory}/dem_corr.tif"), output = glue("{directory}/dem_d8.tif"))
+  wbt_d8_pointer(dem = glue("{dem_output_dir}/dem_corr.tif"), output = glue("{dem_output_dir}/dem_d8.tif"))
   
   # Using S = V * T => T = S/V; divide distance (flowpath_length) by weights (1/V)
-  wbt_downslope_flowpath_length(d8_pntr = glue("{directory}/dem_d8.tif"),
-                                output  = glue("{directory}/giuh_minute.tif"),
-                                weights = glue("{directory}/giuh_travel_time.tif"))
+  wbt_downslope_flowpath_length(d8_pntr = glue("{dem_output_dir}/dem_d8.tif"),
+                                output  = glue("{dem_output_dir}/giuh_minute.tif"),
+                                weights = glue("{dem_output_dir}/giuh_travel_time.tif"))
   
   # from basin outlet to catchment outlet workflow
-  giuh_minute <- rast(glue("{directory}/giuh_minute.tif"))
+  giuh_minute <- rast(glue("{dem_output_dir}/giuh_minute.tif"))
   
   time_min_ftn = execute_zonal(data = giuh_minute,
                                geom = div,
@@ -70,21 +70,56 @@ giuh_function <- function(infile, directory, vel_channel = 1, vel_overland = .5,
   # of a point to the catchment outlet
   downslope_giuh_cat_outlet <- rast_giuh_minute_temp - rasterized_time_min
   
-  print (downslope_giuh_cat_outlet)
+  #print (downslope_giuh_cat_outlet)
   
-  writeRaster(downslope_giuh_cat_outlet, glue("{directory}/downslope_giuh_cat_outlet.tif") ,overwrite=TRUE)  
+  writeRaster(downslope_giuh_cat_outlet, glue("{dem_output_dir}/downslope_giuh_cat_outlet.tif"),
+              overwrite=TRUE)  
   
   # channel cumulative distribution of area with distance
+  #giuh_dist <- execute_zonal(data = downslope_giuh_cat_outlet,
+  #                           geom = div,
+  #                           ID = "divide_id",
+  #                           fun = zonal::distribution,
+  #                           breaks = seq(0.0, 600, by=60),
+  #                           constrain = TRUE)
+  
   giuh_dist <- execute_zonal(data = downslope_giuh_cat_outlet,
                              geom = div,
                              ID = "divide_id",
-                             fun = zonal::distribution,
+                             fun = dist2,
                              breaks = seq(0.0, 600, by=60),
                              constrain = TRUE)
   
   return(giuh_dist)
 }
 
+dist2 <- function(value, coverage_fraction, breaks = 10, constrain = FALSE) {
+  if (length(value) <= 0 | all(is.nan(value))) {
+    return("[]")
+  }
+  
+  x1 = value * coverage_fraction
+  x1 = x1[!is.na(x1)]
+  
+  if (constrain | length(breaks) > 1) {
+    breaks_tmp = c(breaks[1],breaks[2])
+    #message(paste0("BREAKS PRIOR: ", paste(breaks, collapse = ", ")))
+    breaks = breaks[breaks <= max(x1, na.rm = TRUE)]
+    if (length(breaks) == 1) {
+      breaks = breaks_tmp
+    }
+    #message(paste0("BREAKS AFTER: ", paste(breaks, collapse = ", ")))
+  }
+  
+  
+  tmp = as.data.frame(table(cut(x1, breaks = breaks)))
+  
+  tmp$v = as.numeric(gsub("]", "", sub('.*,\\s*', '', tmp$Var1)))
+  
+  tmp$frequency = tmp$Freq / sum(tmp$Freq)
+  
+  as.character(toJSON(tmp[,c("v", "frequency")]))
+}
 
 
 

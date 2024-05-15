@@ -5,22 +5,22 @@
 # ########################### TWI ########################
 # Function computes topographic wetness index (TWI) and generates files 
 # needed for computing width function (see below)
-twi_function <- function(infile, directory, distribution = 'quantiles', nclasses = 5) {
+twi_function <- function(div_infile, dem_output_dir, distribution = 'quantiles', nclasses = 5) {
   
-  div <- read_sf(infile, 'divides')
+  div <- read_sf(div_infile, 'divides')
   
   # @param out_type Output type; one of 'cells' (default), 'catchment area', and 'specific contributing area'.
-  wbt_d8_flow_accumulation(input = glue("{directory}/dem_corr.tif"), output = glue("{directory}/sca.tif")
+  wbt_d8_flow_accumulation(input = glue("{dem_output_dir}/dem_corr.tif"), output = glue("{dem_output_dir}/sca.tif")
                            , out_type = 'specific contributing area')
   
   
-  wbt_slope(dem = glue("{directory}/dem_corr.tif"), output = glue("{directory}/slope.tif"))
+  wbt_slope(dem = glue("{dem_output_dir}/dem_corr.tif"), output = glue("{dem_output_dir}/slope.tif"))
   
-  wbt_wetness_index(sca = glue("{directory}/sca.tif"), slope = glue("{directory}/slope.tif"), 
-                    output = glue("{directory}/twi.tif"))
+  wbt_wetness_index(sca = glue("{dem_output_dir}/sca.tif"), slope = glue("{dem_output_dir}/slope.tif"), 
+                    output = glue("{dem_output_dir}/twi.tif"))
   
-  twi = rast(glue("{directory}/twi.tif"))
-  print (twi)
+  twi = rast(glue("{dem_output_dir}/twi.tif"))
+  #print (twi)
   twi[twi < 0] <- 0
   twi[twi > 50] <- 50
   
@@ -38,6 +38,8 @@ twi_function <- function(infile, directory, distribution = 'quantiles', nclasses
                               ID = "divide_id",
                               fun = zonal::distribution,
                               breaks = nclasses)
+     
+     
   }
 
   return(twi_cat)
@@ -45,18 +47,18 @@ twi_function <- function(infile, directory, distribution = 'quantiles', nclasses
 
 
 
-width_function <- function(infile, directory) {
+width_function <- function(div_infile, dem_output_dir) {
   
-  div <- read_sf(infile, 'divides')
+  div <- read_sf(div_infile, 'divides')
   
-  wbt_d8_pointer(dem = glue("{directory}/dem_corr.tif"), 
-                 output = glue("{directory}/dem_d8.tif"))
+  wbt_d8_pointer(dem = glue("{dem_output_dir}/dem_corr.tif"), 
+                 output = glue("{dem_output_dir}/dem_d8.tif"))
   
-  wbt_downslope_flowpath_length(d8_pntr = glue("{directory}/dem_d8.tif"), 
-                                output = glue("{directory}/downslope_fp_length.tif"), watersheds=NULL)
+  wbt_downslope_flowpath_length(d8_pntr = glue("{dem_output_dir}/dem_d8.tif"), 
+                                output = glue("{dem_output_dir}/downslope_fp_length.tif"), watersheds=NULL)
   # note: watersheds=div never tested but maybe useful in some cases; defualt is NULL
   
-  flowpath_length <- rast(glue("{directory}/downslope_fp_length.tif"))
+  flowpath_length <- rast(glue("{dem_output_dir}/downslope_fp_length.tif"))
   
   fp_min_ftn = execute_zonal(data = flowpath_length,
                              geom = div,
@@ -96,9 +98,9 @@ width_function <- function(infile, directory) {
 
 
 ### Pre-computed TWI values provided by the hydrofabric team
-twi_pre_computed_function <- function(infile, distribution = 'quantiles', nclasses = 5) {
+twi_pre_computed_function <- function(div_infile, distribution = 'quantiles', nclasses = 5) {
   
-  div <- sf::read_sf(infile, 'divides')
+  div <- sf::read_sf(div_infile, 'divides')
   
   #twi <- dap("/vsis3/lynker-spatial/gridded-resources/twi.vrt", AOI = sf::read_sf(div_path,'divides'))  
   

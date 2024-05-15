@@ -2,193 +2,126 @@
 # @email ahmad.jan@noaa.gov
 # @date  December 22, 2023
 
-# The script downloads a geopackge given USGS gauge id, computes TWI and GIUH
-# Appends model attributes from the hydrofabric parquet file to the geopackage
+# The script downloads geopackge(s) given USGS gauge id(s) (also can read gpkg from the disk)
+# Computes TWI and GIUH and extracts model attributes using a parquet file on S3 endpoint
+# Appends TWI, GIUH, and model attributes to .gpkg to be used for generating models' configuration files 
 
 ######################## REQUIRED INPUT #######################################
-# The script downloads geopackage given a gage ID or the user provides the basin 
-# gpkg file  (SEE STEP #3). The script is divided into few steps:
-# STEP #1: Setup/install packages needed for running the script
-# STEP #2: Set pointers to the right directory (e.g., r_path, gpkg_path; see below)
-# STEP #3: Download geopackage
-# STEP #4: Add model attributes to the geopackage
-# STEP #5: Compute TWI and width function
-# STEP #6: Compute GIUH
-# STEP #7: Compute Nash cascade parameters (N and K) for surface runoff
-# STEP #8: Append GIUH, TWI, width function, and Nash cascade parameters to model_attributes layer
+# Key steps are hihglight as:
+# STEP #1: Setup (REQUIRED) (main.R)
+# STEP #2: Options: Provide gage ID or list of gage IDs or set path to work with already download geopackages (main.R)
+# Workflow substeps
+#   STEP #3: Download geopackage (if needed) (inside driver.R)
+#   STEP #4: Add model attributes to the geopackage (inside driver.R)
+#   STEP #5: Compute TWI and width function (inside driver.R)
+#   STEP #6: Compute GIUH (inside driver.R)
+#   STEP #7: Compute Nash cascade parameters (N and K) for surface runoff (inside driver.R)
+#   STEP #8: Append GIUH, TWI, width function, and Nash cascade parameters to model_attributes layer (inside driver.R)
 ###############################################################################
 
 
-######################### INSTALL REQUIRED PACKAGES ############################
-# STEP #1: The packages need to run the script
+################################ SETUP #########################################
+# STEP #1: INSTALL REQUIRED PACKAGES 
+#          a) Install hydrofabric, zonal, etc. (if not already installed), and other
+#          built-in libraries
+#          b) Load custom .R files/functions such as giuh.R that computes GIUH
+#          c) Specify DEM input file (Default points to S3 endpoint; see driver.R)
+#          d) Set output directory path (output_dir)
 ################################################################################
-if(!requireNamespace("hydrofabric", quietly=TRUE)) 
-  devtools::install_github("noaa-owp/hydrofabric", ref = 'b07c109', force = TRUE)
-
-if(!requireNamespace("climateR", quietly=TRUE)) 
-  devtools::install_github("mikejohnson51/climateR", force = TRUE)
-
-if(!requireNamespace("zonal", quietly=TRUE))
-  devtools::install_github("mikejohnson51/zonal", force = TRUE)
-
-if(!requireNamespace("AOI", quietly=TRUE))
-  devtools::install_github("mikejohnson51/AOI")
-
-
-if(!requireNamespace("sf", quietly=TRUE)) install.packages("sf")
-if(!requireNamespace("terra", quietly=TRUE)) install.packages("terra")
-if(!requireNamespace("whitebox", quietly=TRUE)) install.packages("whitebox")
-if(!requireNamespace("dplyr", quietly=TRUE)) install.packages("dplyr")
-if(!requireNamespace("glue", quietly=TRUE)) install.packages("glue")
-if(!requireNamespace("raster", quietly=TRUE)) install.packages("raster")
-if(!requireNamespace("jsonlite", quietly=TRUE)) install.packages("jsonlite")
-if(!requireNamespace("ggplot2", quietly=TRUE)) install.packages("ggplot2")
-
-
-library(hydrofabric)
-library(climateR)
-library(zonal)
-library(whitebox)
-library(sf)
-library(terra)
-library(dplyr)
-library(glue)
-library(raster)
-library(jsonlite)
-library(ggplot2)
-library(Metrics)
-
-############################## SET PATHS ######################################
-# STEP #2. Note the three substeps (a), (b), and (c)
-################################################################################
-
-# (a) Point r_path to the directory of R scripts downloaded from the repository
+# Point r_path to the directory of R scripts downloaded from the repository
 r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_basin_workflow/basin_workflow/giuh_twi"
-source(glue("{r_path}/twi_width_function.R"))
-source(glue("{r_path}/helper.R"))
-source(glue("{r_path}/giuh_function.R"))
-source(glue("{r_path}/nash_cascade.R"))
+# (a)
+source(paste0(r_path, "/install_load_libs.R"))
+# (b)
+source(glue("{r_path}/custom_functions.R"))
+# (c)
+#dem_infile = "/vsicurl/https://lynker-spatial.s3.amazonaws.com/gridded-resources/dem.vrt"
 
-# (b) Point gpkg_path to the directory where geopackage and other related files will be stored
-# NOTE: .gpkg file should be stored under {gpkg_path}/data directory
-gpkg_path = "/Users/ahmadjan/Core/SimulationsData/preprocessing/hydrofabric/sebecx"
-setwd(gpkg_path)
+# (d) Point root_outpath to the directory where geopackage and other related files will be stored
+#outpath_dir = "/Users/ahmadjan/Core/SimulationsData/preprocessing/CAMELS_2024/"
+output_dir = "/Users/ahmadjan/Core/SimulationsData/preprocessing/test"
+setwd(output_dir)
 wbt_wd(getwd())
 
-# (c) DEM (located at S3 endpoint)
-dem_path = "/vsicurl/https://lynker-spatial.s3.amazonaws.com/gridded-resources/dem.vrt"
-
-# DEM and related files (such as projected/corrected DEMs, and specific contributing area rasters are stored here)
-directory="dem"
-dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+# create directory to stored catchment geopackage in case of errors or missing data
+failed_dir = "failed_cats"
+dir.create(failed_dir, recursive = TRUE, showWarnings = FALSE)
 
 
+################################ OPTION #########################################
+# STEP #2:Currently, the script works with a single gage ID, a list of gage ID, or already download
+# geopackages (see Examples 1 and 2 below). 
+# Once an option is selection, go to the corresponding Example and make sure to adjust the file/directories 
+# to your local setting
 
-######################### DOWNLOAD GEOPACKAGE ##################################
-# STEP #3: provide USGS gauge id or your own geopackage (set path in the ELSE block)
+###############################################################################
+# Example 1: User-provided gage IDs; turn using_gage_IDs ON
+option_using_gage_IDs <- TRUE
 ################################################################################
-is_gpkg_provided = FALSE
-if(!is_gpkg_provided) {
-  gage_id = '01033000' # A hydrolocation URI
-  hl = glue('Gages-{gage_id}') # sebec river basin in Maine
-  outfile <- glue('data/gage_{gage_id}.gpkg')
+# Example 2: User-provided geopackages; turn using_gpkgs ON
+option_using_gpkgs    <- FALSE
 
-  ## caching the downloaded VPU files to "data" and writing all layers to "outfile"
-  subset_network(hl_uri = hl, cache_dir = "data", outfile = outfile)
-} else {
-  outfile <- glue('data/gage_{gage_id}.gpkg') # <------ set this path if .gpkg is stored somewhere else
+
+
+if (option_using_gage_IDs == TRUE) {
+  ################################################################################
+  # For this example either provide a gage ID or a file to read gage IDs from
+  # Modify this part according your settings
+  ################################################################################
+  
+  IDs_from_file <- TRUE
+  gage_id <- NULL
+  
+  if (IDs_from_file) {
+    
+    gage_ids_infile = "/Users/ahmadjan/Core/SimulationsData/preprocessing/CAMELS_2024/CAMELS_v3_calib_BestModelsAll.csv"
+    d = read.csv(gage_ids_infile,colClasses = c("character"))
+    gage_ids <- d[["hru_id_CAMELS"]]    
+    
+  }
+  else {
+    gage_ids <- gage_id
+  }
+  
+  stopifnot( length(gage_ids) > 0)
+  
+  cats_failed <- run_given_gage_IDs(gage_ids[c(1:2)], output_dir)      
+  
+  
+} else if (option_using_gpkgs == TRUE) {
+  ################################################################################
+  # For this example set gpkg_i_dir to the directory containing geopackage(s)
+  # Modify this part according your settings
+  ################################################################################
+
+  gpkgs_i_dir = glue("{output_dir}/camels_basins_all")   # input
+  gage_files = list.files(gpkgs_i_dir, full.names = FALSE, pattern = "Gage_")
+  
+  cats_failed <- run_given_gpkg(gage_files, gpkgs_i_dir, output_dir)
+  
 }
 
-## Stop if .gpkg does not exist
-if (!file.exists(outfile))
-  stop(glue("FILE '{outfile}' DOES NOT EXIST!!"))
 
-div <- read_sf(outfile, 'divides')
-nexus <- read_sf(outfile, 'nexus')
-streams <- read_sf(outfile, 'flowpaths')
+print(cats_failed)
 
-
-
-
-########################## MODELS' ATTRIBUTES ##################################
-# STEP #4: Add models' attributes from the parquet file to the geopackage
-################################################################################
-# print layers before appending model attributes
-layers_before_cfe_attr <- sf::st_layers(outfile)
-print (layers_before_cfe_attr$name)
-
-m_attr <- add_model_attributes(div_path = outfile)
-
-layers_after_cfe_attr <- sf::st_layers(outfile)
-print (layers_after_cfe_attr$name)
-
-
-############################### GENERATE TWI ##################################
-# STEP #5: Generate TWI and width function and write to the geopackage
-# Note: The default distribution = 'quantiles'
 ###############################################################################
-dem_function(infile = outfile, directory, dem_path)
-
-twi <- twi_function(infile = outfile, directory = directory, distribution = 'simple', nclasses = 30)
-
-width_dist <- width_function(outfile, directory = directory)
-
-twi_dat_values = data.frame(ID = twi$divide_id, twi = twi$fun.twi, width_dist = width_dist$fun.downslope_fp_length)
-
-# write TWI and width function layers to the geopackage
-names(twi_dat_values)
-colnames(twi_dat_values) <- c('divide_id', 'twi', 'width_dist')
-names(twi_dat_values)
-#sf::st_write(dat_values, outfile, layer = "twi", append = FALSE)
-
-### NOTES: Pre-computed TWI
-# Note 1: model attributes layer ships with pre-computed TWI distribution with four equal quantiles
-#m_attr$twi_dist_4
-
-# Note 2: The user can also compute their own distribution from the pre-computed TWI using the dataset
-# available at s3://lynker-spatial/gridded-resources/twi.vrt
-
-twi_pre_computed <- twi_pre_computed_function(infile = outfile, distribution = 'simple', nclasses = 30)
-
-############################### GENERATE GIUH ##################################
-# STEP #6: Generate GIUH and write to the geopackage
-################################################################################
-# There are many "model" options to specify the velocity.
-# Here we are using a simple approach: constant velocity as a function of upstream drainage area.
-vel_channel     <- 1.0
-vel_overland    <- 0.5
-vel_gully       <- 0.2
-gully_threshold <- 90.0
-
-giuh_compute <- giuh_function(infile = outfile, directory, vel_channel,
-                              vel_overland, vel_gully, gully_threshold)
-
-#giuh_compute[2,] %>% t()
-
-# write GIUH layer to the geopackage
-giuh_dat_values = data.frame(ID = giuh_compute$divide_id, giuh = giuh_compute$fun.giuh_minute)
-names(giuh_dat_values)
-colnames(giuh_dat_values) <- c('divide_id', 'giuh')
-names(giuh_dat_values)
-
-giuh_dat_values$giuh[1]
+# DONE
+###############################################################################
 
 
-############################### GENERATE GIUH ##################################
-# STEP #7: Generate Nash cascade parameters for surface runoff
-################################################################################
-nash_params_surface <- get_nash_params(giuh_dat_values, calib_n_k = FALSE)
 
 
-################################################################################
-# STEP #8: Append GIUH, TWI, width function, and Nash cascade N and K parameters
-# to model attributes layers
-################################################################################
-m_attr$giuh <- giuh_dat_values$giuh # append GIUH column to the model attributes layer
-m_attr$twi <- twi_dat_values$twi   # append TWI column to the model attributes layer
-m_attr$width_dist <- twi_dat_values$width_dist # append width distribution column to the model attributes layer
 
-m_attr$N_nash_surface <- nash_params_surface$N_nash
-m_attr$K_nash_surface <- nash_params_surface$K_nash
 
-sf::st_write(m_attr, outfile,layer = "model_attributes", append = FALSE)
+
+
+#model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/hydrofabric/v20.1/model_attributes/nextgen_01.parquet'))
+#dplyr::as_tibble(model_attr)
+
+# Check if the IDs exist in the HF conus network
+#conus_net <- arrow::read_parquet(glue("{root_outpath}/model_attributes.parquet")) 
+#|> 
+#  dplyr::filter(divide_id %in% divides) |> 
+#  dplyr::collect()
+
+

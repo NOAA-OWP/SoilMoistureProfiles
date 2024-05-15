@@ -4,13 +4,15 @@
 
 # Get the DEM
 
-dem_function <- function(infile, directory, dem_path) {
+dem_function <- function(div_infile,
+                         dem_infile = "/vsicurl/https://lynker-spatial.s3.amazonaws.com/gridded-resources/dem.vrt",
+                         dem_output_dir) {
   
-  elev <- rast(dem_path)
+  elev <- rast(dem_infile)
   
   # Get the catchment geopackage
-  div <- read_sf(infile, 'divides')
-  river <- read_sf(infile, "flowpaths")
+  div <- read_sf(div_infile, 'divides')
+  river <- read_sf(div_infile, "flowpaths")
   
   # Buffer because we want to guarantee we don not have boundary issues when processing the DEM
   div_bf <- st_buffer(div,dist=5000)
@@ -18,15 +20,15 @@ dem_function <- function(infile, directory, dem_path) {
   dem <- crop(elev, project(vect(div_bf), crs(elev)), snap = "out")
   cm_to_m <- 0.01
   dem <- dem * cm_to_m
-  writeRaster(dem, glue("{directory}/dem.tif"), overwrite = TRUE)
+  writeRaster(dem, glue("{dem_output_dir}/dem.tif"), overwrite = TRUE)
   
   gdal_utils("warp",
-             source = glue("{directory}/dem.tif"),
-             destination = glue("{directory}/dem_proj.tif"),
+             source = glue("{dem_output_dir}/dem.tif"),
+             destination = glue("{dem_output_dir}/dem_proj.tif"),
              options = c("-of", "GTiff", "-t_srs", "EPSG:5070", "-r", "bilinear")
   )
   
-  wbt_breach_depressions(dem = glue("{directory}/dem_proj.tif"), output = glue("{directory}/dem_corr.tif") )
+  wbt_breach_depressions(dem = glue("{dem_output_dir}/dem_proj.tif"), output = glue("{dem_output_dir}/dem_corr.tif") )
   
 }
 
@@ -63,9 +65,24 @@ add_model_attributes <- function(div_path) {
   hf_version = 'v20.1' 
   #arrow::read_parquet(glue('s3://lynker-spatial/v20/model_attributes/nextgen_{vpu}.parquet')) #older version v20
   
-  model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/{hf_version}/model_attributes/nextgen_{vpu}.parquet')) |>
+  model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/hydrofabric/{hf_version}/model_attributes/nextgen_{vpu}.parquet')) |>
     dplyr::filter(divide_id %in% divides) |> 
     dplyr::collect()
+
+  #if (nrow(model_attr) == 0) {
+  #  model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/{hf_version}/model_attributes.parquet')) |>
+  #    dplyr::filter(divide_id %in% divides) |> 
+  #    dplyr::collect()    
+  #}
+
+  #model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/hydrofabric/{hf_version}/model_attributes.parquet')) |>
+  #  dplyr::filter(divide_id %in% divides) |> 
+  #  dplyr::collect() 
+  
+  #print ("Model attr B")
+  #print (model_attr)
+  cat ("m_attr: ", nrow(model_attr))
+  stopifnot(nrow(model_attr) > 0)
   
   # Write the attributes to a new table in the hydrofabric subset GPKG
   sf::st_write(model_attr, div_path, layer = "model_attributes", append = FALSE)
