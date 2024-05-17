@@ -352,12 +352,13 @@ def get_jinjabmi_unit_conversion_block(model_exe, input_dir):
 # @param input_dir        : input directory (config files of all models exist here under subdirectories)
 # @param realization file : name of the output realization file
 # @param coupled_models : models coupling option (pre-defined names; see main.py)
-# @param runoff_schame  : surface runoff schemes - Options = Schaake or Xinanjiang (For CFE and SFT)
+# @param runoff_scheme  : surface runoff schemes - Options = Schaake or Xinanjiang (For CFE and SFT)
 # @param simulation_time  : dictionary containing simulation start/end time
 # @param baseline_casae   : boolean (if true, baseline scenario realization file is requested)
 #############################################################################
 def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
-                           coupled_models, runoff_scheme, simulation_time, baseline_case):
+                           coupled_models, runoff_scheme, precip_partitioning_scheme,
+                           simulation_time, baseline_case):
 
     lib_file = {}
     extern_path = os.path.join(ngen_dir, 'extern')
@@ -367,7 +368,12 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
     for m in models:
         if m in ['SoilFreezeThaw', 'cfe', 'SoilMoistureProfiles', 'LASAM', 'LGAR-C', \
                  'sloth', 'evapotranspiration', 'noah-owp-modular', 'topmodel']:
-            path_m = os.path.join(os.path.join(extern_path,m), "cmake_build")
+
+            if m in ['sloth', 'noah-owp-modular', 'topmodel']:
+                path_m = os.path.join(os.path.join(extern_path,m), "cmake_build")
+            else:
+                path_m = os.path.join(os.path.join(extern_path,m,m), "cmake_build")
+                
             if (os.path.exists(path_m)):
                 exe_m = glob.glob(os.path.join(path_m,'*bmi.dylib'))
                 if exe_m == []:
@@ -493,6 +499,7 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
 	                    "DEEP_GW_TO_CHANNEL_FLUX", "Q_OUT", "SOIL_STORAGE", "POTENTIAL_ET", "ACTUAL_ET"]
         output_header_fields = ["rain_rate", "direct_runoff", "giuh_runoff", "nash_lateral_runoff",
                                 "deep_gw_to_channel_flux", "q_out", "soil_storage",  "PET", "AET"]
+        
     elif (coupled_models == "nom_cfe"):
         model_type_name = "NOM_CFE"
         main_output_variable = "Q_OUT"
@@ -529,7 +536,7 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
         output_header_fields = ["soil_ice_fraction", "ground_temperature", "rain_rate", "direct_runoff", "giuh_runoff", "nash_lateral_runoff",
                                 "deep_gw_to_channel_flux", "q_out", "soil_storage", "PET", "AET", "soil_moisture_fraction","ice_fraction_schaake"]
         
-        if (runoff_scheme == "Xinanjiang"):
+        if (precip_partitioning_scheme == "Xinanjiang"):
             output_variables[-1] = "ice_fraction_xinanjiang"
             output_header_fields[-1] = "ice_fraction_xinanjiang"
         
@@ -544,7 +551,11 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
         output_header_fields = ["soil_ice_fraction", "ground_temperature", "rain_rate", "PET_rate", "actual_ET",  
                                 "soil_storage", "direct_runoff", "giuh_runoff", "deep_gw_to_channel_flux", "soil_to_gw_flux", "q_out",
                                 "infiltration", "soil_moisture_fraction"]
-
+    print ("Runo: ", runoff_scheme)
+    if (runoff_scheme == "NASH_CASCADE"):
+        output_variables.remove("GIUH_RUNOFF")
+        output_header_fields.remove("giuh_runoff")
+            
     assert len(output_variables) == len(output_header_fields)
     
     global_block["params"]["model_type_name"] = model_type_name
@@ -573,8 +584,10 @@ def main():
         parser.add_argument("-f", dest="forcing_dir",   type=str, required=False, help="the forcing files directory")
         parser.add_argument("-i", dest="input_dir",     type=str, required=True, help="the input files directory")
         parser.add_argument("-m", dest="models_option", type=str, required=True, help="option for models coupling")
+        parser.add_argument("-p", dest="precip_partitioning_scheme", type=str,
+                            required=True, help="option for precip partitioning scheme")
         parser.add_argument("-r", dest="runoff_scheme", type=str, required=False, help="option for runoff scheme")
-        parser.add_argument("-t",    dest="time",       type=json.loads, required=True,  help="simulation start/end time") 
+        parser.add_argument("-t", dest="time",          type=json.loads, required=True,  help="simulation start/end time") 
         parser.add_argument("-b", dest="baseline_case", type=str, required=False, help="option for baseline case", default=False) 
         args = parser.parse_args()
     except:
@@ -611,6 +624,7 @@ def main():
         realization_file = os.path.join(os.getcwd(), "realization_%s.json"%args.models_option),
         coupled_models   = args.models_option,
         runoff_scheme    = args.runoff_scheme,
+        precip_partitioning_scheme    = args.precip_partitioning_scheme,
         simulation_time  = args.time,
         baseline_case    = args.baseline_case
     )

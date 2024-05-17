@@ -7,6 +7,7 @@
 
 import os,sys
 import subprocess
+import pandas as pd
 
 # Note #1: from the command line just run 'python path_to/main.py'
 # Note #2: make sure to adjust the following required arguments
@@ -20,16 +21,18 @@ import subprocess
 # -ngen : path to nextgen directory (recommended to have a soft link in the current directory, ln -s path_to_ngen)
 # -o    : path to output directory (all config files will be stored here)
 # -m    : model option (see available options below)
-# -r    : runoff scheme for CFE OPTION=[Schaake, Xinanjiang]
+# -p    : preciptation partitioning scheme for CFE OPTION=[Schaake, Xinanjiang]
+# -r    : surface runoff scheme for CFE and LASAM OPTION=[GIUH, NASH_CASCADE]
 # -t    : simulation start/end times (example is given below)
 
-path_gpkg      = "data/gage_01033000.gpkg"
+path_gpkg      = "data/Gage_05593900.gpkg"
 path_forcing   = "data/forcing"
-path_ngen      = "ngen_py3.11"
-path_output    = "inputsNL"
-model_option   = "NL"
-runoff_scheme  = 'Schaake'
-#runoff_scheme= 'Xinanjiang'
+path_ngen      = "../ngen/"
+path_output    = "inputsNC"
+model_option   = "NC"
+precip_partitioning_scheme  = 'Schaake'
+surface_runoff_scheme  = 'NASH_CASCADE'
+
 
 
 """
@@ -49,23 +52,17 @@ runoff_scheme= 'Schaake'
 
 
 path_crf = os.path.dirname(sys.argv[0])
-#simulation_time = '{"start_time" : "2012 10 01 0000", "end_time" : "201310010000"}' # format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
-simulation_time = '{"start_time" : "2012-10-01 00:00:00", "end_time" : "2013-10-01 00:00:00"}' # format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
 
 simulation_time = '{"start_time" : "2010-10-01 00:00:00", "end_time" : "2015-10-01 00:00:00"}' # format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
 
 print (simulation_time)
-
-import pandas as pd
-start = pd.Timestamp("2012-10-01 00:00:00")
-print (start, start.strftime("%Y%m%d%H%M"))
 
 print ("CRF workflow path: ", path_crf )
 
 path_crf_create = os.path.join(path_crf,"driver.py")
 
 driver = f'python {path_crf_create} -gpkg {path_gpkg} -ngen {path_ngen} -f {path_forcing} \
--o {path_output} -m {model_option} -r {runoff_scheme} -t \'{simulation_time}\' '
+-o {path_output} -m {model_option} -p {precip_partitioning_scheme} -r {surface_runoff_scheme} -t \'{simulation_time}\' '
 
 print ("Running (from main.py):\n",driver)
 

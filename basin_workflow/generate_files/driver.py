@@ -47,7 +47,10 @@ def main():
         parser.add_argument("-f",    dest="forcing_dir",   type=str, required=True, help="the forcing files directory")
         parser.add_argument("-o",    dest="output_dir",    type=str, required=True,  help="the output files directory")
         parser.add_argument("-ngen", dest="ngen_dir",      type=str, required=True,  help="the ngen directory")
-        parser.add_argument("-r",    dest="runoff_scheme", type=str, required=True, help="option for runoff scheme")
+        parser.add_argument("-p",    dest="precip_partitioning_scheme", type=str,
+                            required=True, help="option for precip partitioning scheme")
+        parser.add_argument("-r",    dest="surface_runoff_scheme", type=str, required=True,
+                            help="option for surface runoff scheme")
         parser.add_argument("-t",    dest="time",          type=str, required=True,  help="simulation start/end time")
         parser.add_argument("-m",    dest="models_option", type=str, required=True,  help="option for models coupling\n%s"%coupled_models_options)
 
@@ -97,7 +100,9 @@ def main():
     path_crf_gen_files = os.path.join(path_crf,"configuration.py")
 
     generate_config_files = f'python {path_crf_gen_files} -gpkg {args.gpkg_file} -ngen {args.ngen_dir} \
-                              -f {args.forcing_dir} -o {args.output_dir} -m {coupled_models} -r {args.runoff_scheme} -t \'{args.time}\' '
+                              -f {args.forcing_dir} -o {args.output_dir} -m {coupled_models} \
+                              -p {args.precip_partitioning_scheme} -r {args.surface_runoff_scheme} \
+                              -t \'{args.time}\' '
 
     print ("*******************************************")
     print (colors.BLUE)
@@ -121,8 +126,9 @@ def main():
 
     path_crf_real_file = os.path.join(path_crf,"realization.py")
 
-    generate_realization_file = f'python {path_crf_real_file} -ngen {args.ngen_dir} -f {args.forcing_dir} -i {args.output_dir} \
-                                  -m {coupled_models} -r {args.runoff_scheme} -b {baseline_case} -t \'{args.time}\' '
+    generate_realization_file = f'python {path_crf_real_file} -ngen {args.ngen_dir} -f {args.forcing_dir} \
+                                  -i {args.output_dir} -m {coupled_models} -p {args.precip_partitioning_scheme} \
+                                  -b {baseline_case} -r {args.surface_runoff_scheme} -t \'{args.time}\' '
 
     print ("Running (from driver.py): \n ", generate_realization_file)
 

@@ -43,8 +43,8 @@ def get_soil_class_NWM(infile):
 # @param infile : input file pointing to hydrofabric basin geopkacge
 # - returns     : geodataframe 
 #############################################################################
-def read_gpkg_file(infile, coupled_models):
-
+def read_gpkg_file(infile, coupled_models, surface_runoff_scheme):
+    
     gdf_soil = gpd.read_file(infile, layer='model_attributes')
     gdf_soil.set_index("divide_id", inplace=True)
 
@@ -113,9 +113,13 @@ def read_gpkg_file(infile, coupled_models):
         gdf['width_dist'] = gdf_soil['width_dist']
         
     if ("cfe" in coupled_models or "lasam" in coupled_models):
-        gdf['giuh'] = gdf_soil['giuh']
-        
-    # get catchment ids
+        if (surface_runoff_scheme == "GIUH" or surface_runoff_scheme == 1):
+            gdf['giuh'] = gdf_soil['giuh']
+        elif (surface_runoff_scheme == "NASH_CASCADE" or surface_runoff_scheme == 2):
+            gdf['N_nash_surface'] = gdf_soil['N_nash_surface']
+            gdf['K_nash_surface'] = gdf_soil['K_nash_surface']
+    
+    # get catchment ids -- for Shengting
     df_cats = gpd.read_file(infile, layer='divides')
     catids = [int(re.findall('[0-9]+',s)[0]) for s in df_cats['divide_id']]
     
@@ -266,10 +270,10 @@ def write_nom_input_files(catids, nom_dir, forcing_dir, gpkg_file, simulation_ti
 # @param gpkg_file      : basin geopackage file
 # @param coupled_models : option needed to modify CFE config files based on the coupling type
 #############################################################################
-def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, gdf_soil,
+def write_cfe_input_files(catids, precip_partitioning_scheme, surface_runoff_scheme, soil_class_NWM, gdf_soil,
                           cfe_dir, coupled_models):
 
-    if (not runoff_scheme in ["Schaake", "Xinanjiang"]):
+    if (not precip_partitioning_scheme in ["Schaake", "Xinanjiang"]):
         sys.exit("Runoff scheme should be: Schaake or Xinanjiang")
     
     ice_content_threshold  = 0.3 # used when coupled with Soil freeze thaw model
@@ -280,10 +284,11 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, gdf_soil,
     for catID in catids:
         cat_name = 'cat-'+str(catID) 
         fname = cat_name+'*.txt'
-
+        
         # cfe params set
         cfe_params = ['forcing_file=BMI',
-                      'surface_partitioning_scheme=Schaake',
+                      'surface_water_partitioning_scheme=Schaake',
+                      'surface_runoff_scheme=GIUH',
                       'soil_params.depth=2.0[m]',
                       'soil_params.b=' + str(gdf_soil['soil_params.b'][cat_name])+'[]',
                       'soil_params.satdk=' + str(gdf_soil['soil_params.satdk'][cat_name])+'[m s-1]', 
@@ -313,14 +318,20 @@ def write_cfe_input_files(catids, runoff_scheme, soil_class_NWM, gdf_soil,
             cfe_list[3] = 1.1
 
         # add giuh ordinates
-        giuh_cat = json.loads(gdf_soil['giuh'][cat_name])
-        giuh_cat = pd.DataFrame(giuh_cat, columns=['v', 'frequency'])
+        if (surface_runoff_scheme == "GIUH" or surface_runoff_scheme == 1):
+            giuh_cat = json.loads(gdf_soil['giuh'][cat_name])
+            giuh_cat = pd.DataFrame(giuh_cat, columns=['v', 'frequency'])
 
-        giuh_ordinates = ",".join(str(x) for x in np.array(giuh_cat["frequency"]))
-        cfe_params.append(f'giuh_ordinates={giuh_ordinates}')
+            giuh_ordinates = ",".join(str(x) for x in np.array(giuh_cat["frequency"]))
+            cfe_params.append(f'giuh_ordinates={giuh_ordinates}')
+            
+        elif (surface_runoff_scheme == "NASH_CASCADE" or surface_runoff_scheme == 2):
+            cfe_params[2]='surface_runoff_scheme=NASH_CASCADE'
+            cfe_params.append("N_nash_surface=" + str(int(gdf_soil['N_nash_surface'][cat_name]))+'[]')
+            cfe_params.append("K_nash_surface=" + str(gdf_soil['K_nash_surface'][cat_name])+'[h-1]')
         
-        if(runoff_scheme == 'Xinanjiang'):
-            cfe_params[1]='surface_partitioning_scheme=Xinanjiang'
+        if(precip_partitioning_scheme == 'Xinanjiang'):
+            cfe_params[1]='surface_water_partitioning_scheme=Xinanjiang'
             cfe_params.append('a_Xinanjiang_inflection_point_parameter='+str(soil_class_NWM['AXAJ'][soil_id]))
             cfe_params.append('b_Xinanjiang_shape_parameter='+str(soil_class_NWM['BXAJ'][soil_id]))
             cfe_params.append('x_Xinanjiang_shape_parameter='+str(soil_class_NWM['XXAJ'][soil_id]))
@@ -385,18 +396,19 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
 
         ################
         twi_cat = json.loads(gdf_soil['twi'][cat_name])
+
         twi_cat = pd.DataFrame(twi_cat, columns=['v', 'frequency'])
         # frequency: distributed area by percentile, v: twi value
-                
+               
         twi_cat = twi_cat.sort_values(by=['v'],ascending=False)
-
+        
         # add width function commulative distribution
         width_f = json.loads(gdf_soil['width_dist'][cat_name])
         df_width_f = pd.DataFrame(width_f, columns=['v', 'frequency'])
         v_cumm = np.cumsum(df_width_f['frequency'])
         
         nclasses_twi = len(twi_cat['frequency'].values)
-       
+        
         nclasses_width_function = len(df_width_f['frequency'].values) # width functions (distance to the outlet)
         subcat = ["1 1 1",
                   f'Extracted study basin: {cat_name}',
@@ -426,6 +438,7 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
             f.writelines('\n'.join(subcat))
 
         f.close()
+        
                        
 #############################################################################
 # The function generates configuration file for soil freeze thaw (SFT) model
@@ -438,10 +451,11 @@ def write_topmodel_input_files(catids, gdf_soil, topmodel_dir, coupled_models):
 #                         Quartz properties for a given soil type
 # @param sft_dir        : output directory (config files are written to this directory)
 #############################################################################
-def write_sft_input_files(catids, runoff_scheme, forcing_dir, gdf_soil, soil_class_NWM, sft_dir):
+def write_sft_input_files(catids, precip_partitioning_scheme, surface_runoff_scheme, forcing_dir,
+                          gdf_soil, soil_class_NWM, sft_dir):
 
     # runoff scheme
-    if (not runoff_scheme in ["Schaake", "Xinanjiang"]):
+    if (not precip_partitioning_scheme in ["Schaake", "Xinanjiang"]):
         sys.exit("Runoff scheme should be: Schaake or Xinanjiang")
 
     # num cells -- number of cells used for soil column discretization
@@ -478,7 +492,7 @@ def write_sft_input_files(catids, runoff_scheme, forcing_dir, gdf_soil, soil_cla
                       'soil_params.b=' + str(gdf_soil['soil_params.b'][cat_name]) + '[]', 
                       'soil_params.satpsi=' + str(gdf_soil['soil_params.satpsi'][cat_name]) + '[m]', 
                       'soil_params.quartz=' + str(soil_class_NWM['QTZ'][soil_id]) +'[]',
-                      'ice_fraction_scheme=' + runoff_scheme,
+                      'ice_fraction_scheme=' + precip_partitioning_scheme,
                       f'soil_z={soil_z}[m]',
                       f'soil_temperature={MAAT}[K]'
                       ]
@@ -620,9 +634,14 @@ def main():
         parser.add_argument("-o",    dest="output_dir",    type=str, required=True,  help="the output files directory")
         parser.add_argument("-ngen", dest="ngen_dir",      type=str, required=True,  help="the ngen directory")
         parser.add_argument("-m",    dest="models_option", type=str, required=True,  help="option for models coupling")
-        parser.add_argument("-r",    dest="runoff_scheme", type=str, required=False, help="option for runoff scheme", default="Schaake")
-        parser.add_argument("-t",    dest="time",          type=json.loads, required=True,  help="simulation start/end time") 
-        parser.add_argument("-ow",   dest="overwrite",     type=str, required=False, default=True,help="overwrite old/existing files")
+        parser.add_argument("-p",    dest="precip_partitioning_scheme", type=str, required=False,
+                            help="option for precip partitioning scheme", default="Schaake")
+        parser.add_argument("-r",    dest="surface_runoff_scheme", type=str, required=False,
+                            help="option for surface runoff scheme", default="GIUH")
+        parser.add_argument("-t",    dest="time",          type=json.loads, required=True,
+                            help="simulation start/end time") 
+        parser.add_argument("-ow",   dest="overwrite",     type=str, required=False, default=True,
+                            help="overwrite old/existing files")
     except:
         parser.print_help()
         sys.exit(0)
@@ -639,13 +658,13 @@ def main():
         sys.exit(str_msg)
 
    
-    gdf_soil, catids = read_gpkg_file(args.gpkg_file, args.models_option)
+    gdf_soil, catids = read_gpkg_file(args.gpkg_file, args.models_option, args.surface_runoff_scheme)
     
     # doing it outside NOM as some of params from this file are also needed by CFE for Xinanjiang runoff scheme
     nom_params = os.path.join(args.ngen_dir,"extern/noah-owp-modular/noah-owp-modular/parameters")
     
     # *************** NOM  ********************
-    if "nom" in args.models_option:
+    if "nom" in args.models_option and False:
         print ("Generating config files for NOM ...")
         nom_dir = os.path.join(args.output_dir,"nom")
         create_directory(nom_dir)
@@ -665,8 +684,8 @@ def main():
         nom_soil_file = os.path.join(nom_params,"SOILPARM.TBL")
         soil_class_NWM = get_soil_class_NWM(nom_soil_file)
         
-        write_cfe_input_files(catids, args.runoff_scheme, soil_class_NWM, gdf_soil,
-                              cfe_dir, args.models_option)
+        write_cfe_input_files(catids, args.precip_partitioning_scheme, args.surface_runoff_scheme,
+                              soil_class_NWM, gdf_soil, cfe_dir, args.models_option)
 
     # *************** TOPMODEL  ********************
     if "topmodel" in args.models_option:
@@ -691,8 +710,8 @@ def main():
         nom_soil_file = os.path.join(nom_params,"SOILPARM.TBL")
         soil_class_NWM = get_soil_class_NWM(nom_soil_file)
         
-        write_sft_input_files(catids, args.runoff_scheme, args.forcing_dir, gdf_soil,
-                              soil_class_NWM, sft_dir)
+        write_sft_input_files(catids, args.precip_partitioning_scheme, args.surface_runoff_scheme,
+                              args.forcing_dir, gdf_soil, soil_class_NWM, sft_dir)
 
         write_smp_input_files(catids, gdf_soil, smp_dir, args.models_option)
         
