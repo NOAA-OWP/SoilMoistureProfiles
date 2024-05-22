@@ -44,7 +44,7 @@ def main():
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-gpkg", dest="gpkg_file",     type=str, required=True,  help="the gpkg file")
-        parser.add_argument("-f",    dest="forcing_dir",   type=str, required=True, help="the forcing files directory")
+        parser.add_argument("-f",    dest="forcing_dir",   type=str, required=True,  help="the forcing files directory")
         parser.add_argument("-o",    dest="output_dir",    type=str, required=True,  help="the output files directory")
         parser.add_argument("-ngen", dest="ngen_dir",      type=str, required=True,  help="the ngen directory")
         parser.add_argument("-p",    dest="precip_partitioning_scheme", type=str,
@@ -53,6 +53,7 @@ def main():
                             help="option for surface runoff scheme")
         parser.add_argument("-t",    dest="time",          type=str, required=True,  help="simulation start/end time")
         parser.add_argument("-m",    dest="models_option", type=str, required=True,  help="option for models coupling\n%s"%coupled_models_options)
+        parser.add_argument("-netcdf", dest="netcdf", type=str, required=False, default=False, help="option for forcing data format")
 
         args = parser.parse_args()
     except:
@@ -128,7 +129,8 @@ def main():
 
     generate_realization_file = f'python {path_crf_real_file} -ngen {args.ngen_dir} -f {args.forcing_dir} \
                                   -i {args.output_dir} -m {coupled_models} -p {args.precip_partitioning_scheme} \
-                                  -b {baseline_case} -r {args.surface_runoff_scheme} -t \'{args.time}\' '
+                                  -b {baseline_case} -r {args.surface_runoff_scheme} -t \'{args.time}\' \
+                                  -netcdf {args.netcdf}'
 
     print ("Running (from driver.py): \n ", generate_realization_file)
 

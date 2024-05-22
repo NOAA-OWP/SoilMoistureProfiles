@@ -279,6 +279,8 @@ def write_cfe_input_files(catids, precip_partitioning_scheme, surface_runoff_sch
     ice_content_threshold  = 0.3 # used when coupled with Soil freeze thaw model
 
     urban_decimal_fraction = 0.0 # used when runoff scheme is Xinanjiang
+
+    delimiter = ","
     
     # loop over all catchments and write config files
     for catID in catids:
@@ -329,6 +331,9 @@ def write_cfe_input_files(catids, precip_partitioning_scheme, surface_runoff_sch
             cfe_params[2]='surface_runoff_scheme=NASH_CASCADE'
             cfe_params.append("N_nash_surface=" + str(int(gdf_soil['N_nash_surface'][cat_name]))+'[]')
             cfe_params.append("K_nash_surface=" + str(gdf_soil['K_nash_surface'][cat_name])+'[h-1]')
+            s = [str(0.0),]*int(gdf_soil['N_nash_surface'][cat_name])
+            s = delimiter.join(s)
+            cfe_params.append("nash_storage_surface=" + str(s)+'[]')
         
         if(precip_partitioning_scheme == 'Xinanjiang'):
             cfe_params[1]='surface_water_partitioning_scheme=Xinanjiang'
@@ -657,14 +662,13 @@ def main():
         str_msg = 'The forcing directory does not exist! %s'%args.forcing_dir
         sys.exit(str_msg)
 
-   
     gdf_soil, catids = read_gpkg_file(args.gpkg_file, args.models_option, args.surface_runoff_scheme)
     
     # doing it outside NOM as some of params from this file are also needed by CFE for Xinanjiang runoff scheme
     nom_params = os.path.join(args.ngen_dir,"extern/noah-owp-modular/noah-owp-modular/parameters")
     
     # *************** NOM  ********************
-    if "nom" in args.models_option and False:
+    if "nom" in args.models_option:
         print ("Generating config files for NOM ...")
         nom_dir = os.path.join(args.output_dir,"nom")
         create_directory(nom_dir)

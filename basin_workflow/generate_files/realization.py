@@ -358,7 +358,7 @@ def get_jinjabmi_unit_conversion_block(model_exe, input_dir):
 #############################################################################
 def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
                            coupled_models, runoff_scheme, precip_partitioning_scheme,
-                           simulation_time, baseline_case):
+                           simulation_time, baseline_case, is_netcdf_forcing):
 
     lib_file = {}
     extern_path = os.path.join(ngen_dir, 'extern')
@@ -459,9 +459,21 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
                 "provider": "CsvPerFeature"
             }
         },
-        "output_root": "./ngen_output"
+        "output_root": "./div_output"
     }
 
+    # if div_output does not exist, create one
+    if(not os.path.exists("div_output")):
+       os.mkdir("div_output")
+    
+    # Update the forcing block if the forcings are in netcdf format
+    if (is_netcdf_forcing):
+        forcing_block = {
+            "path": forcing_dir,
+            "provider": "NetCDF"
+        }
+        
+    root["global"]["forcing"] = forcing_block
     
     # routing block
     routing_block = {
@@ -523,7 +535,6 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
         model_type_name = "NOM_TOPMODEL"
         main_output_variable = "Qout"
         modules = [nom_block, topmodel_block]
-        print ("HERE", topmodel_block)
         output_variables = ["Qout", "soil_water__domain_volume_deficit","land_surface_water__runoff_mass_flux"]
         output_header_fields = ["qout", "soil_deficit", "direct_runoff"]
     elif (coupled_models == "nom_cfe_smp_sft"):
@@ -551,7 +562,7 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
         output_header_fields = ["soil_ice_fraction", "ground_temperature", "rain_rate", "PET_rate", "actual_ET",  
                                 "soil_storage", "direct_runoff", "giuh_runoff", "deep_gw_to_channel_flux", "soil_to_gw_flux", "q_out",
                                 "infiltration", "soil_moisture_fraction"]
-    print ("Runo: ", runoff_scheme)
+        
     if (runoff_scheme == "NASH_CASCADE"):
         output_variables.remove("GIUH_RUNOFF")
         output_header_fields.remove("giuh_runoff")
@@ -571,7 +582,6 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
     
     # save realization file as .json
     with open(realization_file, 'w') as outfile:
-        print (realization_file)
         json.dump(root, outfile, indent=4, separators=(", ", ": "), sort_keys=False)
 
     
@@ -588,7 +598,9 @@ def main():
                             required=True, help="option for precip partitioning scheme")
         parser.add_argument("-r", dest="runoff_scheme", type=str, required=False, help="option for runoff scheme")
         parser.add_argument("-t", dest="time",          type=json.loads, required=True,  help="simulation start/end time") 
-        parser.add_argument("-b", dest="baseline_case", type=str, required=False, help="option for baseline case", default=False) 
+        parser.add_argument("-b", dest="baseline_case", type=str, required=False, help="option for baseline case", default=False)
+        parser.add_argument("-netcdf", dest="netcdf", type=str, required=False, default=False, help="option for forcing data format")
+        
         args = parser.parse_args()
     except:
         parser.print_help()
@@ -625,8 +637,9 @@ def main():
         coupled_models   = args.models_option,
         runoff_scheme    = args.runoff_scheme,
         precip_partitioning_scheme    = args.precip_partitioning_scheme,
-        simulation_time  = args.time,
-        baseline_case    = args.baseline_case
+        simulation_time   = args.time,
+        baseline_case     = args.baseline_case,
+        is_netcdf_forcing = args.netcdf
     )
 
 
