@@ -77,10 +77,10 @@ run_driver <- function(gage_id = NULL, is_gpkg_provided = FALSE,
   ################################################################################
   # There are many "model" options to specify the velocity.
   # Here we are using a simple approach: constant velocity as a function of upstream drainage area.
-  vel_channel     <- 1.0
-  vel_overland    <- 0.5
-  vel_gully       <- 0.2
-  gully_threshold <- 90.0
+  vel_channel     <- 1.0  # meter/second
+  vel_overland    <- 0.1  # Fred: 0.1
+  vel_gully       <- 0.2 # meter per second
+  gully_threshold <- 30.0 # m (longest , closer to 10-30 m, Refs) 
   
   giuh_compute <- giuh_function(div_infile = outfile, dem_output_dir = dem_output_dir, 
                                 vel_channel, vel_overland, vel_gully, gully_threshold)

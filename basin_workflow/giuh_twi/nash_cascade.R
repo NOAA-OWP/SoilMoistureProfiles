@@ -66,7 +66,7 @@ Nash_Cascade_Runoff <- function(rain_mm, nsubsteps, time_h, factor, N) {
 # default calib_n_k is FALSE, i.e. only calibrate K (one parameter)
 get_nash_params <- function(giuh_dat_values, calib_n_k = FALSE) {
   
-  rainfall_input <- 15    ## mm rainfall
+  rainfall_input <- 15    ## mm rainfall (good point, make this to 1.0 and recover params)
   n_cats = length(giuh_dat_values$divide_id)
   
   N_vector <- vector(mode = "numeric", length = n_cats)
@@ -75,7 +75,7 @@ get_nash_params <- function(giuh_dat_values, calib_n_k = FALSE) {
   # loop over all catchments
   for (ncat in 1:n_cats) {
     peak_error_old <- 1000
-    substeps <- 10
+    substeps <- 10     # hardcoded
       
     d = fromJSON(giuh_dat_values$giuh[ncat]) 
     cat_giuh_ordinates = d$frequency
@@ -85,7 +85,7 @@ get_nash_params <- function(giuh_dat_values, calib_n_k = FALSE) {
       
     # using giuh ordinates and rainfall, compute runoff per hour
     for (ix in 1:length(cat_giuh_ordinates)) {
-      runoff_giuh[ix] =  rainfall_input * cat_giuh_ordinates[ix] 
+      runoff_giuh[ix] =  rainfall_input * cat_giuh_ordinates[ix]  #this should sum up to 1.0
     }
     
     # find index of the peak runoff

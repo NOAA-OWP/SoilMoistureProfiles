@@ -576,6 +576,7 @@ def write_lasam_input_files(catids, soil_param_file, gdf_soil, lasam_dir, couple
                          'use_closed_form_G=false',
                          'layer_soil_type=',
                          'wilting_point_psi=15495.0[cm]',
+                         'field_capacity_psi=340.9[cm]',
                          'giuh_ordinates='
                          ]
 
