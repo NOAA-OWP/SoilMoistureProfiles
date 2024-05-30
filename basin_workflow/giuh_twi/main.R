@@ -30,6 +30,7 @@
 ################################################################################
 # Point r_path to the directory of R scripts downloaded from the repository
 r_path = "~/Core/SimulationsData/preprocessing/hydrofabric/smp_basin_workflow/basin_workflow/giuh_twi"
+
 # (a)
 source(paste0(r_path, "/install_load_libs.R"))
 # (b)
@@ -38,8 +39,7 @@ source(glue("{r_path}/custom_functions.R"))
 #dem_infile = "/vsicurl/https://lynker-spatial.s3.amazonaws.com/gridded-resources/dem.vrt"
 
 # (d) Point root_outpath to the directory where geopackage and other related files will be stored
-#outpath_dir = "/Users/ahmadjan/Core/SimulationsData/preprocessing/CAMELS_2024/"
-output_dir = "/Users/ahmadjan/Core/SimulationsData/preprocessing/test"
+outpath_dir = "/Users/ahmadjan/Core/SimulationsData/preprocessing/CAMELS_2024/"
 setwd(output_dir)
 wbt_wd(getwd())
 
@@ -69,8 +69,8 @@ if (option_using_gage_IDs == TRUE) {
   # Modify this part according your settings
   ################################################################################
   
-  IDs_from_file <- TRUE
-  gage_id <- NULL
+  IDs_from_file <- FALSE
+  gage_id <- '01047000'
   
   if (IDs_from_file) {
     
@@ -85,7 +85,7 @@ if (option_using_gage_IDs == TRUE) {
   
   stopifnot( length(gage_ids) > 0)
   
-  cats_failed <- run_given_gage_IDs(gage_ids[c(1:2)], output_dir)      
+  cats_failed <- run_given_gage_IDs(gage_ids, output_dir)      
   
   
 } else if (option_using_gpkgs == TRUE) {
@@ -107,12 +107,6 @@ print(cats_failed)
 ###############################################################################
 # DONE
 ###############################################################################
-
-
-
-
-
-
 
 
 #model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/hydrofabric/v20.1/model_attributes/nextgen_01.parquet'))

@@ -2,6 +2,21 @@
 # STEP #1: The packages need to run the script
 ################################################################################
 
+if (Sys.info()['sysname'] == "Windows") {
+  options(download.file.method = "curl", download.file.extra="-k -L")
+}
+
+if(!requireNamespace("devtools", quietly=TRUE))
+  install.packages("devtools")
+if(!requireNamespace("curl", quietly=TRUE))
+  install.packages("curl")
+if(!requireNamespace("usethis", quietly=TRUE))
+  install.packages("usethis")
+
+library(curl)
+library(usethis)
+library(devtools)
+
 if(!requireNamespace("hydrofabric3D", quietly=TRUE))
   devtools::install_github("mikejohnson51/hydrofabric3D")
 
@@ -22,21 +37,30 @@ if(!requireNamespace("AOI", quietly=TRUE))
 
 if(!requireNamespace("sf", quietly=TRUE)) install.packages("sf")
 if(!requireNamespace("terra", quietly=TRUE)) install.packages("terra")
-if(!requireNamespace("whitebox", quietly=TRUE)) install.packages("whitebox")
+if(!requireNamespace("whitebox", quietly=TRUE)) {
+  install.packages("whitebox")
+  whitebox::install_whitebox()
+}
+
 if(!requireNamespace("dplyr", quietly=TRUE)) install.packages("dplyr")
 if(!requireNamespace("glue", quietly=TRUE)) install.packages("glue")
 if(!requireNamespace("raster", quietly=TRUE)) install.packages("raster")
 if(!requireNamespace("jsonlite", quietly=TRUE)) install.packages("jsonlite")
 if(!requireNamespace("ggplot2", quietly=TRUE)) install.packages("ggplot2")
 
+
+
+
+
 # install arrow package from source, if any conflicts/errors happen due to arrow package
 #Sys.setenv(LIBARROW_BINARY = TRUE); install.packages('arrow', type = "source")
 
-#library(hydrofabric)
+library(hydrofabric)
 suppressPackageStartupMessages(library(hydrofabric))
 library(climateR)
 library(zonal)
 library(whitebox)
+
 library(sf)
 library(terra)
 library(dplyr)

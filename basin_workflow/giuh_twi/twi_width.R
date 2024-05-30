@@ -56,7 +56,7 @@ width_function <- function(div_infile, dem_output_dir) {
   
   wbt_downslope_flowpath_length(d8_pntr = glue("{dem_output_dir}/dem_d8.tif"), 
                                 output = glue("{dem_output_dir}/downslope_fp_length.tif"), watersheds=NULL)
-  # note: watersheds=div never tested but maybe useful in some cases; defualt is NULL
+  # note: watersheds=div never tested but maybe useful in some cases; default is NULL
   
   flowpath_length <- rast(glue("{dem_output_dir}/downslope_fp_length.tif"))
   

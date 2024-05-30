@@ -12,7 +12,7 @@ dem_function <- function(div_infile,
   
   # Get the catchment geopackage
   div <- read_sf(div_infile, 'divides')
-  river <- read_sf(div_infile, "flowpaths")
+  #river <- read_sf(div_infile, "flowlines")
   
   # Buffer because we want to guarantee we don not have boundary issues when processing the DEM
   div_bf <- st_buffer(div,dist=5000)
@@ -57,31 +57,15 @@ add_model_attributes <- function(div_path) {
   #vpu = read_sf(outfile, "network") %>% pull(vpu) %>% unique()
   
   # full conus model param file is here: s3://lynker-spatial/v20/conus_model_attributes.parquet
-  print (glue("VPU+: {vpu}"))
+  #print (glue("VPU+: {vpu}"))
   
-  
-  #cfe = arrow::read_parquet('s3://lynker-spatial/v20/model_attributes/nextgen_01.parquet') |>
-  #  select(divide_id, twi_dist_4)
   hf_version = 'v20.1' 
-  #arrow::read_parquet(glue('s3://lynker-spatial/v20/model_attributes/nextgen_{vpu}.parquet')) #older version v20
   
   model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/hydrofabric/{hf_version}/model_attributes/nextgen_{vpu}.parquet')) |>
     dplyr::filter(divide_id %in% divides) |> 
     dplyr::collect()
 
-  #if (nrow(model_attr) == 0) {
-  #  model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/{hf_version}/model_attributes.parquet')) |>
-  #    dplyr::filter(divide_id %in% divides) |> 
-  #    dplyr::collect()    
-  #}
-
-  #model_attr <- arrow::read_parquet(glue('s3://lynker-spatial/hydrofabric/{hf_version}/model_attributes.parquet')) |>
-  #  dplyr::filter(divide_id %in% divides) |> 
-  #  dplyr::collect() 
-  
-  #print ("Model attr B")
-  #print (model_attr)
-  cat ("m_attr: ", nrow(model_attr))
+  #cat ("m_attr: ", nrow(model_attr))
   stopifnot(nrow(model_attr) > 0)
   
   # Write the attributes to a new table in the hydrofabric subset GPKG
