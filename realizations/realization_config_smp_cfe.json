@@ -95,7 +95,7 @@
                                         "Qb_topmodel": "sloth_Qb_topmodel",
                                         "Qv_topmodel": "sloth_Qv_topmodel",
 					"global_deficit" : "sloth_global_deficit",
-                                        "sloth_soil_moisture_wetting_fronts": "soil_moisture_wetting_fronts",
+                                        "soil_moisture_wetting_fronts": "sloth_soil_moisture_wetting_fronts",
 					"soil_depth_wetting_fronts" : "sloth_soil_depth_wetting_fronts",
 					"num_wetting_fronts" : "sloth_num_wetting_fronts"
 				    },
