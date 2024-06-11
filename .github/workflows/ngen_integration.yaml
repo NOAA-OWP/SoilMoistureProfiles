@@ -54,7 +54,7 @@ jobs:
       - name: Build CFE
         uses: actions/checkout@v4
         with:
-	  repository: noaa-owp/cfe
+          repository: noaa-owp/cfe
 
       - name: Build CFE Library
         run: |
