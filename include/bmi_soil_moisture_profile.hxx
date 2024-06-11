@@ -16,7 +16,7 @@ namespace coupler {
 
 }
 
-class BmiSoilMoistureProfile : public bmixx::Bmi {
+class BmiSoilMoistureProfile : public bmi::Bmi {
 public:
   BmiSoilMoistureProfile() {
     this->input_var_names[0]  = "soil_storage";
