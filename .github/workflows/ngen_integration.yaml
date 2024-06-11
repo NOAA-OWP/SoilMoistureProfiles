@@ -50,10 +50,22 @@ jobs:
         with:
           repository: noaa-owp/cfe
 
+      # Checkout and build CFE
+      - name: Checkout the commit
+        uses: actions/checkout@v4
+        with:
+          repository: noaa-owp/cfe
+      
       - name: Build CFE Library
         run: |
           cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
+
+      - name: Save CFE to a Temp Directory
+        run: |
+          # Move files to a temporary directory
+          mkdir ${{runner.temp}}/cfe
+          mv ./* ${{runner.temp}}/cfe
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       # Checkout ngen after cfe checkout so $GITHUB_WORKSPACE doesn't get clobbered
@@ -99,6 +111,11 @@ jobs:
         run: |
           rm -rf extern/SoilMoistureProfiles/SoilMoistureProfiles/*
           mv ${{runner.temp}}/smp/* extern/SoilMoistureProfiles/SoilMoistureProfiles
+
+      - name: Move CFE Files Including cmake_build to Appropriate Directory
+        run: |
+          rm -rf extern/cfe/cfe/*
+          mv ${{runner.temp}}/cfe/* extern/cfe/cfe
 
       - name: Run Ngen Test for SMP
         run: |
