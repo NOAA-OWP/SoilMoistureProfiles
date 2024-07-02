@@ -39,10 +39,10 @@ import geopandas as gpd
 #      the partitioned .json is also stored in the data directory
 ################################################ ###################################
 
-root_dir     = "/Users/ahmadjan/Core/SimulationsData/worktasks/CAMELS_2024/basins516/"
-workflow_dir = "/Users/ahmadjan/Core/SimulationsData/preprocessing/hydrofabric/smp_basin_workflow/basin_workflow/generate_files"
-forcing_dir  = "/Users/ahmadjan/Core/SimulationsData/worktasks/CAMELS_2024/forcings/"
-ngen_dir     = "/Users/ahmadjan/codes/ngen/ngen"
+root_dir     = "/home/ahmad.jan/core/projects/ngen_evaluation_camels/basins516"
+workflow_dir = "/home/ahmad.jan/codes/basin_workflow/basin_workflow/generate_files"
+forcing_dir  = "/local/For_Ahmad/CAMELS_Basins_NextGen_Forcings/"
+ngen_dir     = "/home/ahmad.jan/codes/ngen/ngen"
 
 # simulation time format YYYYMMDDHHMM (YYYY, MM, DD, HH, MM)
 simulation_time            = '{"start_time" : "2010-10-01 00:00:00", "end_time" : "2015-10-01 00:00:00"}' 
@@ -52,6 +52,7 @@ surface_runoff_scheme      = 'NASH_CASCADE'
 is_netcdf_forcing          = True
 clean_all                  = True
 partition_gpkg             = True
+is_routing                 = True
 print (simulation_time)
 
 ############ CHECKS ###################
@@ -108,14 +109,14 @@ for dir in gpkg_dirs:
 
     driver = f'python {workflow_driver} -gpkg {gpkg_dir} -ngen {ngen_dir} -f {forcing_dir} \
     -o {output_dir} -m {model_option} -p {precip_partitioning_scheme} -r {surface_runoff_scheme} -t \'{simulation_time}\' \
-    -netcdf {is_netcdf_forcing}'
+    -netcdf {is_netcdf_forcing} -troute {is_routing}'
 
     result = subprocess.call(driver,shell=True)
 
 
     #####################################################################
     # Parition geopackage
-    if(partition_gpkg ):
+    if(partition_gpkg):
         if (os.path.exists(f"{ngen_dir}/cmake_build/partitionGenerator")):
             
             x = gpd.read_file(gpkg_dir, layer="divides")
@@ -133,7 +134,7 @@ for dir in gpkg_dirs:
             partition=f"{ngen_dir}/cmake_build/partitionGenerator {gpkg_dir} {gpkg_dir} {fpar} {nproc} \"\" \"\" "
             result = subprocess.call(partition,shell=True)
             
-    #break
+    break
     
 """
 coupled_models_options = {

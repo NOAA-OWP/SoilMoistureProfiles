@@ -19,6 +19,7 @@ import argparse
 import pandas as pd
 import geopandas as gpd
 import numpy as np
+import shutil
 
 #############################################################################
 # module for potential evapotranspiration block in the nextgen realization file 
@@ -358,14 +359,23 @@ def get_jinjabmi_unit_conversion_block(model_exe, input_dir):
 #############################################################################
 def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
                            coupled_models, runoff_scheme, precip_partitioning_scheme,
-                           simulation_time, baseline_case, is_netcdf_forcing):
+                           simulation_time, baseline_case, is_netcdf_forcing,
+                           is_troute):
 
     lib_file = {}
     extern_path = os.path.join(ngen_dir, 'extern')
     models = os.listdir(extern_path)
     lib_files = {}
+    platform = sys.platform
+    
+    if ("linux" in platform):
+       ext = "lib*.so"
+    elif ("darwin" in platform):
+       ext = "lib*.dylib"
+
     # , include topmodel later
     for m in models:
+    
         if m in ['SoilFreezeThaw', 'cfe', 'SoilMoistureProfiles', 'LASAM', 'LGAR-C', \
                  'sloth', 'evapotranspiration', 'noah-owp-modular', 'topmodel']:
 
@@ -373,20 +383,20 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
                 path_m = os.path.join(os.path.join(extern_path,m), "cmake_build")
             else:
                 path_m = os.path.join(os.path.join(extern_path,m,m), "cmake_build")
-                
+            
+
             if (os.path.exists(path_m)):
-                exe_m = glob.glob(os.path.join(path_m,'*bmi.dylib'))
+                exe_m = glob.glob(os.path.join(path_m, ext))
                 if exe_m == []:
-                    exe_m = glob.glob(os.path.join(path_m,'*model.dylib'))
+                    continue
             
                 exe_m = exe_m[0].split('extern')
                 exe_m = exe_m[1].split('.')
-                #lib_files[m] = './ngen/extern'+str(exe_m[0])
                 lib_files[m] = os.path.join(ngen_dir, 'extern'+str(exe_m[0]))
             else:
                 lib_files[m] = ""
 
-    print ("\n********** Models executables under extern **************")
+    print ("\n********** Models executables under extern directory **************")
     for key, value in lib_files.items():
         print ("Model: ", key, ",", value)
     
@@ -459,13 +469,17 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
                 "provider": "CsvPerFeature"
             }
         },
-        "output_root": "./div_output"
+        "output_root": "./outputs/div"
     }
 
-    # if div_output does not exist, create one
-    if(not os.path.exists("div_output")):
-       os.mkdir("div_output")
+    # if outputs dir does not exist, create one
+    if(os.path.exists("outputs")):
+       shutil.rmtree("outputs")
     
+    os.makedirs("outputs/div")
+    os.makedirs("outputs/troute")
+    os.makedirs("outputs/troute_parq")
+        
     # Update the forcing block if the forcings are in netcdf format
     if (is_netcdf_forcing):
         forcing_block = {
@@ -476,14 +490,24 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
     root["global"]["forcing"] = forcing_block
     
     # routing block
-    routing_block = {
-        "routing": {
-            "t_route_connection_path": os.path.join(input_dir, "extern/t-route"),
-            "t_route_config_file_with_path": os.path.join(input_dir, "troute_config.yaml")            
+    if (is_troute) :
+        routing_block = {
+            "routing": {
+               #"t_route_connection_path": os.path.join(input_dir, "extern/t-route"),
+               "t_route_config_file_with_path": os.path.join(input_dir, "troute_config.yaml")            
+             }
         }
-    }
-    #root.update(routing_block)
-
+        root.update(routing_block)
+        
+        # if div_output does not exist, create one
+        #if(os.path.exists("troute_output")):
+        #   shutil.rmtree("troute_output")
+        
+        #if(os.path.exists("troute_output_par")):
+        #   shutil.rmtree("troute_output_par")
+        
+        #os.mkdir("troute_output")
+        #os.mkdir("troute_output_par")
 
     
     # fill the formulation block "to_be_filled_in" for the global list
@@ -569,12 +593,12 @@ def write_realization_file(ngen_dir, forcing_dir, input_dir, realization_file,
             
     assert len(output_variables) == len(output_header_fields)
     
-    global_block["params"]["model_type_name"] = model_type_name
+    global_block["params"]["model_type_name"]      = model_type_name
     global_block["params"]["main_output_variable"] = main_output_variable
-    global_block["params"]["output_variables"] = output_variables
-    global_block["params"]["output_variables"] = output_variables
+    global_block["params"]["output_variables"]     = output_variables
+    global_block["params"]["output_variables"]     = output_variables
     global_block["params"]["output_header_fields"] = output_header_fields
-    global_block["params"]["modules"] = modules
+    global_block["params"]["modules"]              = modules
 
 
     # replace formulations block
@@ -600,7 +624,7 @@ def main():
         parser.add_argument("-t", dest="time",          type=json.loads, required=True,  help="simulation start/end time") 
         parser.add_argument("-b", dest="baseline_case", type=str, required=False, help="option for baseline case", default=False)
         parser.add_argument("-netcdf", dest="netcdf", type=str, required=False, default=False, help="option for forcing data format")
-        
+        parser.add_argument("-troute", dest="troute", type=str, required=False, default=False, help="option for t-toure")
         args = parser.parse_args()
     except:
         parser.print_help()
@@ -639,7 +663,8 @@ def main():
         precip_partitioning_scheme    = args.precip_partitioning_scheme,
         simulation_time   = args.time,
         baseline_case     = args.baseline_case,
-        is_netcdf_forcing = args.netcdf
+        is_netcdf_forcing = args.netcdf,
+        is_troute         = args.troute
     )
 
 

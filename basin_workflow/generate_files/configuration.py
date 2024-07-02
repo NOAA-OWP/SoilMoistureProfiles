@@ -21,6 +21,7 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 import fiona
+import yaml
 
 #############################################################################
 # module reads NWM soil type file and returns a table
@@ -611,6 +612,60 @@ def write_lasam_input_files(catids, soil_param_file, gdf_soil, lasam_dir, couple
         with open(lasam_file, "w") as f:
             f.writelines('\n'.join(lasam_params))
 
+
+#############################################################################
+# The function generates configuration file for t-route model
+# @param catids         : array/list of integers contain catchment ids
+# @param soil_param_file : input file containing soil properties read by LASAM
+#                          (characterizes soil for specified soil types)
+# @gdf_soil             : geodataframe contains soil properties extracted from the hydrofabric
+# @param lasam_dir        : output directory (config files are written to this directory)
+# @param coupled_models : option needed to modify SMP config files based on the coupling type
+#############################################################################
+def write_troute_input_files(gpkg_file, ngen_dir, output_dir, simulation_time):
+
+    routing_file = os.path.join(ngen_dir, "data/gauge_01073000/routing_config.yaml")
+
+    if (not os.path.exists(routing_file)):
+        sys.exit("Sample routing yaml file does not exist, provided is " + routing_file)
+    
+    with open(routing_file, 'r') as file:
+        d = yaml.safe_load(file)
+    
+    d['network_topology_parameters']['supernetwork_parameters']['geo_file_path'] = gpkg_file
+        
+    d['network_topology_parameters']['waterbody_parameters']['level_pool']['level_pool_waterbody_parameter_file_path'] = gpkg_file
+    
+    dt = 300 # seconds
+    
+    #start_time = pd.Timestamp(simulation_time['start_time']).strftime("%Y-%m-%d_%H:%M:%S")
+    start_time = pd.Timestamp(simulation_time['start_time'])
+    end_time = pd.Timestamp(simulation_time['end_time'])    
+    
+    diff_time = (end_time - start_time).total_seconds()
+    
+    d['compute_parameters']['restart_parameters']['start_datetime'] = start_time.strftime("%Y-%m-%d_%H:%M:%S")
+    
+    d['compute_parameters']['forcing_parameters']['qlat_input_folder'] = "outputs/div"
+    d['compute_parameters']['forcing_parameters']['qlat_file_pattern_filter'] = "nex-*"
+    d['compute_parameters']['forcing_parameters']['binary_nexus_file_folder'] = "outputs/troute_parq"
+    d['compute_parameters']['forcing_parameters']['nts']                      = int(diff_time / dt)
+
+
+    stream_output = {
+       "stream_output" : {
+          "stream_output_directory" : "output/troute",
+          'stream_output_time' : 1, #[hr]
+          'stream_output_type' : '.nc', # netcdf '.nc' or '.csv' or '.pkl'
+          'stream_output_internal_frequency' : 60 #[min]
+          }
+    }
+    
+    d['output_parameters'] = stream_output
+    
+    with open(os.path.join(output_dir,"troute_config.yaml"), 'w') as file:
+        yaml.dump(d,file, default_flow_style=False, sort_keys=False)
+
 #############################################################################
 #############################################################################
 def create_directory(dir_name):
@@ -648,6 +703,7 @@ def main():
                             help="simulation start/end time") 
         parser.add_argument("-ow",   dest="overwrite",     type=str, required=False, default=True,
                             help="overwrite old/existing files")
+        parser.add_argument("-troute", dest="troute", type=str, required=False, default=False, help="option for t-toure")
     except:
         parser.print_help()
         sys.exit(0)
@@ -745,7 +801,9 @@ def main():
         write_lasam_input_files(catids, os.path.join(lasam_dir, "vG_default_params.dat"),
                                 gdf_soil, lasam_dir, args.models_option)
     
-    
+    if (args.troute):
+        write_troute_input_files(args.gpkg_file, args.ngen_dir, args.output_dir, args.time)
+        
     ## create uniform forcings
     #forcing_file = os.path.join(args.forcing_dir,"cat-base.csv")
     #write_forcing_files(catids, forcing_file)

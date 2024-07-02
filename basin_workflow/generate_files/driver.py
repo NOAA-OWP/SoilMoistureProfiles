@@ -54,7 +54,7 @@ def main():
         parser.add_argument("-t",    dest="time",          type=str, required=True,  help="simulation start/end time")
         parser.add_argument("-m",    dest="models_option", type=str, required=True,  help="option for models coupling\n%s"%coupled_models_options)
         parser.add_argument("-netcdf", dest="netcdf", type=str, required=False, default=False, help="option for forcing data format")
-
+        parser.add_argument("-troute", dest="troute", type=str, required=False, default=False, help="option for t-route")
         args = parser.parse_args()
     except:
         parser.print_help()
@@ -103,6 +103,7 @@ def main():
     generate_config_files = f'python {path_crf_gen_files} -gpkg {args.gpkg_file} -ngen {args.ngen_dir} \
                               -f {args.forcing_dir} -o {args.output_dir} -m {coupled_models} \
                               -p {args.precip_partitioning_scheme} -r {args.surface_runoff_scheme} \
+                              -troute {args.troute} \
                               -t \'{args.time}\' '
 
     print ("*******************************************")
@@ -130,7 +131,7 @@ def main():
     generate_realization_file = f'python {path_crf_real_file} -ngen {args.ngen_dir} -f {args.forcing_dir} \
                                   -i {args.output_dir} -m {coupled_models} -p {args.precip_partitioning_scheme} \
                                   -b {baseline_case} -r {args.surface_runoff_scheme} -t \'{args.time}\' \
-                                  -netcdf {args.netcdf}'
+                                  -netcdf {args.netcdf} -troute {args.troute}'
 
     print ("Running (from driver.py): \n ", generate_realization_file)
 
@@ -138,7 +139,6 @@ def main():
     
     result = subprocess.call(generate_realization_file,shell=True)
 
-    
     if (result):
         sys.exit("realization file could not be generated, check the options provided!")
     else:
