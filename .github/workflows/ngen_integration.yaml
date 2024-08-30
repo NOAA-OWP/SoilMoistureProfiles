@@ -120,7 +120,7 @@ jobs:
       - name: Move PET Files Including cmake_build to Appropriate Directory
         run: |
           rm -rf extern/evapotranspiration/evapotranspiration/*
-          mv ${{runner.temp}}/evaportranspiration/* extern/evapotranspiration/evapotranspiration
+          mv ${{runner.temp}}/evaportranspiration/evapotranspiration/* extern/evapotranspiration/evapotranspiration
 
       - name: Run Ngen Test for SMP
         run: |
