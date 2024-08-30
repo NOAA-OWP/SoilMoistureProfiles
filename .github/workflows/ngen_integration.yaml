@@ -127,6 +127,9 @@ jobs:
      #   run: |
      #     rm -rf extern/evapotranspiration/evapotranspiration/*
      #     mv ${{runner.temp}}/evaportranspiration/* extern/evapotranspiration/evapotranspiration
+      - name: PET (checkout master -- remove later)
+        run: |
+          git submodule update --remote extern/evapotranspiration/evapotranspiration
 
       - name: Run Ngen Test for SMP
         run: |
