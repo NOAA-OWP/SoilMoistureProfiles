@@ -88,6 +88,12 @@ jobs:
         with:
           mod-dir: "extern/evapotranspiration/evapotranspiration"
           targets: "petbmi"
+      
+      - name: Save PET to a Temp Directory
+        run: |
+          # Move files to a temporary directory
+          mkdir ${{runner.temp}}/evapotranspiration
+          mv ./* ${{runner.temp}}/evapotranspiration
 
       - name: Build SLoTH
         id: submod_build_4
@@ -120,7 +126,7 @@ jobs:
       - name: Move PET Files Including cmake_build to Appropriate Directory
         run: |
           rm -rf extern/evapotranspiration/evapotranspiration/*
-          mv ${{runner.temp}}/evaportranspiration/evapotranspiration/* extern/evapotranspiration/evapotranspiration
+          mv ${{runner.temp}}/evaportranspiration/* extern/evapotranspiration/evapotranspiration
 
       - name: Run Ngen Test for SMP
         run: |
