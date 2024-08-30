@@ -112,7 +112,7 @@
 		}
             ],
             "forcing": {
-		"path": "./extern/cfe/cfe/forcings/cat87_01Dec2015.csv",
+		"path": "./extern/cfe/cfe/forcings/cat87_01Dec2015_ngen.csv",
 		"provider": "CsvPerFeature"
             }
 	}
