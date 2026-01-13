@@ -1,9 +1,23 @@
 # RUN EXECUTABLES #
 ###################
-./build/*
+build/*
 
 
 # External models #
 #################
-./extern/*
+extern/*
 *~
+
+# Editors #
+*.swp
+*.swo
+.vscode/
+.idea/
+.DS_Store
+
+# Unit test artifacts #
+#####################
+tests/*.out
+tests/*.log
+tests/run_smp
+tests/run_smp.dSYM/
