@@ -63,83 +63,160 @@ using namespace std;
 
 
 namespace soil_moisture_profile {
-  
-  struct soil_profile_parameters {
-    int    shape[3];
-    double spacing[8];
-    double origin[3];
+    struct soil_profile_parameters {
+        int    shape[3];
+        double spacing[8];
+        double origin[3];
 
-    double soil_storage;
-    double soil_storage_change_per_timestep;
-    double water_table_depth;
-    double *soil_moisture_profile;
-    
-    double *smcmax;
-    double b;
-    double satpsi;
-    int    ncells;
-    double soil_depth;
-    double soil_depth_NWM;
-    double last_layer_depth;
-    double *soil_z;
+        /**
+         * [m] : soil storage (input through bmi)
+         */
+        double soil_storage;
+        /**
+         * [m] : change in the soil storage per timestep
+         */
+        double soil_storage_change_per_timestep;
+        /**
+         * [m] : depth from the surface to the water table location
+         */
+        double water_table_depth;
+        /**
+         * [-] : soil moisture content (1D vertical profile)
+         */
+        double *soil_moisture_profile;
 
-    double soil_moisture_fraction;
-    double soil_moisture_fraction_depth;
-    
-    int    soil_storage_model;
-    double soil_storage_model_depth;
-    int    soil_moisture_profile_option;
+        /**
+         * [-] : maximum soil moisture content (porosity)
+         */
+        double *smcmax;
+        /**
+         * [-] : pore size distribution, beta exponent in Clapp-Hornberger (1978) function
+         */
+        double b;
+        /**
+         * [m] : saturated capillary head (saturated moisture potential)
+         */
+        double satpsi;
+        /**
+         * [-] : number of cells of the discretized soil column
+         */
+        int    ncells;
+        /**
+         * [m] : depth of the computational domain
+         */
+        double soil_depth;
+        /**
+         * [m] : National Water Model 3.0 soil column depth (set to 2.0 m)
+         */
+        double soil_depth_NWM;
+        /**
+         * [m] : depth of the last layer (for non-conceptual reservior, e.g, LGAR)
+         */
+        double last_layer_depth;
+        /**
+         * [m] : soil discretization; 1D array of depths from the surface
+         */
+        double *soil_z;
 
-    bool   init_profile;
-    std::string verbosity;
-    
-    // layered model
-    double *soil_moisture_wetting_fronts;
-    double *soil_depth_wetting_fronts;
-    double *soil_depth_layers;
-    int     num_wetting_fronts;
-    int     max_num_wetting_fronts;
-    int     num_layers;
-    bool    soil_depth_layers_bmi;
-    bool    smcmax_bmi;
+        /**
+         * [-] : fraction of soil moisture in the top 40 cm or user-defined
+         *       soil_moisture_fraction_depth (water in the topsoil over total water)
+         */
+        double soil_moisture_fraction;
+        /**
+         * [m] : user specified depth for the fraction of soil moisture (default is 40 cm)
+         */
+        double soil_moisture_fraction_depth;
 
-    //topmodel bmi outputs
-    double Qb_topmodel;
-    double Qv_topmodel;
-    double global_deficit;
-    double field_capacity;
-    int    water_table_based_method;
-    double cat_area;
-    
-  };
+        /**
+         * [-] : optional models : conceptual or layered
+         */
+        int    soil_storage_model;
+        /**
+         * [m] : depth of the soil storage reservoir
+         */
+        double soil_storage_model_depth;
+        int    soil_moisture_profile_option;
 
+        /**
+        * [-] : we have different models and their inputs are different; this is to ensure
+        *   that bmi inputs are consistent with the model inputs, need for ngen framework
+         */
+        bool   init_profile;
+        /**
+         * [-]    : flag for screen outputs for debugging, options = none, high
+         */
+        std::string verbosity;
 
-  void SoilMoistureProfile(std::string config_file, struct soil_profile_parameters* parameters);
+        // layered model
+        /**
+         * [-] : soil moisture content of wetting fronts (bmi input to layered the model)
+         */
+        double *soil_moisture_wetting_fronts;
+        /**
+         * [m] : absolute depth of the wetting fronts (bmi input to layered the model)
+         */
+        double *soil_depth_wetting_fronts;
+        double *soil_depth_layers;
+        int     num_wetting_fronts;
+        int     max_num_wetting_fronts;
+        /**
+         * [-] : number of soil moisture layers, typically different than the ncells
+         */
+        int     num_layers;
+        bool    soil_depth_layers_bmi;
+        bool    smcmax_bmi;
 
-  void InitFromConfigFile(std::string config_file, struct soil_profile_parameters* parameters);
+        //topmodel bmi outputs
+        /**
+         * [m/hr] : baseflow in the topmodel
+         */
+        double Qb_topmodel;
+        /**
+         * [m/hr] : recharge rate of the saturated zone from the unsaturated zone in the topmodel
+         */
+        double Qv_topmodel;
+        /**
+         * [m]    : catchment soil moisture deficit in the topmodel
+         */
+        double global_deficit;
+        /**
+         * [m]    : soil field capacity
+         */
+        double field_capacity;
+        int    water_table_based_method;
+        /**
+         * [m^2]  : catchment area
+         */
+        double cat_area;
+    };
 
-  // reading 1D array from the config file
-  std::vector<double> ReadVectorData(std::string param_name, std::string param_value);
+    void SoilMoistureProfile(const std::string& config_file, soil_profile_parameters* parameters);
 
-  // update the profile for the current timestep
-  void SoilMoistureProfileUpdate(struct soil_profile_parameters* parameters);
+    void InitFromConfigFile(std::string config_file, soil_profile_parameters* parameters);
 
-  // computes soil moisture profile for conceptual reservoir
-  void SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* parameters);
+    // reading 1D array from the config file
+    std::vector<double> ReadVectorData(std::string param_name, std::string param_value);
 
-  // computes soil moisture profile for layered-reservoir
-  void SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* parameters);
+    // update the profile for the current timestep
+    void SoilMoistureProfileUpdate(soil_profile_parameters* parameters);
 
-  // computes soil moisture profile for Topmodel
-  void SoilMoistureProfileFromWaterTableDepth(struct soil_profile_parameters* parameters);
-  
-  // computes linearly interpolated values for layered-reservoir with option = linear
-  double LinearInterpolation(double z, double z1, double z2, double t1, double t2);
+    // computes soil moisture profile for conceptual reservoir
+    void SoilMoistureProfileFromConceptualReservoir(soil_profile_parameters* parameters);
 
-  void FindWaterTableLayeredReservoir(struct soil_profile_parameters* parameters);
-  // print soil moisture profile and soil depths
-  void PrintSoilMoistureProfile(struct soil_profile_parameters* parameters);
-  
+    // computes soil moisture profile for layered-reservoir
+    void SoilMoistureProfileFromLayeredReservoir( soil_profile_parameters* parameters);
+
+    // computes soil moisture profile for Topmodel
+    void SoilMoistureProfileFromWaterTableDepth(soil_profile_parameters* parameters);
+
+    // computes linearly interpolated values for layered-reservoir with option = linear
+    double LinearInterpolation(double z, double z1, double z2, double t1, double t2);
+
+    void FindWaterTableLayeredReservoir(soil_profile_parameters* parameters);
+
+    // print soil moisture profile and soil depths
+    void PrintSoilMoistureProfile(soil_profile_parameters* parameters);
 };
 
 #endif

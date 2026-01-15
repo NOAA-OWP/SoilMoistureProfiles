@@ -2,21 +2,19 @@
 #define BMI_SMP_C_INCLUDED
 
 
-#include <stdio.h>
 #include <string>
 #include <cstring>
-#include <cstdlib>
 #include <vector>
-#include <algorithm>
-#include "../bmi/bmi.hxx"
 #include "../include/bmi_soil_moisture_profile.hxx"
 #include "../include/soil_moisture_profile.hxx"
 
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 
 void BmiSoilMoistureProfile::
-Initialize (std::string config_file)
+Initialize (const std::string config_file)
 {
-  if (config_file.compare("") != 0 ) {
+  if (config_file.empty()) {
     this->state = new soil_moisture_profile::soil_profile_parameters;
     soil_moisture_profile::SoilMoistureProfile(config_file, state);
   }
@@ -42,8 +40,10 @@ UpdateUntil(double t)
 void BmiSoilMoistureProfile::
 Finalize()
 {
-  if (this->state)
+  if (this->state) {
     delete state;
+    this->state = nullptr;
+  }
 }
 
 void BmiSoilMoistureProfile::
@@ -53,97 +53,124 @@ PrintSoilMoistureProfile()
 }
 
 int BmiSoilMoistureProfile::
-GetVarGrid(std::string name)
-{
-  if (name.compare("soil_storage_model") == 0 || name.compare("num_wetting_fronts") == 0)   // int
+GetVarGrid(const std::string name) {
+  if (
+    name == "soil_storage_model"
+    || name == "num_wetting_fronts"
+    || name == "serialization_free"
+  ) {
     return 0;
-  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0
-	   || name.compare("soil_water_table") == 0 || name.compare("soil_moisture_fraction") == 0) // double
+  }
+
+  if (
+    name == "soil_storage"
+    || name == "soil_storage_change"
+	  || name == "soil_water_table"
+    || name == "soil_moisture_fraction"
+    || name == "Qb_topmodel"
+    || name == "Qv_topmodel"
+    || name == "global_deficit"
+    || name == "b"
+    || name == "satpsi"
+  ) {
     return 1;
-  else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0 || name.compare("global_deficit") == 0)
-    return 1;
-  else if (name.compare("b") == 0 || name.compare("satpsi") == 0)
-    return 1;
-  else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
+  }
+
+  if (name == "soil_moisture_profile") {
+    // array of doubles (conceptual model)
     return 2;
-  else if (name.compare("soil_moisture_wetting_fronts") == 0 || name.compare("soil_depth_wetting_fronts") == 0) // array of doubles (layered model)
+  }
+  if (name == "soil_moisture_wetting_fronts" || name == "soil_depth_wetting_fronts") {
+    // array of doubles (layered model)
     return 3;
-  else if (name.compare("smcmax") == 0) // fixed number of layers for calibratable params
+  }
+  if (name == "smcmax") {
+    // fixed number of layers for calibratable params
     return 4;
-  else
-    return -1;
+  }
+  if (name == "serialization_state") // char* beginning of serialized data
+    return 5;
+  if (name == "serialization_create" || name == "serialization_size") {
+    // uint64_t
+    return 6;
+  }
+
+  return -1;
 }
 
 
 std::string BmiSoilMoistureProfile::
-GetVarType(std::string name)
-{
-  int var_grid = GetVarGrid(name);
+GetVarType(const std::string name) {
+  const int var_grid = GetVarGrid(name);
 
   if (var_grid == 0)
     return "int";
-  else if (var_grid == 1 || var_grid == 2 || var_grid == 3 || var_grid == 4)
+  if (var_grid == 1 || var_grid == 2 || var_grid == 3 || var_grid == 4)
     return "double";
-  else
-    return "";
+  if (var_grid == 5)
+    return "char";
+  if (var_grid == 6)
+    return "uint64_t";
+  return "";
 }
 
 
 int BmiSoilMoistureProfile::
-GetVarItemsize(std::string name)
+GetVarItemsize(const std::string name)
 {
-  std::string var_type = GetVarType(name);
+  const std::string var_type = GetVarType(name);
 
-  if (var_type.compare("int") == 0)
+  if (var_type == "int")
     return sizeof(int);
-  else if (var_type.compare("double") == 0)
+  if (var_type == "double")
     return sizeof(double);
-  else
-    return 0;
+  if (var_type == "char")
+    return sizeof(char);
+  if (var_type == "uint64_t")
+    return sizeof(uint64_t);
+
+  return 0;
 }
 
 
 std::string BmiSoilMoistureProfile::
 GetVarUnits(std::string name)
 {
-  if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0 ||
-      name.compare("soil_water_table") == 0)
+  if (name == "soil_storage" || name == "soil_storage_change" ||
+      name == "soil_water_table")
     return "m";
-  else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_wetting_fronts") == 0 ||
-	   name.compare("soil_moisture_fraction") == 0)
-    return "none";
-  else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0)
+  if (name == "soil_moisture_profile" || name == "soil_moisture_wetting_fronts" ||
+	   name == "soil_moisture_fraction")
+    return "1";  // dimensionless (UDUNITS)
+  if (name == "Qb_topmodel" || name == "Qv_topmodel")
     return "m h^-1";
-  else if (name.compare("global_deficit") == 0)
+  if (name == "global_deficit")
     return "m";
-  else if (name.compare("soil_depth_wetting_fronts") == 0)
+  if (name == "soil_depth_wetting_fronts")
     return "m";
-  else
-    return "none";
+
+  return "none";
 }
 
 
 int BmiSoilMoistureProfile::
-GetVarNbytes(std::string name)
+GetVarNbytes(const std::string name)
 {
-  int itemsize;
-  int gridsize;
-
-  itemsize = this->GetVarItemsize(name);
-  gridsize = this->GetGridSize(this->GetVarGrid(name));
-  return itemsize * gridsize;
+  const int item_size = this->GetVarItemsize(name);;
+  const int grid_size = this->GetGridSize(this->GetVarGrid(name));
+  return item_size * grid_size;
 }
 
 
 std::string BmiSoilMoistureProfile::
-GetVarLocation(std::string name)
+GetVarLocation(const std::string name)
 {
-  int var_grid = GetVarGrid(name);
+  const int var_grid = GetVarGrid(name);
 
-  if (var_grid <= 3)
+  if (var_grid <= 3 && name != "serialization_free")
     return "node";
-  else
-    return "none";
+
+  return "none";
 }
 
 
@@ -185,24 +212,27 @@ GetGridRank(const int grid)
 {
   if (grid <= 3)
     return 1;
-  else
-    return -1;
+
+  return -1;
 }
 
 
 int BmiSoilMoistureProfile::
 GetGridSize(const int grid)
 {
-  if (grid == 0 || grid == 1)
+  if (grid == 0 || grid == 1 || grid == 6)
     return 1;
-  else if (grid == 2)
+  if (grid == 2)
     return this->state->shape[0];
-  else if (grid == 3)
+  if (grid == 3)
     return this->state->shape[1];
-  else if (grid == 4)
+  if (grid == 4)
     return this->state->num_layers;
-  else
-    return -1;
+  if (grid == 5) {
+    // WARNING: The narrowing of a uint64_t to an int is implementation-defined and not guaranteed
+    return this->m_serialized_length; // size of currently saved state
+  }
+  return -1;
 }
 
 
@@ -211,8 +241,7 @@ GetGridType(const int grid)
 {
   if (grid == 0)
     return "uniform_rectilinear";
-  else
-    return "";
+  return "";
 }
 
 
@@ -241,12 +270,6 @@ int BmiSoilMoistureProfile::
 GetGridNodeCount(const int grid)
 {
   throw coupler::NotImplemented();
-  /*
-  if (grid == 0)
-    return this->state->shape[0];
-  else
-    return -1;
-  */
 }
 
 
@@ -293,138 +316,146 @@ GetGridNodesPerFace(const int grid, int *nodes_per_face)
 
 
 void BmiSoilMoistureProfile::
-GetValue (std::string name, void *dest)
+GetValue (const std::string name, void *dest)
 {
-  void * src = NULL;
-  int nbytes = 0;
-
-  src = this->GetValuePtr(name);
-  nbytes = this->GetVarNbytes(name);
-  memcpy (dest, src, nbytes);
+  const void *src = this->GetValuePtr(name);
+  int nbytes = this->GetVarNbytes(name);
+  memcpy(dest, src, nbytes);
 }
 
 
 void *BmiSoilMoistureProfile::
-GetValuePtr (std::string name)
+GetValuePtr (const std::string name)
 {
-  if (name.compare("soil_storage") == 0)
-    return (void*)(&this->state->soil_storage);
-  else if (name.compare("soil_storage_change") == 0)
-    return (void*)(&this->state->soil_storage_change_per_timestep);
-  else  if (name.compare("soil_water_table") == 0)
-    return (void*)(&this->state->water_table_depth);
-  else  if (name.compare("soil_moisture_fraction") == 0)
-    return (void*)(&this->state->soil_moisture_fraction);
-  else if (name.compare("soil_moisture_profile") == 0)
-    return (void*)this->state->soil_moisture_profile;
-  else if (name.compare("soil_moisture_wetting_fronts") == 0)
-    return (void*)this->state->soil_moisture_wetting_fronts;
-  else if (name.compare("soil_depth_wetting_fronts") == 0)
-    return (void*)this->state->soil_depth_wetting_fronts;
-  else if (name.compare("soil_storage_model") == 0)
-    return (void*)(&this->state->soil_storage_model);
-  else if (name.compare("num_wetting_fronts") == 0)
-    return (void*)(&this->state->num_wetting_fronts);
-  else if (name.compare("Qb_topmodel") == 0)
-    return (void*)(&this->state->Qb_topmodel);
-  else if (name.compare("Qv_topmodel") == 0)
-    return (void*)(&this->state->Qv_topmodel);
-  else if (name.compare("global_deficit") == 0)
-    return (void*)(&this->state->global_deficit);
-  else if (name.compare("smcmax") == 0)
-    return (void*)this->state->smcmax;
-  else if (name.compare("b") == 0)
-    return (void*)(&this->state->b);
-  else if (name.compare("satpsi") == 0)
-    return (void*)(&this->state->satpsi);
-  else {
-    std::stringstream errMsg;
-    errMsg << "variable "<< name << " does not exist";
-    throw std::runtime_error(errMsg.str());
-    return NULL;
+  if (name == "soil_storage")
+    return &this->state->soil_storage;
+  if (name == "soil_storage_change")
+    return &this->state->soil_storage_change_per_timestep;
+  if (name == "soil_water_table")
+    return &this->state->water_table_depth;
+  if (name == "soil_moisture_fraction")
+    return &this->state->soil_moisture_fraction;
+  if (name == "soil_moisture_profile")
+    return this->state->soil_moisture_profile;
+  if (name == "soil_moisture_wetting_fronts")
+    return this->state->soil_moisture_wetting_fronts;
+  if (name == "soil_depth_wetting_fronts")
+    return this->state->soil_depth_wetting_fronts;
+  if (name == "soil_storage_model")
+    return &this->state->soil_storage_model;
+  if (name == "num_wetting_fronts")
+    return &this->state->num_wetting_fronts;
+  if (name == "Qb_topmodel")
+    return &this->state->Qb_topmodel;
+  if (name == "Qv_topmodel")
+    return &this->state->Qv_topmodel;
+  if (name == "global_deficit")
+    return &this->state->global_deficit;
+  if (name == "smcmax")
+    return this->state->smcmax;
+  if (name == "b")
+    return &this->state->b;
+  if (name == "satpsi")
+    return &this->state->satpsi;
+  if (name == "serialization_state")
+    return (void*)(this->m_serialized.data());
+  if (name == "serialization_size") {
+    return &this->m_serialized_length;
   }
+
+  std::stringstream errMsg;
+  errMsg << "variable "<< name << " does not exist";
+  throw std::runtime_error(errMsg.str());
 }
 
 
 void BmiSoilMoistureProfile::
 GetValueAtIndices (std::string name, void *dest, int *inds, int len)
 {
-  void * src = NULL;
-
-  src = this->GetValuePtr(name);
+  void * src = this->GetValuePtr(name);
 
   if (src) {
     int i;
-    int itemsize = 0;
+    int item_size = 0;
     int offset;
     char *ptr;
 
-    itemsize = this->GetVarItemsize(name);
-    for (i=0, ptr=(char *)dest; i<len; i++, ptr+=itemsize) {
-      offset = inds[i] * itemsize;
-      memcpy(ptr, (char *)src + offset, itemsize);
+    item_size = this->GetVarItemsize(name);
+    for (i=0, ptr=(char *)dest; i<len; i++, ptr+=item_size) {
+      offset = inds[i] * item_size;
+      memcpy(ptr, (char *)src + offset, item_size);
     }
   }
 }
 
 void BmiSoilMoistureProfile::
-ResetSize (std::string name)
+ResetSize (const std::string name)
 {
 // reset the size of wetting fronts array to the number of wetting fronts at the timestep
-  if (name.compare("soil_moisture_wetting_fronts") == 0) {
+  if (name == "soil_moisture_wetting_fronts") {
     assert (this->state->num_wetting_fronts > 0);
     state->soil_moisture_wetting_fronts = new double[this->state->num_wetting_fronts]();
   }
-  else if (name.compare("soil_depth_wetting_fronts") == 0) {
+  else if (name == "soil_depth_wetting_fronts") {
     assert (this->state->num_wetting_fronts > 0);
     state->soil_depth_wetting_fronts = new double[this->state->num_wetting_fronts]();
   }
 }
-  
+
 void BmiSoilMoistureProfile::
-SetValue (std::string name, void *src)
+SetValue (const std::string name, void *src)
 {
-  void * dest = NULL;
+  // special cases for state serialization
+  if (name == "serialization_state") {
+    this->load_serialized(static_cast<char*>(src));
+    return;
+  }
+
+  if (name == "serialization_create") {
+    this->new_serialized();
+    return;
+  }
+
+  if (name == "serialization_free") {
+    this->free_serialized();
+    return;
+  }
+
   ResetSize(name);
-  
-  dest = this->GetValuePtr(name);
-  
+
+  void *dest = this->GetValuePtr(name);
+
   if (dest) {
     int nbytes = 0;
     nbytes = this->GetVarNbytes(name);
     memcpy(dest, src, nbytes);
-    
-    if (name.compare("num_wetting_fronts") == 0)
+
+    if (name == "num_wetting_fronts")
       this->state->shape[1] = this->state->num_wetting_fronts;
-    
+
   }
-  
+
 }
 
 
 void BmiSoilMoistureProfile::
 SetValueAtIndices (std::string name, int * inds, int len, void *src)
 {
-  void * dest = NULL;
-
   ResetSize(name);
-  
-  dest = this->GetValuePtr(name);
-  
+
+  void * dest = this->GetValuePtr(name);
+
   if (dest) {
     int i;
-    int itemsize = 0;
-    int offset;
+    const int item_size = this->GetVarItemsize(name);
     char *ptr;
 
-    itemsize = this->GetVarItemsize(name);
-    
-    for (i=0, ptr=(char *)src; i<len; i++, ptr+=itemsize) {
-      offset = inds[i] * itemsize;
-      memcpy((char *)dest + offset, ptr, itemsize);
+    for (i=0, ptr=static_cast<char*>(src); i<len; i++, ptr += item_size) {
+      const int offset = inds[i] * item_size;
+      memcpy(static_cast<char*>(dest) + offset, ptr, item_size);
 
-      if (name.compare("num_wetting_fronts") == 0)
-	this->state->shape[1] = this->state->num_wetting_fronts;
+      if (name == "num_wetting_fronts")
+	      this->state->shape[1] = this->state->num_wetting_fronts;
     }
   }
 }
@@ -440,14 +471,14 @@ GetComponentName()
 int BmiSoilMoistureProfile::
 GetInputItemCount()
 {
-  return this->input_var_name_count;
+  return input_var_name_count;
 }
 
 
 int BmiSoilMoistureProfile::
 GetOutputItemCount()
 {
-  return this->output_var_name_count;
+  return output_var_name_count;
 }
 
 
@@ -455,10 +486,10 @@ std::vector<std::string> BmiSoilMoistureProfile::
 GetInputVarNames()
 {
   std::vector<std::string> names;
-  
-  for (int i=0; i<this->input_var_name_count; i++)
-    names.push_back(this->input_var_names[i]);
-  
+
+  for (const std::string& input_var_name : this->input_var_names)
+    names.push_back(input_var_name);
+
   return names;
 }
 
@@ -468,8 +499,8 @@ GetOutputVarNames()
 {
   std::vector<std::string> names;
 
-  for (int i=0; i<this->output_var_name_count; i++)
-    names.push_back(this->output_var_names[i]);
+  for (const std::string& output_var_name : this->output_var_names)
+    names.push_back(output_var_name);
 
   return names;
 }
@@ -503,5 +534,71 @@ double BmiSoilMoistureProfile::
 GetTimeStep () {
   return 0;
 }
+
+
+template<class Archive>
+void BmiSoilMoistureProfile::
+serialize(Archive& ar, const unsigned int version) {
+  std::cerr <<
+    "WARNING: Serialization has not been properly implemented in BmiSoilMoistureProfile or its derivatives"
+  << std::endl;
+  soil_moisture_profile::soil_profile_parameters* state = this->state;
+  // size of array pointers assigned in initialization
+  const int size = state->ncells;
+
+  // all three models (Conceptual, Layered, and Topmodel) create these three states
+  ar & state->init_profile;
+  ar & boost::serialization::make_array(state->soil_moisture_profile, size);
+  ar & state->water_table_depth;
+
+  // state regardless of model
+  ar & state->soil_storage;
+  ar & state->soil_moisture_fraction;
+}
+
+
+void BmiSoilMoistureProfile::
+new_serialized() {
+  std::cerr << "WARNING: Serialization has not been properly implemented in BmiSoilMoistureProfile or its derivatives" << std::endl;
+  this->m_serialized.clear();
+  boost::archive::binary_oarchive archive(this->m_serialized);
+  try {
+    archive << (*this);
+    this->m_serialized_length = this->m_serialized.size();
+  } catch (const std::exception &e) {
+    // stringstream ss;
+    // ss << "Serializing SMP encounterd an error: " << e.what();
+    // Logger::Log(ss.str(), LogLevel::SEVERE);
+    this->m_serialized_length = 0;
+    throw;
+  }
+}
+
+
+void BmiSoilMoistureProfile::
+load_serialized(const char* data) {
+  std::cerr << "WARNING: Serialization has not been properly implemented in BmiSoilMoistureProfile or its derivatives" << std::endl;
+  std::stringstream stream(data);
+  boost::archive::binary_iarchive archive(stream);
+  try {
+    archive >> (*this);
+  } catch (const std::exception &e) {
+    // stringstream ss;
+    // ss << "Deserializing SMP encounterd an error: " << e.what();
+    // Logger::Log(ss.str(), LogLevel::SEVERE);
+    throw;
+  }
+  this->free_serialized();
+}
+
+
+void BmiSoilMoistureProfile::
+free_serialized() {
+  std::cerr << "WARNING: Serialization has not been properly implemented in BmiSoilMoistureProfile or its derivatives" << std::endl;
+  this->m_serialized.clear();
+  this->m_serialized.shrink_to_fit();
+  this->m_serialized_length = 0;
+}
+
 
 #endif

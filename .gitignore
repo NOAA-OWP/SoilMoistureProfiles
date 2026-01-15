@@ -1,9 +1,65 @@
 # RUN EXECUTABLES #
 ###################
-./build/*
+build/*
 
 
 # External models #
 #################
-./extern/*
+extern/*
 *~
+
+# Editors #
+*.swp
+*.swo
+.vscode/
+.idea/
+.DS_Store/
+.ssh/
+
+# Unit test artifacts #
+#####################
+tests/*.out
+tests/*.log
+tests/run_smp
+tests/run_smp.dSYM/
+
+# Temporary files #
+##################
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Build artifacts #
+##################
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+CMakeFiles/
+CMakeCache.txt
+
+# Coverage files #
+################
+coverage/
+*.gcda
+*.gcno
+*.gcov
+*.lcov
+
+# Environment files #
+####################
+.env
+.venv
+env/
+venv/
+
+# Database files #
+################
+*.db
+*.sqlite
+*.sqlite3

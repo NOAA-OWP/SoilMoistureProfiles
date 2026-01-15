@@ -39,6 +39,13 @@ set(SMP_LIB_DESC_CMAKE "OWP SMP BMI Module Shared Library")
 # Make sure these are compiled with this directive
 add_compile_definitions(BMI_ACTIVE)
 
+# -----------------------------------------------------------------------------
+# Find the Boost library and configure usage
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost 1.79.0 REQUIRED COMPONENTS serialization)
+
 # add the executable
 if(CFE)
   add_executable(${exe_name} ./src/main_smp_cfe.cxx ./extern/cfe/src/cfe.c ./extern/cfe/src/bmi_cfe.c
@@ -56,6 +63,7 @@ if(TOPMODEL OR CFE)
   target_link_libraries(${exe_name} LINK_PUBLIC smplib)
   target_include_directories(${exe_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
   target_link_libraries(${exe_name} PRIVATE m)
+  target_link_libraries(${exe_name} PRIVATE Boost::serialization)
 endif()
 
 
@@ -71,6 +79,8 @@ target_include_directories(smpbmi PRIVATE include)
 set_target_properties(smpbmi PROPERTIES VERSION ${PROJECT_VERSION})
 
 set_target_properties(smpbmi PROPERTIES PUBLIC_HEADER ./include/bmi_soil_moisture_profile.hxx)
+
+target_link_libraries(smpbmi PRIVATE Boost::serialization)
 
 # Code requires minimum of C99 standard to compile
 set_target_properties(smpbmi PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON)

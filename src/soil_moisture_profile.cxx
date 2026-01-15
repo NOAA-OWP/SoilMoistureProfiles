@@ -17,7 +17,7 @@ enum {Flux_based=1, Deficit_based=2};
 
 
 void soil_moisture_profile::
-SoilMoistureProfile(string config_file, struct soil_profile_parameters* parameters)
+SoilMoistureProfile(const string& config_file, struct soil_profile_parameters* parameters)
 {
 
   InitFromConfigFile(config_file, parameters);
@@ -538,7 +538,7 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
 
   }
 
-  if (verbosity.compare("high") == 0) {
+  if (verbosity == "high") {
     std::cout<<"Number of iterations  = "<< count <<"\nWater table depth (m) = "<< parameters->water_table_depth <<"\n";
     PrintSoilMoistureProfile(parameters);
 
@@ -578,13 +578,13 @@ SoilMoistureProfileFromConceptualReservoir(struct soil_profile_parameters* param
 */
 
 void soil_moisture_profile::
-SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* parameters)
+SoilMoistureProfileFromLayeredReservoir( soil_profile_parameters* parameters)
 {
   std::string verbosity = parameters->verbosity;
   int num_wf            = parameters->num_wetting_fronts; //number of wetting fronts
   int num_layers        = parameters->num_layers;
 
-  if (verbosity.compare("high") == 0) {
+  if (verbosity == "high") {
     std::cerr<<"SoilMoistureProfile: number of wetting fronts = "<<num_wf<<"\n";
     for (int i =0; i <num_wf; i++)
       std::cerr<<"SoilMoistureProfile (input): (depth, water_content) = "<<parameters->soil_depth_wetting_fronts[i]
@@ -700,7 +700,7 @@ SoilMoistureProfileFromLayeredReservoir(struct soil_profile_parameters* paramete
 
   }
 
-  if (verbosity.compare("high") == 0) {
+  if (verbosity == "high") {
     std::cout<<"Water table depth (m) = "<< parameters->water_table_depth <<"\n";
     PrintSoilMoistureProfile(parameters);
   }
@@ -735,16 +735,16 @@ FindWaterTableLayeredReservoir(struct soil_profile_parameters* parameters)
 	//std::cerr<<"Vx = "<<j<<" "<<is_wf_saturated<<" "<<parameters->soil_depth_wetting_fronts[j]<<" "
 	//	 <<parameters->soil_moisture_wetting_fronts[j]<<" "<<parameters->smcmax[c]<<"\n";
 
-	if (is_wf_saturated && j == 0) {
-	  parameters->water_table_depth = 0.0;
+	if (j == 0) {
+	    if (is_wf_saturated) {
+	        parameters->water_table_depth = 0.0;
+	    }
 	  break;
 	}
-	else if (is_wf_saturated && j > 0) {
+	if (j > 0) {
 	  parameters->water_table_depth = parameters->soil_depth_wetting_fronts[j-1];
 	  j--;
 	}
-	else if (j==0 || !is_wf_saturated)
-	  break;
 
       }
     }
