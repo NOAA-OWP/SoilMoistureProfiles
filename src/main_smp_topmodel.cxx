@@ -16,6 +16,7 @@
 #include "../bmi/bmi.hxx"
 #include "bmi_soil_moisture_profile.hxx"
 #include "soil_moisture_profile.hxx"
+#include "Logger.hxx"
 
 
 /*
@@ -60,14 +61,15 @@ main(int argc, const char *argv[]) {
       A configuration file is required for running this model through BMI
   ************************************************************************/
   if(argc<=1) {
-    printf("make sure to include path to config files\n");
+    printf("Expected path argument not received. Make sure to include path to config files.\n");
+    LOG(LogLevel::FATAL, "Expected path argument not received. Make sure to include path to config files.");
     exit(1);
   }
 
   /************************************************************************
       allocating memory to store the entire BMI structure for TopModel
   ************************************************************************/
-  printf("\n Allocating memory to TOPMODEL BMI model structure ... \n");
+  LOG(LogLevel::DEBUG, "Allocating memory to Topmodel BMI model structure");
   Bmi *topmodel_bmi = (Bmi *) malloc(sizeof(Bmi));
 
   BmiSoilMoistureProfile smp_bmi;
@@ -75,25 +77,25 @@ main(int argc, const char *argv[]) {
   /************************************************************************
       Registering the BMI model for Topmodel
   ************************************************************************/
+  LOG(LogLevel::DEBUG, "Registering BMI Topmodel");
   register_bmi_topmodel(topmodel_bmi);
-  printf("Registering BMI topmodel\n");
 
   /************************************************************************
       Initializing the BMI for Topmodel
   ************************************************************************/
 
-  printf("Initializeing BMI Topmodel. %s \n", argv[1]);
+  LOG(LogLevel::INFO, "Initializing BMI Topmodel. %s", argv[1]);
   const char *cfg_file_topmodel = argv[1];
   topmodel_bmi->initialize(topmodel_bmi, cfg_file_topmodel);
 
-  printf("Initializeing BMI SMP \n");
+  LOG(LogLevel::INFO, "Initializing BMI SMP");
   const char *cfg_file_smp = argv[2];
   smp_bmi.Initialize(cfg_file_smp);
 
   /************************************************************************
     Get the information from the configuration here in Main
   ************************************************************************/
-  printf("Get the information from the configuration here in Main\n");
+  LOG(LogLevel::DEBUG, "Get Topmodel information from the configuration");
   topmodel_model *topmodel;
   topmodel = (topmodel_model *) topmodel_bmi->data;
 
@@ -122,7 +124,7 @@ main(int argc, const char *argv[]) {
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
-  printf("looping through and calling update \n");
+  LOG(LogLevel::INFO, "Running Topmodel and SMP BMI's");
 
   // output files -- writing water table depth, soil moisture fraction, and soil moisture profiles to separate files
   ofstream fout, fout_wt;
@@ -135,6 +137,7 @@ main(int argc, const char *argv[]) {
   double water_table;
   double soil_moisture_fraction;
 
+  LOG(LogLevel::DEBUG, "Looping through and calling update");
   for (int i = 0; i < nstep; i++) {
 
     topmodel_bmi->update(topmodel_bmi);
@@ -163,7 +166,7 @@ main(int argc, const char *argv[]) {
   /************************************************************************
     Finalize both the Topmodel bmi
   ************************************************************************/
-  printf("\n Finalizing TOPMODEL and SMP BMIs ... \n");
+  LOG(LogLevel::INFO, "Finalizing Topmodel and SMP BMIs");
   topmodel_bmi->finalize(topmodel_bmi);
 
   return 0;
