@@ -94,8 +94,8 @@ namespace soil_moisture_profile {
     std::string verbosity;
     
     // layered model
-    double *soil_moisture_wetting_fronts;
-    double *soil_depth_wetting_fronts;
+    std::vector<double> soil_moisture_wetting_fronts{};
+    std::vector<double> soil_depth_wetting_fronts{};
     double *soil_depth_layers;
     int     num_wetting_fronts;
     int     max_num_wetting_fronts;

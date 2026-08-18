@@ -69,9 +69,9 @@ endif()
 
 ## for NGEN BUILD
 if(WIN32)
-    add_library(smpbmi src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
+    add_library(smpbmi src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx src/Logger.cxx)
 else()
-    add_library(smpbmi SHARED src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
+    add_library(smpbmi SHARED src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx src/Logger.cxx)
 endif()
 
 target_include_directories(smpbmi PRIVATE include)

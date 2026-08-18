@@ -11,6 +11,7 @@
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_soil_moisture_profile.hxx"
 #include "../include/soil_moisture_profile.hxx"
+#include "Logger.hxx"
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -19,9 +20,14 @@
 void BmiSoilMoistureProfile::
 Initialize (std::string config_file)
 {
+  LOG(LogLevel::INFO, "Initializing SMP");
   if (config_file.compare("") != 0 ) {
     this->state = new soil_moisture_profile::soil_profile_parameters;
     soil_moisture_profile::SoilMoistureProfile(config_file, state);
+  }
+  else {
+    LOG(LogLevel::FATAL, "SMP %s config file not provided", config_file.c_str());
+    throw std::runtime_error("Missing SMP Config file");
   }
 
   this->verbosity = this->state->verbosity;
@@ -259,6 +265,7 @@ GetGridType(const int grid)
 void BmiSoilMoistureProfile::
 GetGridX(const int grid, double *x)
 {
+  LOG(LogLevel::SEVERE, "GetGridX Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -266,6 +273,7 @@ GetGridX(const int grid, double *x)
 void BmiSoilMoistureProfile::
 GetGridY(const int grid, double *y)
 {
+  LOG(LogLevel::SEVERE, "GetGridY Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -273,6 +281,7 @@ GetGridY(const int grid, double *y)
 void BmiSoilMoistureProfile::
 GetGridZ(const int grid, double *z)
 {
+  LOG(LogLevel::SEVERE, "GetGridZ Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -280,6 +289,7 @@ GetGridZ(const int grid, double *z)
 int BmiSoilMoistureProfile::
 GetGridNodeCount(const int grid)
 {
+  LOG(LogLevel::SEVERE, "GetGridNodeCount Not Implemented");
   throw coupler::NotImplemented();
   /*
   if (grid == 0)
@@ -293,6 +303,7 @@ GetGridNodeCount(const int grid)
 int BmiSoilMoistureProfile::
 GetGridEdgeCount(const int grid)
 {
+  LOG(LogLevel::SEVERE, "GetGridEdgeCount Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -300,6 +311,7 @@ GetGridEdgeCount(const int grid)
 int BmiSoilMoistureProfile::
 GetGridFaceCount(const int grid)
 {
+  LOG(LogLevel::SEVERE, "GetGridFaceCount Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -307,6 +319,7 @@ GetGridFaceCount(const int grid)
 void BmiSoilMoistureProfile::
 GetGridEdgeNodes(const int grid, int *edge_nodes)
 {
+  LOG(LogLevel::SEVERE, "GetGridEdgeNodes Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -314,6 +327,7 @@ GetGridEdgeNodes(const int grid, int *edge_nodes)
 void BmiSoilMoistureProfile::
 GetGridFaceEdges(const int grid, int *face_edges)
 {
+  LOG(LogLevel::SEVERE, "GetGridFaceEdges Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -321,6 +335,7 @@ GetGridFaceEdges(const int grid, int *face_edges)
 void BmiSoilMoistureProfile::
 GetGridFaceNodes(const int grid, int *face_nodes)
 {
+  LOG(LogLevel::SEVERE, "GetGridFaceNodes Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -328,6 +343,7 @@ GetGridFaceNodes(const int grid, int *face_nodes)
 void BmiSoilMoistureProfile::
 GetGridNodesPerFace(const int grid, int *nodes_per_face)
 {
+  LOG(LogLevel::SEVERE, "GetGridNodesPerFace Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -358,9 +374,9 @@ GetValuePtr (std::string name)
   else if (name.compare("soil_moisture_profile") == 0)
     return (void*)this->state->soil_moisture_profile;
   else if (name.compare("soil_moisture_wetting_fronts") == 0)
-    return (void*)this->state->soil_moisture_wetting_fronts;
+    return this->state->soil_moisture_wetting_fronts.data();
   else if (name.compare("soil_depth_wetting_fronts") == 0)
-    return (void*)this->state->soil_depth_wetting_fronts;
+    return this->state->soil_depth_wetting_fronts.data();
   else if (name.compare("soil_storage_model") == 0)
     return (void*)(&this->state->soil_storage_model);
   else if (name.compare("num_wetting_fronts") == 0)
@@ -384,6 +400,7 @@ GetValuePtr (std::string name)
   } else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
+    LOG(LogLevel::FATAL, errMsg.str());
     throw std::runtime_error(errMsg.str());
     return NULL;
   }
@@ -416,15 +433,23 @@ ResetSize (std::string name)
 {
 // reset the size of wetting fronts array to the number of wetting fronts at the timestep
   if (name.compare("soil_moisture_wetting_fronts") == 0) {
-    assert (this->state->num_wetting_fronts > 0);
-    state->soil_moisture_wetting_fronts = new double[this->state->num_wetting_fronts]();
+    if (this->state->num_wetting_fronts <= 0) {
+      std::string error_msg = "The number of wetting fronts must be greater than zero. The current number of wetting fronts is " + std::to_string(this->state->num_wetting_fronts);
+      LOG(LogLevel::FATAL, error_msg);
+      throw std::out_of_range(error_msg);
+    }
+    state->soil_moisture_wetting_fronts.resize(this->state->num_wetting_fronts);
   }
   else if (name.compare("soil_depth_wetting_fronts") == 0) {
-    assert (this->state->num_wetting_fronts > 0);
-    state->soil_depth_wetting_fronts = new double[this->state->num_wetting_fronts]();
+    if (this->state->num_wetting_fronts <= 0) {
+      std::string error_msg = "The number of wetting fronts must be greater than zero. The current number of wetting fronts is " + std::to_string(this->state->num_wetting_fronts);
+      LOG(LogLevel::FATAL, error_msg);
+      throw std::out_of_range(error_msg);
+    }
+    state->soil_depth_wetting_fronts.resize(this->state->num_wetting_fronts);
   }
 }
-  
+
 void BmiSoilMoistureProfile::
 SetValue (std::string name, void *src)
 {
@@ -586,9 +611,8 @@ new_serialized() {
     archive << (*this);
     this->m_serialized_length = this->m_serialized.size();
   } catch (const std::exception &e) {
-    // stringstream ss;
-    // ss << "Serializing SMP encounterd an error: " << e.what();
-    // Logger::Log(ss.str(), LogLevel::SEVERE);
+    LOG(LogLevel::WARNING, "Serializing SMP encounterd an error: %s", e.what());
+    LOG(LogLevel::WARNING, "Set m_serialized_length = 0");
     this->m_serialized_length = 0;
     throw;
   }
@@ -602,9 +626,7 @@ load_serialized(const char* data) {
   try {
     archive >> (*this);
   } catch (const std::exception &e) {
-    // stringstream ss;
-    // ss << "Deserializing SMP encounterd an error: " << e.what();
-    // Logger::Log(ss.str(), LogLevel::SEVERE);
+    LOG(LogLevel::SEVERE, "Deserializing SMP encounterd an error: %s", e.what());
     throw;
   }
   this->free_serialized();
