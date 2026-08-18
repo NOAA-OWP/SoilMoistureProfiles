@@ -6,7 +6,9 @@ using namespace std;
 #include <string.h>
 #include "../bmi/bmi.hxx"
 #include "soil_moisture_profile.hxx"
+#include "vecbuf.hpp"
 
+#include <boost/serialization/access.hpp>
 
 namespace coupler {
   class NotImplemented : public std::logic_error {
@@ -18,7 +20,7 @@ namespace coupler {
 
 class BmiSoilMoistureProfile : public bmi::Bmi {
 public:
-  BmiSoilMoistureProfile() {
+  BmiSoilMoistureProfile() : m_serialized{} {
     this->input_var_names[0]  = "soil_storage";
     this->input_var_names[1]  = "soil_storage_change";
     this->input_var_names[2]  = "num_wetting_fronts";
@@ -93,8 +95,9 @@ public:
   void GetGridFaceNodes(const int grid, int *face_nodes);
   void GetGridNodesPerFace(const int grid, int *nodes_per_face);
   void ResetSize (std::string name);
-  
+
 private:
+  friend class boost::serialization::access;
   soil_moisture_profile::soil_profile_parameters* state;
   static const int input_var_name_count  = 8;
   static const int output_var_name_count = 3;
@@ -104,6 +107,14 @@ private:
   std::string output_var_names[output_var_name_count];
   std::string calib_var_names[calib_var_name_count];
   std::string verbosity;
+
+  template<class Archive>
+  void serialize(Archive& ar, const unsigned int version);
+  vecbuf<char> m_serialized;
+  uint64_t m_serialized_length;
+  void new_serialized();
+  void load_serialized(const char* data);
+  void free_serialized();
 };
 
 
