@@ -7,7 +7,7 @@ set(Red         "${Esc}[31m")
 # Uncomment this and rebuild artifacts to enable debugging
 set(CMAKE_BUILD_TYPE Debug)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -69,9 +69,9 @@ endif()
 
 ## for NGEN BUILD
 if(WIN32)
-    add_library(smpbmi src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx src/Logger.cxx)
+    add_library(smpbmi src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
 else()
-    add_library(smpbmi SHARED src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx src/Logger.cxx)
+    add_library(smpbmi SHARED src/bmi_soil_moisture_profile.cxx src/soil_moisture_profile.cxx)
 endif()
 
 target_include_directories(smpbmi PRIVATE include)
@@ -84,6 +84,25 @@ target_link_libraries(smpbmi PRIVATE Boost::serialization)
 
 # Code requires minimum of C99 standard to compile
 set_target_properties(smpbmi PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON)
+
+option(USE_EWTS "Build SMP with EWTS logging" ON)
+message("-- SMP CMakeLists USE_EWTS = ${USE_EWTS}")
+if(USE_EWTS)
+    message("-- SMP compiled with EWTS logging")
+
+    # --- EWTS (installed from nwm-ewts) ---
+    find_package(ewts CONFIG REQUIRED)
+
+    # Always use EWTS runtime logger for CPP
+    target_link_libraries(smpbmi PRIVATE ewts::ewts_cpp)
+
+    # Built with ngen bridge
+    target_link_libraries(smpbmi PRIVATE 
+        "-Wl,--no-as-needed" ewts::ewts_ngen_bridge "-Wl,--as-needed")
+    target_compile_definitions(smpbmi PRIVATE SMP_USE_EWTS)
+else()
+    message("-- SMP compiled with stdout fallback logging")
+endif()
 
 include(GNUInstallDirs)
 

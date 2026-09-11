@@ -375,7 +375,7 @@ void soil_moisture_profile::SoilMoistureProfileUpdate(struct soil_profile_parame
         stringstream errMsg;
         errMsg << "Soil moisture profile OPTION provided in the config file is "
                << parameters->soil_storage_model
-               << ", valid options are concepttual, layered, and topmodel " << "\n";
+               << ", valid options are conceptual, layered, and topmodel " << "\n";
         LOG(LogLevel::FATAL, errMsg.str());
         throw runtime_error(errMsg.str());
     }
@@ -458,17 +458,32 @@ void soil_moisture_profile::SoilMoistureProfileFromConceptualReservoir(
 
     double soil_storage_max = model_depth * parameters->smcmax[0];
 
+
     double soil_storage_change_per_timestep_cm =
         fabs(parameters->soil_storage_change_per_timestep * 100.0);
-    double soil_storage_current_timestep_cm =
-        100.0 * parameters->soil_storage; // storage at the current timestep
 
     if (!(parameters->soil_storage > 0.0)) {
+        static int warned = 0;
+
         // to ensure that soil storage is non-zero due to unexpected
-        //  bugs (either in the models or calibration tools) 
-        LOG(LogLevel::FATAL,"Invalid parameter. soil_storage = %f. Must be >= 0.0", parameters->soil_storage);
-        throw std::runtime_error("Bad soil_storage value");
+        //  bugs (either in the models or calibration tools)
+        if (warned == 0) {
+            LOG(LogLevel::WARNING,
+                "Invalid parameter. soil_storage = %f. Must be >= 0.0. Initializing the soil storage to 0.0001.",
+                parameters->soil_storage);
+            warned = 1;
+        }
+        else if (warned == 1) {
+            LOG(LogLevel::WARNING,
+                "Invalid soil_storage occurred again; further warnings suppressed");
+            warned = 2;
+        }
+
+        parameters->soil_storage = 0.0001;
     }
+
+    double soil_storage_current_timestep_cm =
+        100.0 * parameters->soil_storage; // storage at the current timestep
 
     int count = 0;
 
@@ -571,7 +586,7 @@ void soil_moisture_profile::SoilMoistureProfileFromConceptualReservoir(
         }
     }
 
-    if (Logger::GetLogLevel() == LogLevel::DEBUG) {
+    if (GetLogLevel() == LogLevel::DEBUG) {
         LOG(LogLevel::DEBUG, "Number of iterations  = %d ", count);
         LOG(LogLevel::DEBUG, "Water table depth (m) = %f ", parameters->water_table_depth);
         PrintSoilMoistureProfile(parameters);
@@ -624,7 +639,7 @@ void soil_moisture_profile::SoilMoistureProfileFromLayeredReservoir(
     int num_wf            = parameters->num_wetting_fronts; // number of wetting fronts
     int num_layers        = parameters->num_layers;
 
-    if (Logger::GetLogLevel() == LogLevel::DEBUG) {
+    if (GetLogLevel() == LogLevel::DEBUG) {
         LOG(LogLevel::DEBUG, "SoilMoistureProfile: number of wetting fronts = %d", num_wf);
         LOG(LogLevel::DEBUG, "SoilMoistureProfile (input): (depth, water_content):");
         for (int i = 0; i < num_wf; i++)
@@ -737,7 +752,7 @@ void soil_moisture_profile::SoilMoistureProfileFromLayeredReservoir(
         }
     }
 
-    if (Logger::GetLogLevel() == LogLevel::DEBUG) {
+    if (GetLogLevel() == LogLevel::DEBUG) {
         LOG(LogLevel::DEBUG, "Water table depth (m) = %f ", parameters->water_table_depth);
         PrintSoilMoistureProfile(parameters);
     }
@@ -947,7 +962,7 @@ void soil_moisture_profile::SoilMoistureProfileFromWaterTableDepth(
     delete[] smct_temp;
     delete[] z_temp;
 
-    if (Logger::GetLogLevel() == LogLevel::DEBUG) {
+    if (GetLogLevel() == LogLevel::DEBUG) {
         LOG(LogLevel::DEBUG, "Water table depth (m) = %f ", parameters->water_table_depth);
         PrintSoilMoistureProfile(parameters);
     }

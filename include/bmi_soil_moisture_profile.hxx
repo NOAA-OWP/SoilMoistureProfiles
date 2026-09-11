@@ -113,7 +113,7 @@ private:
   vecbuf<char> m_serialized;
   uint64_t m_serialized_length;
   void new_serialized();
-  void load_serialized(const char* data);
+  void load_serialized(char* data);
   void free_serialized();
 };
 
