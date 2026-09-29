@@ -11,14 +11,31 @@
 #include "../bmi/bmi.hxx"
 #include "../include/bmi_soil_moisture_profile.hxx"
 #include "../include/soil_moisture_profile.hxx"
+#include "Logger.hxx"
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 
 void BmiSoilMoistureProfile::
 Initialize (std::string config_file)
 {
+#ifdef SMP_USE_EWTS    
+  // Initialize the Error and Warning Trapping System
+  #pragma message("SoilMoistureProfiles.bmi_soil_moisture_profile.Initialize: SMP_USE_EWTS ON")
+  EwtsInit(SMP_MODULE_ID, true);
+#else
+  #pragma message("SoilMoistureProfiles.bmi_soil_moisture_profile.Initialize: SMP_USE_EWTS OFF")
+#endif  
+
+  LOG(LogLevel::INFO, "Initializing SMP");
   if (config_file.compare("") != 0 ) {
     this->state = new soil_moisture_profile::soil_profile_parameters;
     soil_moisture_profile::SoilMoistureProfile(config_file, state);
+  }
+  else {
+    LOG(LogLevel::FATAL, "SMP %s config file not provided", config_file.c_str());
+    throw std::runtime_error("Missing SMP Config file");
   }
 
   this->verbosity = this->state->verbosity;
@@ -42,8 +59,10 @@ UpdateUntil(double t)
 void BmiSoilMoistureProfile::
 Finalize()
 {
-  if (this->state)
+  if (this->state) {
     delete state;
+    this->state = NULL;
+  }
 }
 
 void BmiSoilMoistureProfile::
@@ -55,21 +74,47 @@ PrintSoilMoistureProfile()
 int BmiSoilMoistureProfile::
 GetVarGrid(std::string name)
 {
-  if (name.compare("soil_storage_model") == 0 || name.compare("num_wetting_fronts") == 0)   // int
+  if (
+    name.compare("soil_storage_model") == 0
+    || name.compare("num_wetting_fronts") == 0
+    || name.compare("serialization_free") == 0
+  ) // int
     return 0;
-  else if (name.compare("soil_storage") == 0 || name.compare("soil_storage_change") == 0
-	   || name.compare("soil_water_table") == 0 || name.compare("soil_moisture_fraction") == 0) // double
+  else if (
+    name.compare("soil_storage") == 0
+    || name.compare("soil_storage_change") == 0
+	  || name.compare("soil_water_table") == 0
+    || name.compare("soil_moisture_fraction") == 0
+    || name.compare("Qb_topmodel") == 0
+    || name.compare("Qv_topmodel") == 0
+    || name.compare("global_deficit") == 0
+    || name.compare("b") == 0
+    || name.compare("satpsi") == 0
+    || name.compare("reset_time") == 0
+  ) // double
     return 1;
-  else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0 || name.compare("global_deficit") == 0)
-    return 1;
-  else if (name.compare("b") == 0 || name.compare("satpsi") == 0)
-    return 1;
-  else if (name.compare("soil_moisture_profile") == 0) // array of doubles (conceptual model)
+  else if (
+    name.compare("soil_moisture_profile") == 0
+  ) // array of doubles (conceptual model)
     return 2;
-  else if (name.compare("soil_moisture_wetting_fronts") == 0 || name.compare("soil_depth_wetting_fronts") == 0) // array of doubles (layered model)
+  else if (
+    name.compare("soil_moisture_wetting_fronts") == 0
+    || name.compare("soil_depth_wetting_fronts") == 0
+  ) // array of doubles (layered model)
     return 3;
-  else if (name.compare("smcmax") == 0) // fixed number of layers for calibratable params
+  else if (
+    name.compare("smcmax") == 0
+  ) // fixed number of layers for calibratable params
     return 4;
+  else if (
+    name.compare("serialization_state") == 0
+  ) // char* beginning of serialized data
+    return 5;
+  else if (
+    name.compare("serialization_create") == 0
+    || name.compare("serialization_size") == 0
+  ) // uint64_t
+    return 6;
   else
     return -1;
 }
@@ -84,6 +129,10 @@ GetVarType(std::string name)
     return "int";
   else if (var_grid == 1 || var_grid == 2 || var_grid == 3 || var_grid == 4)
     return "double";
+  else if (var_grid == 5)
+    return "char";
+  else if (var_grid == 6)
+    return "uint64_t";
   else
     return "";
 }
@@ -98,6 +147,10 @@ GetVarItemsize(std::string name)
     return sizeof(int);
   else if (var_type.compare("double") == 0)
     return sizeof(double);
+  else if (var_type.compare("char") == 0)
+    return sizeof(char);
+  else if (var_type.compare("uint64_t") == 0)
+    return sizeof(uint64_t);
   else
     return 0;
 }
@@ -111,7 +164,7 @@ GetVarUnits(std::string name)
     return "m";
   else if (name.compare("soil_moisture_profile") == 0 || name.compare("soil_moisture_wetting_fronts") == 0 ||
 	   name.compare("soil_moisture_fraction") == 0)
-    return "none";
+    return "1";  // dimensionless (UDUNITS)
   else if (name.compare("Qb_topmodel") == 0 || name.compare("Qv_topmodel") == 0)
     return "m h^-1";
   else if (name.compare("global_deficit") == 0)
@@ -140,7 +193,7 @@ GetVarLocation(std::string name)
 {
   int var_grid = GetVarGrid(name);
 
-  if (var_grid <= 3)
+  if (var_grid <= 3 && name != "serialization_free")
     return "node";
   else
     return "none";
@@ -193,7 +246,7 @@ GetGridRank(const int grid)
 int BmiSoilMoistureProfile::
 GetGridSize(const int grid)
 {
-  if (grid == 0 || grid == 1)
+  if (grid == 0 || grid == 1 || grid == 6)
     return 1;
   else if (grid == 2)
     return this->state->shape[0];
@@ -201,6 +254,8 @@ GetGridSize(const int grid)
     return this->state->shape[1];
   else if (grid == 4)
     return this->state->num_layers;
+  else if (grid == 5)
+    return this->m_serialized_length; // size of currently saved state
   else
     return -1;
 }
@@ -219,6 +274,7 @@ GetGridType(const int grid)
 void BmiSoilMoistureProfile::
 GetGridX(const int grid, double *x)
 {
+  LOG(LogLevel::SEVERE, "GetGridX Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -226,6 +282,7 @@ GetGridX(const int grid, double *x)
 void BmiSoilMoistureProfile::
 GetGridY(const int grid, double *y)
 {
+  LOG(LogLevel::SEVERE, "GetGridY Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -233,6 +290,7 @@ GetGridY(const int grid, double *y)
 void BmiSoilMoistureProfile::
 GetGridZ(const int grid, double *z)
 {
+  LOG(LogLevel::SEVERE, "GetGridZ Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -240,6 +298,7 @@ GetGridZ(const int grid, double *z)
 int BmiSoilMoistureProfile::
 GetGridNodeCount(const int grid)
 {
+  LOG(LogLevel::SEVERE, "GetGridNodeCount Not Implemented");
   throw coupler::NotImplemented();
   /*
   if (grid == 0)
@@ -253,6 +312,7 @@ GetGridNodeCount(const int grid)
 int BmiSoilMoistureProfile::
 GetGridEdgeCount(const int grid)
 {
+  LOG(LogLevel::SEVERE, "GetGridEdgeCount Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -260,6 +320,7 @@ GetGridEdgeCount(const int grid)
 int BmiSoilMoistureProfile::
 GetGridFaceCount(const int grid)
 {
+  LOG(LogLevel::SEVERE, "GetGridFaceCount Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -267,6 +328,7 @@ GetGridFaceCount(const int grid)
 void BmiSoilMoistureProfile::
 GetGridEdgeNodes(const int grid, int *edge_nodes)
 {
+  LOG(LogLevel::SEVERE, "GetGridEdgeNodes Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -274,6 +336,7 @@ GetGridEdgeNodes(const int grid, int *edge_nodes)
 void BmiSoilMoistureProfile::
 GetGridFaceEdges(const int grid, int *face_edges)
 {
+  LOG(LogLevel::SEVERE, "GetGridFaceEdges Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -281,6 +344,7 @@ GetGridFaceEdges(const int grid, int *face_edges)
 void BmiSoilMoistureProfile::
 GetGridFaceNodes(const int grid, int *face_nodes)
 {
+  LOG(LogLevel::SEVERE, "GetGridFaceNodes Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -288,6 +352,7 @@ GetGridFaceNodes(const int grid, int *face_nodes)
 void BmiSoilMoistureProfile::
 GetGridNodesPerFace(const int grid, int *nodes_per_face)
 {
+  LOG(LogLevel::SEVERE, "GetGridNodesPerFace Not Implemented");
   throw coupler::NotImplemented();
 }
 
@@ -318,9 +383,9 @@ GetValuePtr (std::string name)
   else if (name.compare("soil_moisture_profile") == 0)
     return (void*)this->state->soil_moisture_profile;
   else if (name.compare("soil_moisture_wetting_fronts") == 0)
-    return (void*)this->state->soil_moisture_wetting_fronts;
+    return this->state->soil_moisture_wetting_fronts.data();
   else if (name.compare("soil_depth_wetting_fronts") == 0)
-    return (void*)this->state->soil_depth_wetting_fronts;
+    return this->state->soil_depth_wetting_fronts.data();
   else if (name.compare("soil_storage_model") == 0)
     return (void*)(&this->state->soil_storage_model);
   else if (name.compare("num_wetting_fronts") == 0)
@@ -337,9 +402,14 @@ GetValuePtr (std::string name)
     return (void*)(&this->state->b);
   else if (name.compare("satpsi") == 0)
     return (void*)(&this->state->satpsi);
-  else {
+  else if (name.compare("serialization_state") == 0)
+    return (void*)(this->m_serialized.data());
+  else if (name.compare("serialization_size") == 0) {
+    return (void*)(&this->m_serialized_length);
+  } else {
     std::stringstream errMsg;
     errMsg << "variable "<< name << " does not exist";
+    LOG(LogLevel::FATAL, errMsg.str());
     throw std::runtime_error(errMsg.str());
     return NULL;
   }
@@ -372,18 +442,40 @@ ResetSize (std::string name)
 {
 // reset the size of wetting fronts array to the number of wetting fronts at the timestep
   if (name.compare("soil_moisture_wetting_fronts") == 0) {
-    assert (this->state->num_wetting_fronts > 0);
-    state->soil_moisture_wetting_fronts = new double[this->state->num_wetting_fronts]();
+    if (this->state->num_wetting_fronts <= 0) {
+      std::string error_msg = "The number of wetting fronts must be greater than zero. The current number of wetting fronts is " + std::to_string(this->state->num_wetting_fronts);
+      LOG(LogLevel::FATAL, error_msg);
+      throw std::out_of_range(error_msg);
+    }
+    state->soil_moisture_wetting_fronts.resize(this->state->num_wetting_fronts);
   }
   else if (name.compare("soil_depth_wetting_fronts") == 0) {
-    assert (this->state->num_wetting_fronts > 0);
-    state->soil_depth_wetting_fronts = new double[this->state->num_wetting_fronts]();
+    if (this->state->num_wetting_fronts <= 0) {
+      std::string error_msg = "The number of wetting fronts must be greater than zero. The current number of wetting fronts is " + std::to_string(this->state->num_wetting_fronts);
+      LOG(LogLevel::FATAL, error_msg);
+      throw std::out_of_range(error_msg);
+    }
+    state->soil_depth_wetting_fronts.resize(this->state->num_wetting_fronts);
   }
 }
-  
+
 void BmiSoilMoistureProfile::
 SetValue (std::string name, void *src)
 {
+  // special cases for state serialization
+  if (name.compare("serialization_state") == 0) {
+    this->load_serialized((char*)src);
+    return;
+  } else if (name.compare("serialization_create") == 0) {
+    this->new_serialized();
+    return;
+  } else if (name.compare("serialization_free") == 0) {
+    this->free_serialized();
+    return;
+  } else if (name == "reset_time") {
+    // This BMI does not increment its time, so no action needs to be done.
+    return;
+  }
   void * dest = NULL;
   ResetSize(name);
   
@@ -503,5 +595,78 @@ double BmiSoilMoistureProfile::
 GetTimeStep () {
   return 0;
 }
+
+
+template<class Archive>
+void BmiSoilMoistureProfile::
+serialize(Archive& ar, const unsigned int version) {
+  soil_moisture_profile::soil_profile_parameters* state = this->state;
+  // size of array pointers assigned in initialization
+  int size = state->ncells;
+
+  // all three models (Conceptual, Layered, and Topmodel) create these three states
+  ar & state->init_profile;
+  ar & boost::serialization::make_array(state->soil_moisture_profile, size);
+  ar & state->water_table_depth;
+
+  // state regardless of model
+  ar & state->soil_storage;
+  ar & state->soil_moisture_fraction;
+}
+
+namespace {
+  using HeaderType = uint64_t;
+}
+
+void BmiSoilMoistureProfile::
+new_serialized() {
+  // resize with space for size as a header
+  this->m_serialized.clear();
+  OStreamType stream(this->m_serialized);
+  // add space for sizze header
+  HeaderType serialized_size;
+  stream.write(reinterpret_cast<const char*>(&serialized_size), sizeof(HeaderType));
+  boost::archive::binary_oarchive archive(stream);
+  try {
+    archive << (*this);
+    stream.flush();
+    this->m_serialized_length = this->m_serialized.size();
+    // store size of serialized data as header
+    serialized_size = this->m_serialized_length - sizeof(HeaderType);
+    memcpy(this->m_serialized.data(), &serialized_size, sizeof(HeaderType));
+  } catch (const std::exception &e) {
+    LOG(LogLevel::WARNING, "Serializing SMP encounterd an error: %s", e.what());
+    LOG(LogLevel::WARNING, "Set m_serialized_length = 0");
+    this->m_serialized_length = 0;
+    throw;
+  }
+}
+
+
+void BmiSoilMoistureProfile::
+load_serialized(char* data) {
+  // get size from header of data
+  HeaderType size;
+  memcpy(&size, data, sizeof(HeaderType));
+  // create stream from after header
+  membuf stream(data + sizeof(HeaderType), size);
+  boost::archive::binary_iarchive archive(stream);
+  try {
+    archive >> (*this);
+  } catch (const std::exception &e) {
+    LOG(LogLevel::SEVERE, "Deserializing SMP encounterd an error: %s", e.what());
+    throw;
+  }
+  this->free_serialized();
+}
+
+
+void BmiSoilMoistureProfile::
+free_serialized() {
+  this->m_serialized.clear();
+  this->m_serialized.shrink_to_fit();
+  this->m_serialized_length = 0;
+}
+
 
 #endif
